@@ -57,7 +57,7 @@ public class Pavilion {
     @JsonIgnore
     private Set<Roadmap> roadmaps;
 
-    @ManyToMany(mappedBy = "pavilions")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "pavilion")
     @JsonIgnore
-    private Set<Passport> passports;
+    private Set<Visit> visits;
 }

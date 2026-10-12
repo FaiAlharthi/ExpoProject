@@ -2,10 +2,8 @@ package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
 import com.example.expo.Model.Passport;
-import com.example.expo.Model.Pavilion;
 import com.example.expo.Model.Visitor;
 import com.example.expo.Repository.PassportRepository;
-import com.example.expo.Repository.PavilionRepository;
 import com.example.expo.Repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +15,6 @@ import java.util.List;
 public class PassportService {
     private final PassportRepository passportRepository;
     private final VisitorRepository visitorRepository;
-    private final PavilionRepository pavilionRepository;
 
     public List<Passport> getAllPassports(){
         return passportRepository.findAll();
@@ -31,6 +28,9 @@ public class PassportService {
         if(visitor.getPassport() != null){
             throw new ApiException("this visitor already has passport");
         }
+        //رقم الجواز من id الزائر ، وما يتكرر لأن كل زائر له جواز واحد
+        passport.setPassportNumber(String.format("EXPO30-%06d", visitor.getId()));
+        passport.setExplorerLevel("BRONZE");
         passport.setVisitor(visitor);
         passportRepository.save(passport);
     }
@@ -42,18 +42,5 @@ public class PassportService {
         }
         passport.getVisitor().setPassport(null);
         passportRepository.delete(passport);
-    }
-
-    public void addPavilionToPassport(Integer passportId, Integer pavilionId){
-        Passport passport = passportRepository.findPassportById(passportId);
-        if(passport == null){
-            throw new ApiException("passport not found");
-        }
-        Pavilion pavilion = pavilionRepository.findPavilionById(pavilionId);
-        if(pavilion == null){
-            throw new ApiException("pavilion not found");
-        }
-        passport.getPavilions().add(pavilion);
-        passportRepository.save(passport);
     }
 }

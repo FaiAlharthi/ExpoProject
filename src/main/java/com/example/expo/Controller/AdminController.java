@@ -30,4 +30,10 @@ public class AdminController {
         adminService.deleteAdmin(id);
         return ResponseEntity.status(200).body(new ApiResponse("admin deleted"));
     }
+
+    @PutMapping("/updateAdmin/{id}")
+    public ResponseEntity<?> updateAdmin(@PathVariable Integer id, @RequestBody @Valid Admin admin){
+        adminService.updateAdmin(id, admin);
+        return ResponseEntity.status(200).body(new ApiResponse("admin updated"));
+    }
 }

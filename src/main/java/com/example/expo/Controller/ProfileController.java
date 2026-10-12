@@ -30,4 +30,10 @@ public class ProfileController {
         profileService.deleteProfile(id);
         return ResponseEntity.status(200).body(new ApiResponse("profile deleted"));
     }
+
+    @PutMapping("/updateProfile/{id}")
+    public ResponseEntity<?> updateProfile(@PathVariable Integer id, @RequestBody @Valid Profile profile){
+        profileService.updateProfile(id, profile);
+        return ResponseEntity.status(200).body(new ApiResponse("profile updated"));
+    }
 }

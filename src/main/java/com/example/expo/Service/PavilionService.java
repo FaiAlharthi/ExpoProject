@@ -68,8 +68,8 @@ public class PavilionService {
         if(pavilion.getRoadmaps()!=null&&!pavilion.getRoadmaps().isEmpty()){
             throw new ApiException("Pavilion is used in roadmaps");
         }
-        if(pavilion.getPassports()!=null&&!pavilion.getPassports().isEmpty()){
-            throw new ApiException("Pavilion is used in passports");
+        if(pavilion.getVisits()!=null&&!pavilion.getVisits().isEmpty()){
+            throw new ApiException("Pavilion has visits");
         }
         pavilionRepository.delete(pavilion);
     }
