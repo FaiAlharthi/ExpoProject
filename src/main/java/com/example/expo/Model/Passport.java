@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
-
 import java.util.Set;
 
 @Setter
@@ -32,5 +31,5 @@ public class Passport {
     private Visitor visitor;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "passport")
-    private Set<Visit> visits;
+    private Set <Visit> visits;
 }
