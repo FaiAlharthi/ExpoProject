@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PavilionRepository extends JpaRepository<Pavilion, Integer> {
     Pavilion findPavilionById(Integer id);
+    Pavilion findPavilionByName(String name);
 }
