@@ -1,10 +1,7 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
-import com.example.expo.Model.Location;
-import com.example.expo.Model.Pavilion;
-import com.example.expo.Model.Visitor;
-import com.example.expo.Model.Zone;
+import com.example.expo.Model.*;
 import com.example.expo.Repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -112,10 +109,10 @@ public class PavilionService {
         List<Pavilion> unvisited = new ArrayList<>();
         for(Pavilion pavilion : pavilionRepository.findAll()){
             boolean visited=false;
-            if(visitor.getPassport()!= null && visitor.getPassport().getPavilions()!=null){
-                for(Pavilion p : visitor.getPassport().getPavilions()){
-                    if(p.getId().equals(pavilion.getId())){
-                        visited=true;
+            if(visitor.getPassport() != null && visitor.getPassport().getVisits() != null){
+                for(Visit visit : visitor.getPassport().getVisits()){
+                    if(visit.getPavilion().getId().equals(pavilion.getId())){
+                        visited = true;
                     }
                 }
             }
