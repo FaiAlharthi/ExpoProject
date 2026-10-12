@@ -36,4 +36,10 @@ public class RoadmapController {
         roadmapService.addPavilionToRoadmap(roadmapId, pavilionId);
         return ResponseEntity.status(200).body(new ApiResponse("pavilion added to roadmap"));
     }
+
+    @PutMapping("/updateRoadmap/{id}")
+    public ResponseEntity<?> updateRoadmap(@PathVariable Integer id, @RequestBody @Valid Roadmap roadmap){
+        roadmapService.updateRoadmap(id, roadmap);
+        return ResponseEntity.status(200).body(new ApiResponse("roadmap updated"));
+    }
 }

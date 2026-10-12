@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Setter
 @Getter
 @AllArgsConstructor
@@ -13,6 +15,20 @@ public class AiChatbot {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @Column(columnDefinition = "TEXT")
+    private String lastQuestion;
+
+    @Column(columnDefinition = "TEXT")
+    private String lastAnswer;
+
+    //يتعبى تلقائي في السيرفس
+    @Column(columnDefinition = "DATETIME")
+    private LocalDateTime createdAt;
+
+    //يتحدث مع كل سؤال
+    @Column(columnDefinition = "DATETIME")
+    private LocalDateTime lastInteractionAt;
 
     @OneToOne
     @JoinColumn
