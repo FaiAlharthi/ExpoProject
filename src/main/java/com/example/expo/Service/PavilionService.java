@@ -57,6 +57,7 @@ public class PavilionService {
         }
         oldPavilion.setName(pavilion.getName());
         oldPavilion.setDescription(pavilion.getDescription());
+
         oldPavilion.setImageUrl(pavilion.getImageUrl());
         pavilionRepository.save(oldPavilion);
     }
