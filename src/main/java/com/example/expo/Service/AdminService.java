@@ -28,8 +28,21 @@ public class AdminService {
         if(adminRepository.findAdminById(profileId) != null){
             throw new ApiException("this profile already has admin");
         }
+        if(profile.getVisitor() != null){
+            throw new ApiException("this profile is already a visitor");
+        }
+        profile.setRole("ADMIN");
         admin.setProfile(profile);
         adminRepository.save(admin);
+    }
+
+    public void updateAdmin(Integer id, Admin admin){
+        Admin oldAdmin = adminRepository.findAdminById(id);
+        if(oldAdmin == null){
+            throw new ApiException("admin not found");
+        }
+        oldAdmin.setJobTitle(admin.getJobTitle());
+        adminRepository.save(oldAdmin);
     }
 
     public void deleteAdmin(Integer id){
@@ -38,6 +51,7 @@ public class AdminService {
             throw new ApiException("admin not found");
         }
         admin.getProfile().setAdmin(null);
+        admin.getProfile().setRole(null);
         adminRepository.delete(admin);
     }
 }

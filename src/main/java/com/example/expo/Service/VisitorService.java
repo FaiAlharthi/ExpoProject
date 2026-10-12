@@ -31,8 +31,24 @@ public class VisitorService {
         if(visitorRepository.findVisitorById(profileId) != null){
             throw new ApiException("this profile already has visitor");
         }
+        if(profile.getAdmin() != null){
+            throw new ApiException("this profile is already an admin");
+        }
+        profile.setRole("VISITOR");
         visitor.setProfile(profile);
         visitorRepository.save(visitor);
+    }
+
+    public void updateVisitor(Integer id, Visitor visitor){
+        Visitor oldVisitor = visitorRepository.findVisitorById(id);
+        if(oldVisitor == null){
+            throw new ApiException("visitor not found");
+        }
+        oldVisitor.setAge(visitor.getAge());
+        oldVisitor.setGender(visitor.getGender());
+        oldVisitor.setPreferredLanguage(visitor.getPreferredLanguage());
+        oldVisitor.setNationality(visitor.getNationality());
+        visitorRepository.save(oldVisitor);
     }
 
     public void deleteVisitor(Integer id){
@@ -41,6 +57,7 @@ public class VisitorService {
             throw new ApiException("visitor not found");
         }
         visitor.getProfile().setVisitor(null);
+        visitor.getProfile().setRole(null);
         visitorRepository.delete(visitor);
     }
 

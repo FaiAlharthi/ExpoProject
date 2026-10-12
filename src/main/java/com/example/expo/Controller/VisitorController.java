@@ -36,4 +36,10 @@ public class VisitorController {
         visitorService.addInterestToVisitor(visitorId, interestId);
         return ResponseEntity.status(200).body(new ApiResponse("interest added to visitor"));
     }
+
+    @PutMapping("/updateVisitor/{id}")
+    public ResponseEntity<?> updateVisitor(@PathVariable Integer id, @RequestBody @Valid Visitor visitor){
+        visitorService.updateVisitor(id, visitor);
+        return ResponseEntity.status(200).body(new ApiResponse("visitor updated"));
+    }
 }

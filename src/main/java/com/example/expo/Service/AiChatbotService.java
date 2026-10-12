@@ -8,6 +8,7 @@ import com.example.expo.Repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,6 +29,7 @@ public class AiChatbotService {
         if(visitor.getAiChatbot() != null){
             throw new ApiException("this visitor already has aiChatbot");
         }
+        aiChatbot.setCreatedAt(LocalDateTime.now());
         aiChatbot.setVisitor(visitor);
         aiChatbotRepository.save(aiChatbot);
     }

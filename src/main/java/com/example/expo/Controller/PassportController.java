@@ -30,10 +30,4 @@ public class PassportController {
         passportService.deletePassport(id);
         return ResponseEntity.status(200).body(new ApiResponse("passport deleted"));
     }
-
-    @PutMapping("/{passportId}/addPavilion/{pavilionId}")
-    public ResponseEntity<?> addPavilionToPassport(@PathVariable Integer passportId, @PathVariable Integer pavilionId){
-        passportService.addPavilionToPassport(passportId, pavilionId);
-        return ResponseEntity.status(200).body(new ApiResponse("pavilion added to passport"));
-    }
 }

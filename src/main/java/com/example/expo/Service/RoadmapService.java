@@ -10,6 +10,8 @@ import com.example.expo.Repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,8 +30,30 @@ public class RoadmapService {
         if(visitor == null){
             throw new ApiException("visitor not found");
         }
+        checkDateAndTime(roadmap);
+        roadmap.setCreatedAt(LocalDateTime.now());
         roadmap.setVisitor(visitor);
         roadmapRepository.save(roadmap);
+    }
+
+    public void updateRoadmap(Integer id, Roadmap roadmap){
+        Roadmap oldRoadmap = roadmapRepository.findRoadmapById(id);
+        if(oldRoadmap == null){
+            throw new ApiException("roadmap not found");
+        }
+        checkDateAndTime(roadmap);
+        oldRoadmap.setPlanType(roadmap.getPlanType());
+        oldRoadmap.setVisitDate(roadmap.getVisitDate());
+        oldRoadmap.setPartyType(roadmap.getPartyType());
+        oldRoadmap.setPartySize(roadmap.getPartySize());
+        oldRoadmap.setArrivalTime(roadmap.getArrivalTime());
+        oldRoadmap.setDepartureTime(roadmap.getDepartureTime());
+        oldRoadmap.setExperienceTypes(roadmap.getExperienceTypes());
+        oldRoadmap.setVisitPace(roadmap.getVisitPace());
+        oldRoadmap.setIncludePrayerBreaks(roadmap.getIncludePrayerBreaks());
+        oldRoadmap.setIncludeMealBreaks(roadmap.getIncludeMealBreaks());
+        oldRoadmap.setIncludeChildRestBreaks(roadmap.getIncludeChildRestBreaks());
+        roadmapRepository.save(oldRoadmap);
     }
 
     public void deleteRoadmap(Integer id){
@@ -51,5 +75,15 @@ public class RoadmapService {
         }
         roadmap.getPavilions().add(pavilion);
         roadmapRepository.save(roadmap);
+    }
+
+    //التاريخ لازم يكون خلال فترة المعرض ، ووقت المغادرة بعد وقت الوصول
+    private void checkDateAndTime(Roadmap roadmap){
+        if(roadmap.getVisitDate().isBefore(LocalDate.of(2030, 10, 1)) || roadmap.getVisitDate().isAfter(LocalDate.of(2031, 3, 31))){
+            throw new ApiException("visit date must be between 2030-10-01 and 2031-03-31");
+        }
+        if(!roadmap.getDepartureTime().isAfter(roadmap.getArrivalTime())){
+            throw new ApiException("departure time must be after arrival time");
+        }
     }
 }
