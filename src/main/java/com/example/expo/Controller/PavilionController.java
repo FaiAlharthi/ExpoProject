@@ -41,4 +41,24 @@ public class PavilionController {
         pavilionService.deletePavilion(id);
         return ResponseEntity.status(200).body(new ApiResponse("Pavilion deleted"));
     }
+
+    @GetMapping("/zone/{zoneId}")
+    public ResponseEntity<?> getPavilionsByZone(@PathVariable Integer zoneId) {
+        return ResponseEntity.status(200).body(pavilionService.getPavilionsByZone(zoneId));
+    }
+
+    @GetMapping("/search/{name}")
+    public ResponseEntity<?> searchPavilion(@PathVariable String name) {
+        return ResponseEntity.status(200).body(pavilionService.searchPavilion(name));
+    }
+
+    @GetMapping("/top-rated")
+    public ResponseEntity<?> getTopRatedPavilions() {
+        return ResponseEntity.status(200).body(pavilionService.getTopRatedPavilions());
+    }
+
+    @GetMapping("/unvisited/{visitorId}")
+    public ResponseEntity<?> getUnvisitedPavilions(@PathVariable Integer visitorId) {
+        return ResponseEntity.status(200).body(pavilionService.getUnvisitedPavilions(visitorId));
+    }
 }

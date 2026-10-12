@@ -1,6 +1,7 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
+import com.example.expo.Model.Passport;
 import com.example.expo.Model.Pavilion;
 import com.example.expo.Model.Review;
 import com.example.expo.Model.Visitor;
@@ -32,6 +33,11 @@ public class ReviewService {
         if(pavilion == null){
             throw new ApiException("Pavilion not found");
         }
+        Passport passport=visitor.getPassport();
+        if(passport==null||passport.getPavilions()==null||!passport.getPavilions().contains(pavilion)){
+            throw new ApiException("You must visit the pavilion before reviewing it");
+        }
+
         if(reviewRepository.findReviewByVisitorAndPavilion(visitor, pavilion) != null){
             throw new ApiException("You already reviewed this pavilion");
         }

@@ -3,13 +3,13 @@ package com.example.expo.Service;
 import com.example.expo.Api.ApiException;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Pavilion;
+import com.example.expo.Model.Visitor;
 import com.example.expo.Model.Zone;
-import com.example.expo.Repository.LocationRepository;
-import com.example.expo.Repository.PavilionRepository;
-import com.example.expo.Repository.ZoneRepository;
+import com.example.expo.Repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -19,6 +19,8 @@ public class PavilionService {
     private final PavilionRepository pavilionRepository;
     private final ZoneRepository zoneRepository;
     private final LocationRepository locationRepository;
+    private final VisitorRepository visitorRepository;
+    private final ReviewRepository reviewRepository;
 
     public List<Pavilion>getAllPavilion(){
         return pavilionRepository.findAll();
@@ -55,7 +57,6 @@ public class PavilionService {
         }
         oldPavilion.setName(pavilion.getName());
         oldPavilion.setDescription(pavilion.getDescription());
-        oldPavilion.setVisitDuration(pavilion.getVisitDuration());
         oldPavilion.setImageUrl(pavilion.getImageUrl());
         pavilionRepository.save(oldPavilion);
     }
@@ -73,6 +74,60 @@ public class PavilionService {
         }
         pavilionRepository.delete(pavilion);
     }
+
+     //endpoint أجنحة زون معينة
+    public List<Pavilion>getPavilionsByZone(Integer zone_id){
+        Zone zone=zoneRepository.findZoneById(zone_id);
+        if(zone == null){
+            throw new ApiException("Zone not found");
+        }
+        return pavilionRepository.findPavilionByZone(zone);
+    }
+
+    //endpoint ابحث بالاسم عن جناح
+    public List<Pavilion>searchPavilion(String name){
+        List<Pavilion>pavilions=pavilionRepository.findPavilionsByNameContaining(name);
+        if(pavilions.isEmpty()){
+            throw new ApiException("No pavilions found");
+        }
+        return pavilions;
+    }
+
+    //3) الأجنحة مرتبة حسب التقييم
+    public List<Pavilion> getTopRatedPavilions(){
+        List<Pavilion> pavilions = pavilionRepository.findTopRatedPavilions();
+        if(pavilions.isEmpty()){
+            throw new ApiException("No rated pavilions yet");
+        }
+        return pavilions;
+    }
+
+    // 4) الأجنحة اللي ما زارها الزائر
+    public List<Pavilion> getUnvisitedPavilions(Integer visitorId){
+        Visitor visitor = visitorRepository.findVisitorById(visitorId);
+        if(visitor == null){
+            throw new ApiException("Visitor not found");
+        }
+        List<Pavilion> unvisited = new ArrayList<>();
+        for(Pavilion pavilion : pavilionRepository.findAll()){
+            boolean visited=false;
+            if(visitor.getPassport()!= null && visitor.getPassport().getPavilions()!=null){
+                for(Pavilion p : visitor.getPassport().getPavilions()){
+                    if(p.getId().equals(pavilion.getId())){
+                        visited=true;
+                    }
+                }
+            }
+            if(!visited){
+                unvisited.add(pavilion);
+            }
+        }
+        return unvisited;
+    }
+
+
+
+
 
 
 }
