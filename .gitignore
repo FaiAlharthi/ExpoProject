@@ -34,3 +34,6 @@ build/
 
 ### local secrets ###
 application-local.properties
+
+### macOS ###
+.DS_Store

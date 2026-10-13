@@ -1,8 +1,8 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
-import com.example.expo.Dto.RoadmapRouteDTO;
-import com.example.expo.Dto.ShortestPathDTO;
+import com.example.expo.Dto.Out.RoadmapRouteDTO;
+import com.example.expo.Dto.Out.ShortestPathDTO;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Path;
 import com.example.expo.Model.Pavilion;
@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -159,19 +160,20 @@ public class PathService {
         return buildRoute(roadmap, roadmap.getEntrance().getLocation());
     }
 
-    // يرتب الأجنحة اللي ما انزارت: كل مرة أقرب جناح باقي بمسافة Dijkstra
+    // follows the roadmap order (stopOrder) and draws the shortest path between each stop and the next
     private RoadmapRouteDTO buildRoute(Roadmap roadmap, Location start){
-        List<Pavilion> remaining = new ArrayList<>();
+        List<Visit> stops = new ArrayList<>();
         if(roadmap.getVisits() != null){
             for(Visit visit : roadmap.getVisits()){
                 if(!visit.getIsVisited() && visit.getPavilion() != null && visit.getPavilion().getLocation() != null){
-                    remaining.add(visit.getPavilion());
+                    stops.add(visit);
                 }
             }
         }
-        if(remaining.isEmpty()){
+        if(stops.isEmpty()){
             throw new ApiException("Roadmap has no remaining pavilions");
         }
+        stops.sort(Comparator.comparing(Visit::getStopOrder, Comparator.nullsLast(Comparator.naturalOrder())));
 
         List<String> visitOrder = new ArrayList<>();
         List<Location> fullRoute = new ArrayList<>();
@@ -180,38 +182,24 @@ public class PathService {
         Location current = start;
         fullRoute.add(current);
 
-        while(!remaining.isEmpty()){
-            // 1) أقرب جناح باقي
-            Pavilion nextPavilion = null;
-            ShortestPathDTO bestPath = null;
-
-            for(Pavilion pavilion : remaining){
-                ShortestPathDTO path;
-                try {
-                    path = getShortestPath(current.getId(), pavilion.getLocation().getId());
-                } catch (ApiException e) {
-                    continue; // ما فيه ممر يوصل له
-                }
-                if(bestPath == null || path.getTotalDistance() < bestPath.getTotalDistance()){
-                    bestPath = path;
-                    nextPavilion = pavilion;
-                }
-            }
-
-            if(nextPavilion == null){
+        for(Visit stop : stops){
+            Pavilion nextPavilion = stop.getPavilion();
+            ShortestPathDTO bestPath;
+            try {
+                bestPath = getShortestPath(current.getId(), nextPavilion.getLocation().getId());
+            } catch (ApiException e) {
                 throw new ApiException("Some pavilions are not connected by paths");
             }
 
-            // 2) نضيف طريقه للمسار الكامل (بدون تكرار نقطة البداية)
+            // add its path to the full route (without repeating the start point)
             for(int i = 1; i < bestPath.getLocations().size(); i++){
                 fullRoute.add(bestPath.getLocations().get(i));
             }
             totalDistance = totalDistance + bestPath.getTotalDistance();
             visitOrder.add(nextPavilion.getName());
 
-            // 3) الجناح هذا يصير نقطة البداية الجديدة
+            // this pavilion becomes the new start point
             current = nextPavilion.getLocation();
-            remaining.remove(nextPavilion);
         }
 
         // 4) بعد آخر جناح: نطلع من أقرب بوابة

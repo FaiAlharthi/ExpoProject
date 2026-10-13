@@ -1,6 +1,7 @@
 package com.example.expo.Controller;
 
 import com.example.expo.Api.ApiResponse;
+import com.example.expo.Dto.In.GenerateRoadmapDTO;
 import com.example.expo.Model.Roadmap;
 import com.example.expo.Service.RoadmapService;
 import jakarta.validation.Valid;
@@ -32,8 +33,8 @@ public class RoadmapController {
     }
 
     @PostMapping("/generate/{visitorId}/{entranceId}")
-    public ResponseEntity<?> generateRoadmap(@PathVariable Integer visitorId, @PathVariable Integer entranceId, @RequestBody @Valid Roadmap roadmap){
-        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(visitorId, entranceId, roadmap));
+    public ResponseEntity<?> generateRoadmap(@PathVariable Integer visitorId, @PathVariable Integer entranceId, @RequestBody @Valid GenerateRoadmapDTO dto){
+        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(visitorId, entranceId, dto));
     }
 
     @GetMapping("/getStops/{roadmapId}")
