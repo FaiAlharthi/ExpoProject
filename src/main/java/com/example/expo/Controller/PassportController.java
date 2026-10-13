@@ -19,12 +19,6 @@ public class PassportController {
         return ResponseEntity.status(200).body(passportService.getAllPassports());
     }
 
-    @PostMapping("/createPassport/{visitorId}")
-    public ResponseEntity<?> createPassport(@PathVariable Integer visitorId, @RequestBody @Valid Passport passport){
-        passportService.addPassport(visitorId, passport);
-        return ResponseEntity.status(200).body(new ApiResponse("passport added"));
-    }
-
     @DeleteMapping("/deletePassport/{id}")
     public ResponseEntity<?> deletePassport(@PathVariable Integer id){
         passportService.deletePassport(id);

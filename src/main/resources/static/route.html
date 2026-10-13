@@ -7,9 +7,20 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <style>
     :root {
-      --bg: #eef2ef; --surface: #ffffff; --ink: #14242b; --muted: #5d6d6a; --line: #d3ddd8;
-      --path: #b9c7c1; --accent: #0e6f63; --route: #c27c0e; --straight: #7a5cc4; --start: #b3261e;
-      --zone-a: #0e6f6314; --zone-b: #0e6f6326; --node: #8a9a95;
+      --bg: #eef2ef;
+      --surface: #ffffff;
+      --ink: #14242b;
+      --muted: #5d6d6a;
+      --line: #d3ddd8;
+      --path: #b9c7c1;
+      --accent: #0e6f63;
+      --route: #c27c0e;
+      --straight: #7a5cc4;
+      --start: #b3261e;
+      --zone-a: #0e6f6314;
+      --zone-b: #0e6f6326;
+      --node: #8a9a95;
+      --len: 3000;
       --font-display: "Reem Kufi", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
       --font-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
       --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -20,20 +31,25 @@
       --zone-a: #3fb8a614; --zone-b: #3fb8a628; --node: #6f8580; color-scheme: dark;
     }
     * { box-sizing: border-box; }
-    body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; padding-inline: 16px; padding-block: 24px 40px; }
+    body {
+      background: var(--bg); color: var(--ink); font-family: var(--font-body);
+      font-size: 15px; line-height: 1.6; padding-inline: 16px; padding-block: 24px 40px;
+    }
     .page { max-width: 1180px; margin-inline: auto; display: grid; gap: 20px; }
+    header { display: grid; gap: 6px; }
     .eyebrow { font-size: 12px; letter-spacing: .04em; color: var(--accent); font-weight: 600; }
     h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); margin: 0; line-height: 1.2; text-wrap: balance; }
     .lede { margin: 0; color: var(--muted); max-width: 70ch; }
-    .top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
-    .theme-btn { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
 
     .board { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
     @media (max-width: 900px) { .board { grid-template-columns: minmax(0, 1fr); } }
 
     .map-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }
     .modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-    .mode-btn { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+    .mode-btn {
+      font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+      padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    }
     .mode-btn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
     .mode-btn:focus-visible, .chip:focus-within, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     svg { width: 100%; height: auto; display: block; }
@@ -45,10 +61,7 @@
     .ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
     .ticket h2 { font-family: var(--font-display); font-weight: 500; font-size: 18px; margin: 0; }
     label.field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
-    select, input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; width: 100%; }
-    .row { display: flex; gap: 8px; align-items: end; }
-    .row .field { flex: 1; }
-    .btn { font: inherit; font-size: 14px; background: var(--accent); color: var(--surface); border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+    select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
     .chips { display: flex; flex-wrap: wrap; gap: 6px; }
     .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; background: var(--bg); }
     .chip input { accent-color: var(--accent); margin: 0; }
@@ -66,6 +79,12 @@
     .note { font-size: 13px; color: var(--muted); margin: 0; }
     .err { color: var(--start); font-size: 13px; margin: 0; }
     .err:empty { display: none; }
+    .row { display: flex; gap: 8px; align-items: end; }
+    .row .field { flex: 1; }
+    input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; width: 100%; }
+    .btn { font: inherit; font-size: 14px; background: var(--accent); color: var(--surface); border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+    .top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .theme-btn { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
 
     .node-label { font-family: var(--font-body); font-size: 12px; fill: var(--ink); }
     .zone-label { font-family: var(--font-display); font-size: 15px; fill: var(--accent); }
@@ -83,7 +102,7 @@
     <div style="display:grid;gap:6px">
       <div class="eyebrow">متصل بالباك إند · Location · Zone · Pavilion · Path</div>
       <h1>مسار المشي في إكسبو 2030 الرياض</h1>
-      <p class="lede">اختاري أجنحة الرحلة ونقطة البداية، وقارني بين الترتيب بالخط المستقيم والترتيب بالمشي الحقيقي على الممرات باستخدام Dijkstra. الخمس مناطق مرتبة حول الساحة المركزية، ويربطها طريق دائري.</p>
+      <p class="lede">اختاري أجنحة الرحلة ونقطة البداية، وقارني بين الترتيب بالخط المستقيم والترتيب بالمشي الحقيقي على الممرات باستخدام Dijkstra.</p>
     </div>
     <button class="theme-btn" id="theme">☀️ فاتح</button>
   </header>
@@ -141,6 +160,7 @@
   let plaza = null, center = { x: 500, y: 400 }, big = false;
   let picked = new Set(), mode = "dijkstra";
   let fixedOrder = null; // ترتيب الرحلة من الباك إند (stopOrder)، null = نرتب هنا
+  let aiSummary = "";    // ملخص الـ AI للرحلة
   const cache = {}; // نخزن نتائج Dijkstra عشان ما نكرر الطلب
 
   async function api(url) {
@@ -257,6 +277,10 @@
     syncChips();
     startSel.addEventListener("change", () => { fixedOrder = null; render(); });
     render();
+
+    // لو الرابط فيه ?roadmap=رقم، نحمّل الرحلة على طول
+    const rid = new URLSearchParams(location.search).get("roadmap");
+    if (rid) { document.getElementById("roadmapId").value = rid; document.getElementById("loadRoadmap").click(); }
   }
 
   const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -406,7 +430,7 @@
       note.textContent = same ? "الطريقتين طلعوا نفس الترتيب هنا. جربي تغيرين نقطة البداية أو الأجنحة."
               : `الترتيب اختلف. لو مشى الزائر بترتيب الخط المستقيم بيمشي ${diff} م زيادة على الممرات.`;
     } else if (mode === "straight") note.textContent = `الخط المستقيم يقول ${m(sum(line.legs, "line"))} م، بس المشي الفعلي على الممرات بنفس الترتيب ${m(sum(line.legs, "walk"))} م.`;
-    else if (fixedOrder) note.textContent = "هذا ترتيب الرحلة اللي ولّدها الباك إند (generate)، والطريق بين كل جناحين محسوب بـ Dijkstra.";
+    else if (fixedOrder) note.textContent = (aiSummary ? "🤖 " + aiSummary + " — " : "") + "هذا ترتيب الرحلة اللي ولّدها الباك إند (generate)، والطريق بين كل جناحين محسوب بـ Dijkstra.";
     else note.textContent = "الترتيب محسوب بمسافة المشي الحقيقية من الباك إند، وبعد آخر جناح يطلع من أقرب بوابة.";
     if (walk.unreachable.length && mode !== "straight") err("ما فيه ممرات توصل لـ: " + walk.unreachable.map(nameOf).join("، "));
   }
@@ -416,11 +440,13 @@
     const id = document.getElementById("roadmapId").value;
     if (!id) return;
     try {
-      // الأجنحة بالترتيب (stopOrder)
-      const stops = await api(`/roadmap/getStops/${id}`);
+      // الرحلة: { id, summary, aiUsed, breaks, stops: [...] } والأجنحة مرتبة بـ stopOrder
+      const data = await api(`/roadmap/getStops/${id}`);
+      const stops = Array.isArray(data) ? data : (data.stops || []);
+      aiSummary = data.summary || "";
       const order = [];
       stops.forEach(v => {
-        if (v.isVisited) return; // اللي زارها خلاص
+        if (v.isVisited || v.visited) return; // اللي زارها خلاص
         const p = pavilions.find(x => x.id === v.pavilionId || x.name === v.pavilionName);
         if (p) order.push(p.location.id);
       });
