@@ -2,13 +2,17 @@ package com.example.expo.Config;
 
 import com.example.expo.Model.Entrance;
 import com.example.expo.Model.Location;
+import com.example.expo.Model.Passport;
 import com.example.expo.Model.Path;
 import com.example.expo.Model.Pavilion;
+import com.example.expo.Model.Visitor;
 import com.example.expo.Model.Zone;
 import com.example.expo.Repository.EntranceRepository;
 import com.example.expo.Repository.LocationRepository;
+import com.example.expo.Repository.PassportRepository;
 import com.example.expo.Repository.PathRepository;
 import com.example.expo.Repository.PavilionRepository;
+import com.example.expo.Repository.VisitorRepository;
 import com.example.expo.Repository.ZoneRepository;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
@@ -34,6 +38,8 @@ public class DataSeeder implements CommandLineRunner {
     private final EntranceRepository entranceRepository;
     private final PavilionRepository pavilionRepository;
     private final PathRepository pathRepository;
+    private final VisitorRepository visitorRepository;
+    private final PassportRepository passportRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -45,6 +51,20 @@ public class DataSeeder implements CommandLineRunner {
         }
         if(pathRepository.count() == 0 && data.getPaths() != null){
             seedPaths(data);
+        }
+        addMissingPassports();
+    }
+
+    // visitors registered before passports were automatic
+    private void addMissingPassports(){
+        for(Visitor visitor : visitorRepository.findAll()){
+            if(visitor.getPassport() == null){
+                Passport passport = new Passport();
+                passport.setPassportNumber(String.format("EXPO30-%06d", visitor.getId()));
+                passport.setExplorerLevel("BRONZE");
+                passport.setVisitor(visitor);
+                passportRepository.save(passport);
+            }
         }
     }
 

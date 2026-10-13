@@ -2,9 +2,11 @@ package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
 import com.example.expo.Model.Interest;
+import com.example.expo.Model.Passport;
 import com.example.expo.Model.Profile;
 import com.example.expo.Model.Visitor;
 import com.example.expo.Repository.InterestRepository;
+import com.example.expo.Repository.PassportRepository;
 import com.example.expo.Repository.ProfileRepository;
 import com.example.expo.Repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ public class VisitorService {
     private final VisitorRepository visitorRepository;
     private final ProfileRepository profileRepository;
     private final InterestRepository interestRepository;
+    private final PassportRepository passportRepository;
 
     public List<Visitor> getAllVisitors(){
         return visitorRepository.findAll();
@@ -36,7 +39,14 @@ public class VisitorService {
         }
         profile.setRole("VISITOR");
         visitor.setProfile(profile);
-        visitorRepository.save(visitor);
+        Visitor savedVisitor = visitorRepository.save(visitor);
+
+        // every new visitor gets a passport
+        Passport passport = new Passport();
+        passport.setPassportNumber(String.format("EXPO30-%06d", savedVisitor.getId()));
+        passport.setExplorerLevel("BRONZE");
+        passport.setVisitor(savedVisitor);
+        passportRepository.save(passport);
     }
 
     public void updateVisitor(Integer id, Visitor visitor){
