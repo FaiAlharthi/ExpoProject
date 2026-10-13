@@ -38,7 +38,7 @@ public class ReviewService {
         }
         boolean visited = false;
         for(Visit visit : passport.getVisits()){
-            if(visit.getPavilion().getId().equals(pavilionId)){
+            if(visit.getIsVisited() && visit.getPavilion().getId().equals(pavilionId)){
                 visited = true;
             }
         }
@@ -106,10 +106,9 @@ public class ReviewService {
         if(visitor.getPassport() == null || visitor.getPassport().getVisits() == null){
             throw new ApiException("You did not visit any pavilion yet");
         }
-
         List<Pavilion> pending = new ArrayList<>();
         for(Visit visit : visitor.getPassport().getVisits()){
-            if(reviewRepository.findReviewByVisitorAndPavilion(visitor, visit.getPavilion()) == null && !pending.contains(visit.getPavilion())){
+            if(reviewRepository.findReviewByVisitorAndPavilion(visitor, visit.getPavilion()) == null){
                 pending.add(visit.getPavilion());
             }
         }

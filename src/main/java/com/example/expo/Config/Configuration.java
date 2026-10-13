@@ -16,7 +16,7 @@ public class Configuration {
         return new BCryptPasswordEncoder();
     }
 
-    // مبدئياً كل الإندبوينتس مفتوحة لين نضيف الرولز
+    // all endpoints are open for now
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         return http

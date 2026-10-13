@@ -64,9 +64,6 @@ public class PavilionService {
         if(pavilion ==null){
             throw new ApiException("Pavilion not found");
         }
-        if(pavilion.getRoadmaps()!=null&&!pavilion.getRoadmaps().isEmpty()){
-            throw new ApiException("Pavilion is used in roadmaps");
-        }
         if(pavilion.getVisits()!=null&&!pavilion.getVisits().isEmpty()){
             throw new ApiException("Pavilion has visits");
         }
@@ -111,7 +108,7 @@ public class PavilionService {
             boolean visited=false;
             if(visitor.getPassport() != null && visitor.getPassport().getVisits() != null){
                 for(Visit visit : visitor.getPassport().getVisits()){
-                    if(visit.getPavilion().getId().equals(pavilion.getId())){
+                    if(visit.getIsVisited() && visit.getPavilion().getId().equals(pavilion.getId())){
                         visited = true;
                     }
                 }

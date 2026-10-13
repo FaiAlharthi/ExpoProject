@@ -1,11 +1,13 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
-import com.example.expo.Model.Pavilion;
+import com.example.expo.Model.Entrance;
 import com.example.expo.Model.Roadmap;
+import com.example.expo.Model.Visit;
 import com.example.expo.Model.Visitor;
-import com.example.expo.Repository.PavilionRepository;
+import com.example.expo.Repository.EntranceRepository;
 import com.example.expo.Repository.RoadmapRepository;
+import com.example.expo.Repository.VisitRepository;
 import com.example.expo.Repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,20 +21,29 @@ import java.util.List;
 public class RoadmapService {
     private final RoadmapRepository roadmapRepository;
     private final VisitorRepository visitorRepository;
-    private final PavilionRepository pavilionRepository;
+    private final VisitRepository visitRepository;
+    private final EntranceRepository entranceRepository;
 
     public List<Roadmap> getAllRoadmaps(){
         return roadmapRepository.findAll();
     }
 
-    public void addRoadmap(Integer visitorId, Roadmap roadmap){
+    public void addRoadmap(Integer visitorId, Integer entranceId, Roadmap roadmap){
         Visitor visitor = visitorRepository.findVisitorById(visitorId);
         if(visitor == null){
             throw new ApiException("visitor not found");
         }
+        Entrance entrance = entranceRepository.findEntranceById(entranceId);
+        if(entrance == null){
+            throw new ApiException("entrance not found");
+        }
         checkDateAndTime(roadmap);
+        if(roadmapRepository.findRoadmapByVisitorAndVisitDate(visitor, roadmap.getVisitDate()) != null){
+            throw new ApiException("you already have a roadmap for this day, update it instead");
+        }
         roadmap.setCreatedAt(LocalDateTime.now());
         roadmap.setVisitor(visitor);
+        roadmap.setEntrance(entrance);
         roadmapRepository.save(roadmap);
     }
 
@@ -42,6 +53,10 @@ public class RoadmapService {
             throw new ApiException("roadmap not found");
         }
         checkDateAndTime(roadmap);
+        Roadmap sameDayRoadmap = roadmapRepository.findRoadmapByVisitorAndVisitDate(oldRoadmap.getVisitor(), roadmap.getVisitDate());
+        if(sameDayRoadmap != null && !sameDayRoadmap.getId().equals(id)){
+            throw new ApiException("you already have a roadmap for this day");
+        }
         oldRoadmap.setPlanType(roadmap.getPlanType());
         oldRoadmap.setVisitDate(roadmap.getVisitDate());
         oldRoadmap.setPartyType(roadmap.getPartyType());
@@ -53,6 +68,7 @@ public class RoadmapService {
         oldRoadmap.setIncludePrayerBreaks(roadmap.getIncludePrayerBreaks());
         oldRoadmap.setIncludeMealBreaks(roadmap.getIncludeMealBreaks());
         oldRoadmap.setIncludeChildRestBreaks(roadmap.getIncludeChildRestBreaks());
+        oldRoadmap.setAllowRevisits(roadmap.getAllowRevisits());
         roadmapRepository.save(oldRoadmap);
     }
 
@@ -61,23 +77,17 @@ public class RoadmapService {
         if(roadmap == null){
             throw new ApiException("roadmap not found");
         }
+        // keep visits, only unlink them
+        if(roadmap.getVisits() != null){
+            for(Visit visit : roadmap.getVisits()){
+                visit.setRoadmap(null);
+                visitRepository.save(visit);
+            }
+        }
         roadmapRepository.delete(roadmap);
     }
 
-    public void addPavilionToRoadmap(Integer roadmapId, Integer pavilionId){
-        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
-            throw new ApiException("roadmap not found");
-        }
-        Pavilion pavilion = pavilionRepository.findPavilionById(pavilionId);
-        if(pavilion == null){
-            throw new ApiException("pavilion not found");
-        }
-        roadmap.getPavilions().add(pavilion);
-        roadmapRepository.save(roadmap);
-    }
-
-    //التاريخ لازم يكون خلال فترة المعرض ، ووقت المغادرة بعد وقت الوصول
+    // date must be in expo period, departure after arrival
     private void checkDateAndTime(Roadmap roadmap){
         if(roadmap.getVisitDate().isBefore(LocalDate.of(2030, 10, 1)) || roadmap.getVisitDate().isAfter(LocalDate.of(2031, 3, 31))){
             throw new ApiException("visit date must be between 2030-10-01 and 2031-03-31");

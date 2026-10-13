@@ -19,9 +19,9 @@ public class RoadmapController {
         return ResponseEntity.status(200).body(roadmapService.getAllRoadmaps());
     }
 
-    @PostMapping("/createRoadmap/{visitorId}")
-    public ResponseEntity<?> createRoadmap(@PathVariable Integer visitorId, @RequestBody @Valid Roadmap roadmap){
-        roadmapService.addRoadmap(visitorId, roadmap);
+    @PostMapping("/createRoadmap/{visitorId}/{entranceId}")
+    public ResponseEntity<?> createRoadmap(@PathVariable Integer visitorId, @PathVariable Integer entranceId, @RequestBody @Valid Roadmap roadmap){
+        roadmapService.addRoadmap(visitorId, entranceId, roadmap);
         return ResponseEntity.status(200).body(new ApiResponse("roadmap added"));
     }
 
@@ -29,12 +29,6 @@ public class RoadmapController {
     public ResponseEntity<?> deleteRoadmap(@PathVariable Integer id){
         roadmapService.deleteRoadmap(id);
         return ResponseEntity.status(200).body(new ApiResponse("roadmap deleted"));
-    }
-
-    @PutMapping("/{roadmapId}/addPavilion/{pavilionId}")
-    public ResponseEntity<?> addPavilionToRoadmap(@PathVariable Integer roadmapId, @PathVariable Integer pavilionId){
-        roadmapService.addPavilionToRoadmap(roadmapId, pavilionId);
-        return ResponseEntity.status(200).body(new ApiResponse("pavilion added to roadmap"));
     }
 
     @PutMapping("/updateRoadmap/{id}")
