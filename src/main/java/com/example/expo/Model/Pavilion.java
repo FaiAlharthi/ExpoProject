@@ -32,11 +32,11 @@ public class Pavilion {
 // private Boolean indoor; //for weather api  //مفتوح مغلق
 
 
-// @NotNull(message = "visit duration should not be empty")
-// @Min(value = 5, message = "visit duration must be at least 5 minutes")
-// @Max(value = 180, message = "visit duration must be at most 180 minutes")
-// @Column(nullable = false)
-// private Integer visitDuration;
+ @NotNull(message = "visit duration should not be empty")
+ @Min(value = 5, message = "visit duration must be at least 5 minutes")
+ @Max(value = 180, message = "visit duration must be at most 180 minutes")
+ @Column(nullable = false)
+ private Integer visitDuration;
 
 
  private String imageUrl;
