@@ -1,7 +1,7 @@
 package com.example.expo.Model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,6 +35,7 @@ public class Visit {
     @JsonIgnore
     private Pavilion pavilion;
 
+
     // يرجع اسم الجناح في الـ JSON بدل الجناح كامل لان عليه جاسون اقنور ال بافلين فيصير نحط اسمه بس
     @JsonProperty("pavilionName")
     public String getPavilionName() {
@@ -43,4 +44,5 @@ public class Visit {
         }
         return pavilion.getName();
     }
+
 }
