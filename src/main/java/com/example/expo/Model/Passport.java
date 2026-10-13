@@ -16,11 +16,11 @@ public class Passport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    //يتولد في السيرفس بصيغة EXPO30-000012 (الرقم هو id الزائر)
+    // generated in service, e.g. EXPO30-000012
     @Column(columnDefinition = "VARCHAR(13) unique")
     private String passportNumber;
 
-    //يتحدث تلقائي حسب عدد الزيارات: BRONZE من 0 ، SILVER من 10 ، GOLD من 25
+    // updated by visits count
     @Pattern(regexp = "^(BRONZE|SILVER|GOLD)$", message = "explorer level must be BRONZE, SILVER or GOLD")
     @Column(columnDefinition = "VARCHAR(6)")
     private String explorerLevel;

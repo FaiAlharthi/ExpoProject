@@ -25,7 +25,7 @@ public class Roadmap {
     @Column(columnDefinition = "VARCHAR(7) not null")
     private String planType;
 
-    //لازم يكون بين 2030-10-01 و 2031-03-31 ، نتحقق منه في السيرفس
+    // checked in service
     @NotNull(message = "visit date cannot be empty")
     @Column(columnDefinition = "DATE not null")
     private LocalDate visitDate;
@@ -44,12 +44,11 @@ public class Roadmap {
     @Column(columnDefinition = "TIME not null")
     private LocalTime arrivalTime;
 
-    //لازم يكون بعد وقت الوصول ، نتحقق منه في السيرفس
+    // checked in service
     @NotNull(message = "departure time cannot be empty")
     @Column(columnDefinition = "TIME not null")
     private LocalTime departureTime;
 
-    //المزاج ، اختيار متعدد
     @NotEmpty(message = "experience types cannot be empty")
     @ElementCollection
     private Set<@Pattern(regexp = "^(ENTERTAINMENT|CULTURAL|EDUCATIONAL|RELAXATION|CULINARY)$", message = "experience type must be ENTERTAINMENT, CULTURAL, EDUCATIONAL, RELAXATION or CULINARY") String> experienceTypes;
@@ -59,7 +58,6 @@ public class Roadmap {
     @Column(columnDefinition = "VARCHAR(9) not null")
     private String visitPace;
 
-    //الاستراحات اختيارية
     @Column(columnDefinition = "BOOLEAN default false")
     private Boolean includePrayerBreaks = false;
 
@@ -69,7 +67,12 @@ public class Roadmap {
     @Column(columnDefinition = "BOOLEAN default false")
     private Boolean includeChildRestBreaks = false;
 
-    //يتعبى تلقائي في السيرفس
+    // true = can include visited pavilions
+    @NotNull(message = "allow revisits cannot be empty")
+    @Column(columnDefinition = "BOOLEAN not null")
+    private Boolean allowRevisits;
+
+    // set in service
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime createdAt;
 
@@ -78,6 +81,12 @@ public class Roadmap {
     @JsonIgnore
     private Visitor visitor;
 
-    @ManyToMany
-    private Set<Pavilion> pavilions;
+    // the entrance the visitor starts from
+    @ManyToOne
+    @JoinColumn
+    private Entrance entrance;
+
+    // roadmap stops
+    @OneToMany(mappedBy = "roadmap")
+    private Set<Visit> visits;
 }

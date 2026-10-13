@@ -23,10 +23,10 @@ public class VisitController {
         return ResponseEntity.status(200).body(new ApiResponse("visit added"));
     }
 
-    @PutMapping("/likeVisit/{id}")
-    public ResponseEntity<?> likeVisit(@PathVariable Integer id){
-        visitService.likeVisit(id);
-        return ResponseEntity.status(200).body(new ApiResponse("visit like updated"));
+    @PostMapping("/checkIn/{visitorId}/{pavilionId}")
+    public ResponseEntity<?> checkIn(@PathVariable Integer visitorId, @PathVariable Integer pavilionId){
+        visitService.checkIn(visitorId, pavilionId);
+        return ResponseEntity.status(200).body(new ApiResponse("check-in done"));
     }
 
     @DeleteMapping("/deleteVisit/{id}")

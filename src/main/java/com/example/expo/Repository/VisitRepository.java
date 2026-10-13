@@ -2,6 +2,7 @@ package com.example.expo.Repository;
 
 import com.example.expo.Model.Passport;
 import com.example.expo.Model.Pavilion;
+import com.example.expo.Model.Roadmap;
 import com.example.expo.Model.Visit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,8 +13,12 @@ import java.time.LocalDateTime;
 public interface VisitRepository extends JpaRepository<Visit, Integer> {
     Visit findVisitById(Integer id);
 
-    //يتأكد اذا الجواز زار نفس الجناح في نفس اليوم
+    // checks if this passport visited the pavilion on the same day
     Boolean existsByPassportAndPavilionAndVisitedAtBetween(Passport passport, Pavilion pavilion, LocalDateTime start, LocalDateTime end);
 
-    Long countByPassport(Passport passport);
+    // counts real visits only
+    Long countByPassportAndIsVisitedTrue(Passport passport);
+
+    // planned stop for this pavilion in the roadmap
+    Visit findVisitByRoadmapAndPavilionAndIsVisitedFalse(Roadmap roadmap, Pavilion pavilion);
 }
