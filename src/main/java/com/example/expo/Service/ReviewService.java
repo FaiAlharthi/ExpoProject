@@ -97,6 +97,7 @@ public class ReviewService {
     }
 
 
+
     // الأجنحة اللي زارها وما قيّمها
     public List<Pavilion> getPendingReviews(Integer visitorId){
         Visitor visitor = visitorRepository.findVisitorById(visitorId);
@@ -108,7 +109,9 @@ public class ReviewService {
         }
         List<Pavilion> pending = new ArrayList<>();
         for(Visit visit : visitor.getPassport().getVisits()){
-            if(reviewRepository.findReviewByVisitorAndPavilion(visitor, visit.getPavilion()) == null){
+            if(visit.getIsVisited()
+                    && reviewRepository.findReviewByVisitorAndPavilion(visitor, visit.getPavilion()) == null
+                    && !pending.contains(visit.getPavilion())){
                 pending.add(visit.getPavilion());
             }
         }

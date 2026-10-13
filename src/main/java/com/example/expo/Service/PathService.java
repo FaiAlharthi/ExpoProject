@@ -1,12 +1,13 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
-import com.example.expo.DTO.RoadmapRouteDTO;
+import com.example.expo.Dto.RoadmapRouteDTO;
 import com.example.expo.Dto.ShortestPathDTO;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Path;
 import com.example.expo.Model.Pavilion;
 import com.example.expo.Model.Roadmap;
+import com.example.expo.Model.Visit;
 import com.example.expo.Repository.LocationRepository;
 import com.example.expo.Repository.PathRepository;
 import com.example.expo.Repository.RoadmapRepository;
@@ -17,6 +18,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.example.expo.Model.Entrance;
+import com.example.expo.Repository.EntranceRepository;
+
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class PathService {
     private final PathRepository pathRepository;
     private final LocationRepository locationRepository;
     private final RoadmapRepository roadmapRepository;
+    private final EntranceRepository entranceRepository;
 
     public List<Path> getAllPaths(){
         return pathRepository.findAll();
@@ -129,21 +134,45 @@ public class PathService {
         return new ShortestPathDTO(distance.get(end.getId()), route);
     }
 
-    // ===== مسار المشي الكامل لرحلة الزائر =====
+    // ===== مسار الرحلة من نقطة يحددها الزائر (مثلاً مكانه الحين) =====
     public RoadmapRouteDTO getRoadmapRoute(Integer roadmapId, Integer startLocationId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
             throw new ApiException("Roadmap not found");
         }
-        if(roadmap.getPavilions() == null || roadmap.getPavilions().isEmpty()){
-            throw new ApiException("Roadmap has no pavilions");
-        }
         Location start = locationRepository.findLocationById(startLocationId);
         if(start == null){
             throw new ApiException("Start location not found");
         }
+        return buildRoute(roadmap, start);
+    }
 
-        List<Pavilion> remaining = new ArrayList<>(roadmap.getPavilions());
+    // ===== مسار الرحلة من بوابة الدخول اللي اختارها الزائر =====
+    public RoadmapRouteDTO getRoadmapRouteFromEntrance(Integer roadmapId){
+        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
+        if(roadmap == null){
+            throw new ApiException("Roadmap not found");
+        }
+        if(roadmap.getEntrance() == null || roadmap.getEntrance().getLocation() == null){
+            throw new ApiException("Roadmap entrance has no location");
+        }
+        return buildRoute(roadmap, roadmap.getEntrance().getLocation());
+    }
+
+    // يرتب الأجنحة اللي ما انزارت: كل مرة أقرب جناح باقي بمسافة Dijkstra
+    private RoadmapRouteDTO buildRoute(Roadmap roadmap, Location start){
+        List<Pavilion> remaining = new ArrayList<>();
+        if(roadmap.getVisits() != null){
+            for(Visit visit : roadmap.getVisits()){
+                if(!visit.getIsVisited() && visit.getPavilion() != null && visit.getPavilion().getLocation() != null){
+                    remaining.add(visit.getPavilion());
+                }
+            }
+        }
+        if(remaining.isEmpty()){
+            throw new ApiException("Roadmap has no remaining pavilions");
+        }
+
         List<String> visitOrder = new ArrayList<>();
         List<Location> fullRoute = new ArrayList<>();
         double totalDistance = 0;
@@ -152,14 +181,11 @@ public class PathService {
         fullRoute.add(current);
 
         while(!remaining.isEmpty()){
-            // 1) أقرب جناح باقي، بمسافة Dijkstra
+            // 1) أقرب جناح باقي
             Pavilion nextPavilion = null;
             ShortestPathDTO bestPath = null;
 
             for(Pavilion pavilion : remaining){
-                if(pavilion.getLocation() == null){
-                    continue;
-                }
                 ShortestPathDTO path;
                 try {
                     path = getShortestPath(current.getId(), pavilion.getLocation().getId());
@@ -188,6 +214,31 @@ public class PathService {
             remaining.remove(nextPavilion);
         }
 
-        return new RoadmapRouteDTO(visitOrder, totalDistance, fullRoute);
+        // 4) بعد آخر جناح: نطلع من أقرب بوابة
+        String exitEntrance = null;
+        ShortestPathDTO exitPath = null;
+        for(Entrance entrance : entranceRepository.findAll()){
+            if(entrance.getLocation() == null){
+                continue;
+            }
+            ShortestPathDTO path;
+            try {
+                path = getShortestPath(current.getId(), entrance.getLocation().getId());
+            } catch (ApiException e) {
+                continue;
+            }
+            if(exitPath == null || path.getTotalDistance() < exitPath.getTotalDistance()){
+                exitPath = path;
+                exitEntrance = entrance.getName();
+            }
+        }
+        if(exitPath != null){
+            for(int i = 1; i < exitPath.getLocations().size(); i++){
+                fullRoute.add(exitPath.getLocations().get(i));
+            }
+            totalDistance = totalDistance + exitPath.getTotalDistance();
+        }
+
+        return new RoadmapRouteDTO(visitOrder, totalDistance, fullRoute, exitEntrance);
     }
 }

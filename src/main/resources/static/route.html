@@ -137,8 +137,8 @@
   const svg = document.getElementById("map");
   const NS = "http://www.w3.org/2000/svg";
 
-  let locations = {}, zones = [], pavilions = [], paths = [];
-  let plaza = null, entrance = null;
+  let locations = {}, zones = [], pavilions = [], paths = [], entrances = [];
+  let plaza = null;
   let picked = new Set(), mode = "dijkstra";
   const cache = {}; // نخزن نتائج Dijkstra عشان ما نكرر الطلب
 
@@ -184,6 +184,21 @@
     return { legs, unreachable };
   }
 
+  // بعد آخر جناح: نطلع من أقرب بوابة
+  async function addExit(result, metric) {
+    if (!result.legs.length || result.unreachable.length || !entrances.length) return;
+    const last = result.legs[result.legs.length - 1].to;
+    let best = null, bestD = Infinity, bestR = null;
+    for (const e of entrances) {
+      const id = e.location.id;
+      const r = await shortest(last, id);
+      const d = metric === "walk" ? (r ? r.total : Infinity) : straight(last, id);
+      if (d < bestD) { bestD = d; best = id; bestR = r; }
+    }
+    if (best === null || best === last) return;
+    result.legs.push({ to: best, line: straight(last, best), walk: bestR ? bestR.total : null, route: bestR ? bestR.route : [last, best], exit: true });
+  }
+
   // ---------- تحميل البيانات ----------
   async function load() {
     try {
@@ -191,21 +206,19 @@
       locs.forEach(l => locations[l.id] = l);
       zones = zs.filter(z => z.location); pavilions = pavs.filter(p => p.location); paths = ps;
     } catch (e) { err("ما قدرت أجيب البيانات: " + e.message + ". تأكدي إن المشروع شغال وإن ما فيه JSON Loop."); return; }
+    try { entrances = (await api("/entrance/getAll")).filter(e => e.location && locations[e.location.id]); } catch (e) { entrances = []; }
     if (!Object.keys(locations).length) { err("قاعدة البيانات فاضية. افتحي seed.html أول."); return; }
 
-    // التقاطعات = نقاط مو زون ومو جناح
-    const junctions = Object.values(locations).filter(l => !isZone(l.id) && !pavOf(l.id));
     // الساحة = أقرب تقاطع لمنتصف الزونات
+    const junctions = Object.values(locations).filter(l => !isZone(l.id) && !pavOf(l.id) && !entOf(l.id));
     let cx = 500, cy = 400;
     if (zones.length) { cx = avg(zones.map(z => z.location.x)); cy = avg(zones.map(z => z.location.y)); }
     plaza = nearest(junctions, cx, cy);
-    // البوابة = أوطى تقاطع في الخريطة
-    entrance = junctions.slice().sort((a, b) => b.y - a.y)[0] || null;
 
-    // نقطة البداية
+    // نقطة البداية: البوابات أول
     const startSel = document.getElementById("start");
-    if (entrance) startSel.add(new Option("البوابة الرئيسية", entrance.id));
-    if (plaza && plaza !== entrance) startSel.add(new Option("الساحة المركزية", plaza.id));
+    entrances.forEach(e => startSel.add(new Option("🚪 " + e.name, e.location.id)));
+    if (plaza) startSel.add(new Option("الساحة المركزية", plaza.id));
     pavilions.forEach(p => startSel.add(new Option(p.name, p.location.id)));
 
     // الأجنحة مقسمة على الزونات
@@ -230,6 +243,7 @@
   }
   const isZone = id => zones.some(z => z.location.id === id);
   const pavOf = id => pavilions.find(p => p.location.id === id);
+  const entOf = id => entrances.find(e => e.location.id === id);
 
   // الجناح يتبع الزون: من قائمة الزون إذا موجودة، وإلا أقرب زون له
   function zoneOf(p) {
@@ -240,7 +254,7 @@
   }
   function nameOf(id) {
     const p = pavOf(id); if (p) return p.name;
-    if (entrance && id === entrance.id) return "البوابة الرئيسية";
+    const e = entOf(id); if (e) return e.name;
     if (plaza && id === plaza.id) return "الساحة المركزية";
     const z = zones.find(z => z.location.id === id); if (z) return z.name;
     return "تقاطع #" + id;
@@ -270,6 +284,8 @@
     const picks = [...picked].filter(p => p !== start);
     const walk = await plan(start, picks, "walk");
     const line = await plan(start, picks, "line");
+    await addExit(walk, "walk");
+    await addExit(line, "line");
     if (myId !== renderId) return; // فيه رسم أحدث
 
     svg.innerHTML = "";
@@ -312,20 +328,23 @@
 
     // النقاط
     Object.values(locations).forEach(l => {
-      const pav = pavOf(l.id);
+      const pav = pavOf(l.id), ent = entOf(l.id);
       if (pav) {
         const g = el("g", { class: "pav", tabindex: 0, role: "button", "aria-label": pav.name });
         const on = picked.has(l.id) && l.id !== start;
-        const idx = shown.findIndex(s => s.to === l.id);
+        const idx = shown.findIndex(s => s.to === l.id && !s.exit);
         el("circle", { cx: l.x, cy: l.y, r: 15, fill: on ? "var(--accent)" : "var(--surface)", stroke: on ? "var(--accent)" : "var(--node)", "stroke-width": 2, class: "ring" }, g);
         if (idx >= 0) el("text", { x: l.x, y: l.y + 5, "text-anchor": "middle", fill: "var(--surface)", "font-size": 13, "font-weight": 700, "font-family": "var(--font-data)" }, g).textContent = idx + 1;
         el("text", { x: l.x, y: l.y - 22, "text-anchor": "middle", class: "node-label" }, g).textContent = pav.name;
         const toggle = () => { picked.has(l.id) ? picked.delete(l.id) : picked.add(l.id); syncChips(); render(); };
         g.addEventListener("click", toggle);
         g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
-      } else if (entrance && l.id === entrance.id) {
+      } else if (ent) {
+        // البوابة: مربع، واسمها برا الخريطة
         el("rect", { x: l.x - 10, y: l.y - 10, width: 20, height: 20, rx: 4, fill: "var(--ink)" });
-        el("text", { x: l.x, y: l.y + 32, "text-anchor": "middle", class: "node-label" }).textContent = "البوابة الرئيسية";
+        const rad = Math.atan2(l.y - P.y, l.x - P.x), cos = Math.cos(rad), sin = Math.sin(rad);
+        const anchor = cos > 0.5 ? "end" : cos < -0.5 ? "start" : "middle"; // الصفحة RTL فـ start = يمين
+        el("text", { x: l.x + cos * 30, y: l.y + sin * 26 + 4, "text-anchor": anchor, class: "node-label" }).textContent = ent.name;
       } else if (plaza && l.id === plaza.id) {
         el("circle", { cx: l.x, cy: l.y, r: 7, fill: "var(--node)" });
         el("text", { x: l.x, y: l.y + 26, "text-anchor": "middle", class: "node-label" }).textContent = "الساحة المركزية";
@@ -334,25 +353,27 @@
       }
     });
 
-    // علامة البداية
+    // علامة البداية، وعلامة بوابة الخروج
     if (locations[start]) el("circle", { cx: locations[start].x, cy: locations[start].y, r: 22, fill: "none", stroke: "var(--start)", "stroke-width": 3 });
+    const exitLeg = shown.find(s => s.exit);
+    if (exitLeg) el("circle", { cx: locations[exitLeg.to].x, cy: locations[exitLeg.to].y, r: 22, fill: "none", stroke: "var(--route)", "stroke-width": 3, "stroke-dasharray": "5 4" });
 
     // النتيجة
     const sum = (legs, k) => legs.reduce((a, l) => a + (l[k] || 0), 0);
     document.getElementById("t-walk").textContent = m(sum(shown, "walk")) + " م";
     document.getElementById("t-line").textContent = m(sum(shown, "line")) + " م";
     document.getElementById("legs").innerHTML = shown.map(l =>
-            `<li>${nameOf(l.to)} <span class="d">· ${l.walk != null ? m(l.walk) + " م مشي" : "ما فيه ممر"} · يمر على ${Math.max(l.route.length - 2, 0)} نقطة</span></li>`).join("");
+            `<li>${l.exit ? "🚪 الخروج من " : ""}${nameOf(l.to)} <span class="d">· ${l.walk != null ? m(l.walk) + " م مشي" : "ما فيه ممر"} · يمر على ${Math.max(l.route.length - 2, 0)} نقطة</span></li>`).join("");
 
     const note = document.getElementById("note");
     if (!picks.length) note.textContent = "اختاري جناح أو أكثر عشان يطلع المسار.";
     else if (mode === "both") {
-      const same = walk.legs.map(l => l.to).join() === line.legs.map(l => l.to).join();
+      const same = walk.legs.filter(l => !l.exit).map(l => l.to).join() === line.legs.filter(l => !l.exit).map(l => l.to).join();
       const diff = m(sum(line.legs, "walk") - sum(walk.legs, "walk"));
       note.textContent = same ? "الطريقتين طلعوا نفس الترتيب هنا. جربي تغيرين نقطة البداية أو الأجنحة."
               : `الترتيب اختلف. لو مشى الزائر بترتيب الخط المستقيم بيمشي ${diff} م زيادة على الممرات.`;
     } else if (mode === "straight") note.textContent = `الخط المستقيم يقول ${m(sum(line.legs, "line"))} م، بس المشي الفعلي على الممرات بنفس الترتيب ${m(sum(line.legs, "walk"))} م.`;
-    else note.textContent = "الترتيب محسوب بمسافة المشي الحقيقية من الباك إند، والخط يمر على الممرات والتقاطعات.";
+    else note.textContent = "الترتيب محسوب بمسافة المشي الحقيقية من الباك إند، وبعد آخر جناح يطلع من أقرب بوابة.";
     if (walk.unreachable.length && mode !== "straight") err("ما فيه ممرات توصل لـ: " + walk.unreachable.map(nameOf).join("، "));
   }
 
@@ -364,7 +385,14 @@
       const all = await api("/roadmap/getAll");
       const rm = all.find(r => r.id == id);
       if (!rm) throw new Error("ما لقيت رحلة رقم " + id);
-      picked = new Set((rm.pavilions || []).filter(p => p.location).map(p => p.location.id));
+      const names = [];
+      (rm.visits || []).forEach(v => { if (!v.isVisited) names.push(v.pavilionName); });
+      if (!names.length) throw new Error("الرحلة ما فيها أجنحة باقية");
+      picked = new Set(pavilions.filter(p => names.includes(p.name)).map(p => p.location.id));
+      const sel = document.getElementById("start");
+      if (rm.entrance && rm.entrance.location && sel.querySelector(`option[value="${rm.entrance.location.id}"]`)) {
+        sel.value = rm.entrance.location.id;
+      }
       syncChips(); render();
     } catch (e) { err(e.message); }
   });

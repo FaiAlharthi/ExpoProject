@@ -18,7 +18,7 @@
 <body>
 <div class="box">
   <h1>تجهيز خريطة الإكسبو</h1>
-  <p>يضيف في قاعدة البيانات: الساحة المركزية، و5 مناطق، و15 جناح، والطريق الدائري، والبوابة الرئيسية، وكل الممرات بينها.</p>
+  <p>يضيف في قاعدة البيانات: الساحة المركزية، و5 مناطق، و15 جناح، والطريق الدائري، و5 بوابات، وكل الممرات بينها.</p>
   <p><b>⚠️ شغليه على قاعدة بيانات فاضية</b> (بعد ما تصفرينها من DataGrip)، وإلا بيطلع تكرار.</p>
   <button id="go">جهّز البيانات</button>
   <div id="log"></div>
@@ -46,7 +46,7 @@
   const angles = ZONES.map((_, i) => -90 + i * 72);
 
   // كل النقاط بأسماء مؤقتة
-  const points = { plaza: C, rs: pt(90, 135), gate: { x: 500, y: 712 } };
+  const points = { plaza: C };
   ZONES.forEach((z, i) => {
     const a = angles[i];
     points["g" + i] = pt(a, 135);           // بوابة الزون على الطريق الدائري
@@ -54,14 +54,19 @@
     points["p" + i + "a"] = pt(a - 17, 235);
     points["p" + i + "b"] = pt(a + 17, 235);
     points["p" + i + "c"] = pt(a, 300);
+    points["r" + i] = pt(a + 36, 135);      // نقطة على الطريق الدائري بين زونين
+    points["e" + i] = pt(a + 36, 312);      // بوابة برا، بين زونين
   });
+
+  // البوابات (الأولى هي اللي تحت)
+  const GATES = [["e2", "البوابة الرئيسية"], ["e1", "البوابة الشرقية"], ["e3", "البوابة الغربية"], ["e0", "البوابة الشمالية الشرقية"], ["e4", "البوابة الشمالية الغربية"]];
   const links = [];
-  const ring = ["g0", "g1", "g2", "rs", "g3", "g4"];
+  const ring = ["g0", "r0", "g1", "r1", "g2", "r2", "g3", "r3", "g4", "r4"];
   ring.forEach((k, i) => links.push([k, ring[(i + 1) % ring.length]]));
   ZONES.forEach((_, i) => {
     links.push(["plaza", "g" + i], ["g" + i, "p" + i + "a"], ["g" + i, "p" + i + "b"], ["p" + i + "a", "p" + i + "c"], ["p" + i + "b", "p" + i + "c"]);
   });
-  links.push(["rs", "gate"]);
+  ZONES.forEach((_, i) => links.push(["r" + i, "e" + i]));
 
   const logEl = document.getElementById("log");
   const log = (t, c) => { const s = document.createElement("div"); s.textContent = t; if (c) s.className = c; logEl.appendChild(s); logEl.scrollTop = logEl.scrollHeight; };
@@ -95,7 +100,7 @@
         const keys = ["a", "b", "c"];
         for (let j = 0; j < 3; j++) {
           const [name, description] = ZONES[i].pavs[j];
-          await call("POST", `/pavilion/add/${zoneId}/${idOf("p" + i + keys[j])}`, { name, description, visitDuration: 30 + j * 15, indoor: true });
+          await call("POST", `/pavilion/add/${zoneId}/${idOf("p" + i + keys[j])}`, { name, description, visitDuration: 30 + j * 15 });
         }
       }
       log("Pavilions: 15", "ok");
@@ -103,6 +108,10 @@
       // 4) الممرات
       for (const [a, b] of links) await call("POST", `/path/add/${idOf(a)}/${idOf(b)}`);
       log("Paths: " + links.length, "ok");
+
+      // 5) البوابات
+      for (const [k, name] of GATES) await call("POST", `/entrance/createEntrance/${idOf(k)}`, { name });
+      log("Entrances: " + GATES.length, "ok");
 
       document.getElementById("done").hidden = false;
     } catch (err) {

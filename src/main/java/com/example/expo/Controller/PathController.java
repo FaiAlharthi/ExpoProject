@@ -34,6 +34,13 @@ public class PathController {
         return ResponseEntity.status(200).body(pathService.getShortestPath(fromId, toId));
     }
 
+    // من بوابة الرحلة
+    @GetMapping("/roadmap/{roadmapId}")
+    public ResponseEntity<?> getRoadmapRouteFromEntrance(@PathVariable Integer roadmapId){
+        return ResponseEntity.status(200).body(pathService.getRoadmapRouteFromEntrance(roadmapId));
+    }
+
+    // من أي نقطة (مكان الزائر الحين)
     @GetMapping("/roadmap/{roadmapId}/{startLocationId}")
     public ResponseEntity<?> getRoadmapRoute(@PathVariable Integer roadmapId, @PathVariable Integer startLocationId){
         return ResponseEntity.status(200).body(pathService.getRoadmapRoute(roadmapId, startLocationId));
