@@ -45,4 +45,10 @@ public class PathController {
     public ResponseEntity<?> getRoadmapRoute(@PathVariable Integer roadmapId, @PathVariable Integer startLocationId){
         return ResponseEntity.status(200).body(pathService.getRoadmapRoute(roadmapId, startLocationId));
     }
+
+    @PostMapping("/generate")
+    public ResponseEntity<?> generatePaths(){
+        Integer added = pathService.generatePaths();
+        return ResponseEntity.status(200).body(new ApiResponse("Paths generated: " + added));
+    }
 }

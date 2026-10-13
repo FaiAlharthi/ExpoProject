@@ -32,7 +32,7 @@ public class RoadmapService {
     private final VisitRepository visitRepository;
     private final EntranceRepository entranceRepository;
     private final PavilionRepository pavilionRepository;
-    private final RouteService routeService;
+    private final PathService pathService;
 
     // average minutes per pavilion, temporary until the AI is added
     private static final int MINUTES_PER_PAVILION = 30;
@@ -214,7 +214,7 @@ public class RoadmapService {
         for(Pavilion pavilion : pavilions){
             Zone zone = pavilion.getZone();
             Location target = zone.getLocation() != null ? zone.getLocation() : pavilion.getLocation();
-            double distance = routeService.getDistance(from, target);
+            double distance = pathService.getWalkingDistance(from, target);
             if(distance < best){
                 best = distance;
                 nearest = zone;
@@ -227,7 +227,7 @@ public class RoadmapService {
         Pavilion nearest = null;
         double best = Double.MAX_VALUE;
         for(Pavilion pavilion : pavilions){
-            double distance = routeService.getDistance(from, pavilion.getLocation());
+            double distance = pathService.getWalkingDistance(from, pavilion.getLocation());
             if(distance < best){
                 best = distance;
                 nearest = pavilion;

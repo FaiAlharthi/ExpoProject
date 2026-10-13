@@ -63,6 +63,7 @@ public class DataSeeder implements CommandLineRunner {
             pavilion.setCountry(seedPavilion.getCountry());
             pavilion.setDescription(seedPavilion.getDescription());
             pavilion.setImageUrl(seedPavilion.getImageUrl());
+            pavilion.setVisitDuration(30);
             pavilion.setZone(zones.get(seedPavilion.getZone()));
             pavilion.setLocation(saveLocation(seedPavilion.getLocation()));
             pavilionRepository.save(pavilion);
