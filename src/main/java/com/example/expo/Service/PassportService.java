@@ -28,7 +28,7 @@ public class PassportService {
         if(visitor.getPassport() != null){
             throw new ApiException("this visitor already has passport");
         }
-        //رقم الجواز من id الزائر ، وما يتكرر لأن كل زائر له جواز واحد
+        // passport number from visitor id
         passport.setPassportNumber(String.format("EXPO30-%06d", visitor.getId()));
         passport.setExplorerLevel("BRONZE");
         passport.setVisitor(visitor);

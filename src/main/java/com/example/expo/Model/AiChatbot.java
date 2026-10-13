@@ -22,11 +22,11 @@ public class AiChatbot {
     @Column(columnDefinition = "TEXT")
     private String lastAnswer;
 
-    //يتعبى تلقائي في السيرفس
+    // set in service
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime createdAt;
 
-    //يتحدث مع كل سؤال
+    // updated with every question
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime lastInteractionAt;
 

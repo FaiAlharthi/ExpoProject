@@ -54,10 +54,6 @@ public class Pavilion {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "pavilion")
     private Set<Review> reviews;//نفس الشي من ناحية
 
-    @ManyToMany(mappedBy = "pavilions")
-    @JsonIgnore
-    private Set<Roadmap> roadmaps;
-
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "pavilion")
     @JsonIgnore
     private Set<Visit> visits;

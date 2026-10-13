@@ -25,7 +25,7 @@ public class ProfileService {
         if(profileRepository.findProfileByEmail(profile.getEmail()) != null){
             throw new ApiException("email already exists");
         }
-        //الرول يتحدد لما ينضاف Admin او Visitor
+        // role is set when an admin or visitor is added
         profile.setRole(null);
         profile.setCreatedAt(LocalDateTime.now());
         profileRepository.save(profile);
