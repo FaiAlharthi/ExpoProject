@@ -22,6 +22,11 @@ public class Pavilion {
  @Column(nullable = false, unique = true)
  private String name;//unique
 
+ @NotEmpty(message = "country should not be empty")
+ @Size(max = 100, message = "country must be less than 100 characters")
+ @Column(nullable = false)
+ private String country;
+
     @NotEmpty(message = "description should not be empty")
  @Size(max = 1000, message = "description must be less than 1000 characters")
  @Column(length = 1000,nullable = false)

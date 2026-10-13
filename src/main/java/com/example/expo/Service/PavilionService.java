@@ -53,6 +53,7 @@ public class PavilionService {
             throw new ApiException("Pavilion already exists");
         }
         oldPavilion.setName(pavilion.getName());
+        oldPavilion.setCountry(pavilion.getCountry());
         oldPavilion.setDescription(pavilion.getDescription());
 
         oldPavilion.setImageUrl(pavilion.getImageUrl());
