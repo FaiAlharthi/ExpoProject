@@ -54,4 +54,13 @@ public class Visit {
         return pavilion.getName();
     }
 
+    // pavilion id for the frontend, used in check-in
+    @JsonProperty("pavilionId")
+    public Integer getPavilionId() {
+        if (pavilion == null) {
+            return null;
+        }
+        return pavilion.getId();
+    }
+
 }

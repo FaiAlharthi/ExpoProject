@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface VisitRepository extends JpaRepository<Visit, Integer> {
@@ -18,6 +19,12 @@ public interface VisitRepository extends JpaRepository<Visit, Integer> {
 
     // counts real visits only
     Long countByPassportAndIsVisitedTrue(Passport passport);
+
+    List<Visit> findVisitsByRoadmapAndIsVisitedFalse(Roadmap roadmap);
+
+    List<Visit> findVisitsByRoadmapOrderByStopOrderAsc(Roadmap roadmap);
+
+    List<Visit> findVisitsByPassportAndIsVisitedTrue(Passport passport);
 
     // planned stop for this pavilion in the roadmap
     Visit findVisitByRoadmapAndPavilionAndIsVisitedFalse(Roadmap roadmap, Pavilion pavilion);

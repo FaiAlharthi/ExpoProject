@@ -31,9 +31,21 @@ public class RoadmapController {
         return ResponseEntity.status(200).body(new ApiResponse("roadmap deleted"));
     }
 
+    @PostMapping("/generate/{visitorId}/{entranceId}")
+    public ResponseEntity<?> generateRoadmap(@PathVariable Integer visitorId, @PathVariable Integer entranceId, @RequestBody @Valid Roadmap roadmap){
+        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(visitorId, entranceId, roadmap));
+    }
+
+    @GetMapping("/getStops/{roadmapId}")
+    public ResponseEntity<?> getStops(@PathVariable Integer roadmapId){
+        return ResponseEntity.status(200).body(roadmapService.getStops(roadmapId));
+    }
+
+    /*
     @PutMapping("/updateRoadmap/{id}")
     public ResponseEntity<?> updateRoadmap(@PathVariable Integer id, @RequestBody @Valid Roadmap roadmap){
         roadmapService.updateRoadmap(id, roadmap);
         return ResponseEntity.status(200).body(new ApiResponse("roadmap updated"));
     }
+    */
 }
