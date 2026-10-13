@@ -2,16 +2,21 @@ package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
 import com.example.expo.Model.Location;
+import com.example.expo.Model.Pavilion;
 import com.example.expo.Repository.LocationRepository;
+import com.example.expo.Repository.PathRepository;
+import com.example.expo.Repository.PavilionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class LocationService {
     private final LocationRepository locationRepository;
+    private final PathRepository pathRepository;
 
 
     public List<Location>getAllLocation(){
@@ -48,7 +53,13 @@ public class LocationService {
        if(location.getZone()!=null||location.getPavilion()!=null){
            throw new ApiException("Location is linked to a pavilion or zone delete it first");
        }
+        if(pathRepository.existsByFromLocationOrToLocation(location, location)){
+            throw new ApiException("Location has paths, delete them first");
+        }
        locationRepository.delete(location);
     }
+
+
+
 
 }

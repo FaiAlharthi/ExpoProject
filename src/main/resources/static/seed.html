@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Expo Seed</title>
+  <style>
+    body { font-family: sans-serif; background: #eef2ef; color: #14242b; margin: 0; padding: 24px 16px; }
+    .box { max-width: 640px; margin: auto; background: #fff; border: 1px solid #d3ddd8; border-radius: 14px; padding: 20px; display: grid; gap: 12px; }
+    h1 { margin: 0; font-size: 22px; color: #0e6f63; }
+    p { margin: 0; color: #5d6d6a; }
+    button { background: #0e6f63; color: #fff; border: 0; padding: 12px 18px; border-radius: 10px; font-size: 16px; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    #log { font-family: monospace; font-size: 13px; background: #f3f6f4; border-radius: 8px; padding: 10px; max-height: 360px; overflow: auto; white-space: pre-wrap; direction: ltr; text-align: left; }
+    .ok { color: #0e6f63; } .bad { color: #b3261e; }
+    a { color: #0e6f63; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>تجهيز خريطة الإكسبو</h1>
+  <p>يضيف في قاعدة البيانات: الساحة المركزية، و5 مناطق، و15 جناح، والطريق الدائري، و5 بوابات، وكل الممرات بينها.</p>
+  <p><b>⚠️ شغليه على قاعدة بيانات فاضية</b> (بعد ما تصفرينها من DataGrip)، وإلا بيطلع تكرار.</p>
+  <button id="go">جهّز البيانات</button>
+  <div id="log"></div>
+  <p id="done" hidden>✅ خلص. افتحي <a href="route.html">route.html</a></p>
+</div>
+
+<script>
+  const API = "/api/v1";
+  const C = { x: 500, y: 400 };
+  const ZONES = [
+    { name: "منطقة المملكة", desc: "تعرض التحول الوطني وإنجازات رؤية 2030",
+      pavs: [["جناح المملكة", "قصة المملكة وإنجازاتها في التنمية والثقافة"], ["جناح التراث", "التراث السعودي والحرف والعمارة التقليدية"], ["جناح الرؤية", "مشاريع رؤية 2030 الكبرى ومستقبل المدن"]] },
+    { name: "التقنية التحويلية", desc: "التحول الرقمي والذكاء الاصطناعي والتقنيات الناشئة",
+      pavs: [["الذكاء الاصطناعي", "تطبيقات الذكاء الاصطناعي والتعلم الآلي في الحياة اليومية"], ["الروبوتات", "الروبوتات والأتمتة والصناعة الذكية"], ["الفضاء", "استكشاف الفضاء والأقمار الصناعية والتقنيات المرتبطة"]] },
+    { name: "الحلول المستدامة", desc: "العمل المناخي والطاقة المتجددة والتقنية الخضراء",
+      pavs: [["الطاقة المتجددة", "الطاقة الشمسية وطاقة الرياح والهيدروجين الأخضر"], ["المياه", "تحلية المياه وإعادة تدويرها والمحافظة عليها"], ["المدن الخضراء", "التخطيط العمراني المستدام والمساحات الخضراء"]] },
+    { name: "الشعوب المزدهرة", desc: "الشمول وسهولة الوصول وجودة الحياة",
+      pavs: [["الصحة", "الرعاية الصحية الحديثة والطب الرقمي"], ["التعليم", "مستقبل التعليم والتعلم مدى الحياة"], ["الفنون والثقافة", "الفنون والموسيقى والثقافة من حول العالم"]] },
+    { name: "التعاون العالمي", desc: "نقطة التقاء دولية للشراكات والازدهار المشترك",
+      pavs: [["جناح اليابان", "الابتكار الياباني بين التقنية والتقاليد"], ["جناح البرازيل", "التنوع الطبيعي والثقافي في البرازيل"], ["جناح إيطاليا", "التصميم والفن والمطبخ الإيطالي"]] }
+  ];
+
+  const round = v => Math.round(v * 10) / 10;
+  const pt = (deg, r) => ({ x: round(C.x + r * Math.cos(deg * Math.PI / 180)), y: round(C.y + r * Math.sin(deg * Math.PI / 180)) });
+  const angles = ZONES.map((_, i) => -90 + i * 72);
+
+  // كل النقاط بأسماء مؤقتة
+  const points = { plaza: C };
+  ZONES.forEach((z, i) => {
+    const a = angles[i];
+    points["g" + i] = pt(a, 135);           // بوابة الزون على الطريق الدائري
+    points["z" + i] = pt(a, 255);           // مكان الزون نفسها
+    points["p" + i + "a"] = pt(a - 17, 235);
+    points["p" + i + "b"] = pt(a + 17, 235);
+    points["p" + i + "c"] = pt(a, 300);
+    points["r" + i] = pt(a + 36, 135);      // نقطة على الطريق الدائري بين زونين
+    points["e" + i] = pt(a + 36, 312);      // بوابة برا، بين زونين
+  });
+
+  // البوابات (الأولى هي اللي تحت)
+  const GATES = [["e2", "البوابة الرئيسية"], ["e1", "البوابة الشرقية"], ["e3", "البوابة الغربية"], ["e0", "البوابة الشمالية الشرقية"], ["e4", "البوابة الشمالية الغربية"]];
+  const links = [];
+  const ring = ["g0", "r0", "g1", "r1", "g2", "r2", "g3", "r3", "g4", "r4"];
+  ring.forEach((k, i) => links.push([k, ring[(i + 1) % ring.length]]));
+  ZONES.forEach((_, i) => {
+    links.push(["plaza", "g" + i], ["g" + i, "p" + i + "a"], ["g" + i, "p" + i + "b"], ["p" + i + "a", "p" + i + "c"], ["p" + i + "b", "p" + i + "c"]);
+  });
+  ZONES.forEach((_, i) => links.push(["r" + i, "e" + i]));
+
+  const logEl = document.getElementById("log");
+  const log = (t, c) => { const s = document.createElement("div"); s.textContent = t; if (c) s.className = c; logEl.appendChild(s); logEl.scrollTop = logEl.scrollHeight; };
+
+  async function call(method, url, body) {
+    const res = await fetch(API + url, { method, headers: body ? { "Content-Type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
+    const text = await res.text(); let data; try { data = JSON.parse(text); } catch (e) { data = text; }
+    if (!res.ok) throw new Error(url + " → " + ((data && data.message) || res.status));
+    return data;
+  }
+
+  document.getElementById("go").addEventListener("click", async e => {
+    e.target.disabled = true; logEl.textContent = "";
+    try {
+      // 1) النقاط
+      for (const k in points) { await call("POST", "/location/add", points[k]); }
+      log("Locations: " + Object.keys(points).length, "ok");
+
+      // نجيب أرقامها من قاعدة البيانات حسب x و y
+      const all = await call("GET", "/location/get");
+      const idOf = k => { const p = points[k]; const f = all.find(l => Math.abs(l.x - p.x) < 0.05 && Math.abs(l.y - p.y) < 0.05); if (!f) throw new Error("ما لقيت النقطة " + k); return f.id; };
+
+      // 2) الزونات
+      for (let i = 0; i < ZONES.length; i++) await call("POST", `/zone/add/${idOf("z" + i)}`, { name: ZONES[i].name, description: ZONES[i].desc });
+      const zones = await call("GET", "/zone/get");
+      log("Zones: " + ZONES.length, "ok");
+
+      // 3) الأجنحة
+      for (let i = 0; i < ZONES.length; i++) {
+        const zoneId = zones.find(z => z.name === ZONES[i].name).id;
+        const keys = ["a", "b", "c"];
+        for (let j = 0; j < 3; j++) {
+          const [name, description] = ZONES[i].pavs[j];
+          await call("POST", `/pavilion/add/${zoneId}/${idOf("p" + i + keys[j])}`, { name, description, visitDuration: 30 + j * 15 });
+        }
+      }
+      log("Pavilions: 15", "ok");
+
+      // 4) الممرات
+      for (const [a, b] of links) await call("POST", `/path/add/${idOf(a)}/${idOf(b)}`);
+      log("Paths: " + links.length, "ok");
+
+      // 5) البوابات
+      for (const [k, name] of GATES) await call("POST", `/entrance/createEntrance/${idOf(k)}`, { name });
+      log("Entrances: " + GATES.length, "ok");
+
+      document.getElementById("done").hidden = false;
+    } catch (err) {
+      log("✗ " + err.message, "bad");
+      log("إذا الخطأ تكرار، صفري قاعدة البيانات وجربي مرة ثانية.", "bad");
+      e.target.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
