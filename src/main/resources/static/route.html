@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expo Walking Route</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <style>
+    :root {
+      --bg: #eef2ef; --surface: #ffffff; --ink: #14242b; --muted: #5d6d6a; --line: #d3ddd8;
+      --path: #b9c7c1; --accent: #0e6f63; --route: #c27c0e; --straight: #7a5cc4; --start: #b3261e;
+      --zone-a: #0e6f6314; --zone-b: #0e6f6326; --node: #8a9a95;
+      --font-display: "Reem Kufi", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --font-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+      --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    }
+    :root[data-theme="dark"] {
+      --bg: #0f1719; --surface: #172226; --ink: #e5eeeb; --muted: #93a6a1; --line: #2a3a3e;
+      --path: #3a4d51; --accent: #3fb8a6; --route: #f0a93a; --straight: #a98bf0; --start: #f2665c;
+      --zone-a: #3fb8a614; --zone-b: #3fb8a628; --node: #6f8580; color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; padding-inline: 16px; padding-block: 24px 40px; }
+    .page { max-width: 1180px; margin-inline: auto; display: grid; gap: 20px; }
+    .eyebrow { font-size: 12px; letter-spacing: .04em; color: var(--accent); font-weight: 600; }
+    h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); margin: 0; line-height: 1.2; text-wrap: balance; }
+    .lede { margin: 0; color: var(--muted); max-width: 70ch; }
+    .top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .theme-btn { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+
+    .board { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+    @media (max-width: 900px) { .board { grid-template-columns: minmax(0, 1fr); } }
+
+    .map-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }
+    .modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .mode-btn { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+    .mode-btn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+    .mode-btn:focus-visible, .chip:focus-within, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    svg { width: 100%; height: auto; display: block; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .sw { width: 18px; height: 0; border-top: 3px solid; display: inline-block; }
+
+    aside { display: grid; gap: 14px; min-width: 0; }
+    .ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+    .ticket h2 { font-family: var(--font-display); font-weight: 500; font-size: 18px; margin: 0; }
+    label.field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+    select, input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; width: 100%; }
+    .row { display: flex; gap: 8px; align-items: end; }
+    .row .field { flex: 1; }
+    .btn { font: inherit; font-size: 14px; background: var(--accent); color: var(--surface); border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; background: var(--bg); }
+    .chip input { accent-color: var(--accent); margin: 0; }
+    .zone-group { display: grid; gap: 6px; }
+    .zone-group b { font-size: 12px; color: var(--muted); font-weight: 500; }
+
+    .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat { border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+    .stat .k { font-size: 12px; color: var(--muted); }
+    .stat .v { font-family: var(--font-data); font-size: 22px; font-variant-numeric: tabular-nums; }
+    .stat.walk .v { color: var(--route); }
+    .stat.line .v { color: var(--straight); }
+    ol.legs { margin: 0; padding-inline-start: 20px; display: grid; gap: 6px; font-size: 14px; }
+    ol.legs .d { font-family: var(--font-data); color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+    .note { font-size: 13px; color: var(--muted); margin: 0; }
+    .err { color: var(--start); font-size: 13px; margin: 0; }
+    .err:empty { display: none; }
+
+    .node-label { font-family: var(--font-body); font-size: 12px; fill: var(--ink); }
+    .zone-label { font-family: var(--font-display); font-size: 15px; fill: var(--accent); }
+    .pav { cursor: pointer; }
+    .pav:focus-visible circle.ring { stroke: var(--accent); stroke-width: 3; }
+    @media (prefers-reduced-motion: no-preference) {
+      .draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw 1.1s ease-out forwards; }
+      @keyframes draw { to { stroke-dashoffset: 0; } }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div style="display:grid;gap:6px">
+      <div class="eyebrow">متصل بالباك إند · Location · Zone · Pavilion · Path</div>
+      <h1>مسار المشي في إكسبو 2030 الرياض</h1>
+      <p class="lede">اختاري أجنحة الرحلة ونقطة البداية، وقارني بين الترتيب بالخط المستقيم والترتيب بالمشي الحقيقي على الممرات باستخدام Dijkstra. الخمس مناطق مرتبة حول الساحة المركزية، ويربطها طريق دائري.</p>
+    </div>
+    <button class="theme-btn" id="theme">☀️ فاتح</button>
+  </header>
+
+  <div class="board">
+    <section class="map-card" aria-label="الخريطة">
+      <div class="modes" role="group">
+        <button class="mode-btn" data-mode="dijkstra" aria-pressed="true">Dijkstra على الممرات</button>
+        <button class="mode-btn" data-mode="straight" aria-pressed="false">خط مستقيم</button>
+        <button class="mode-btn" data-mode="both" aria-pressed="false">قارني الاثنين</button>
+      </div>
+      <svg id="map" viewBox="0 0 1000 770" role="img"></svg>
+      <div class="legend">
+        <span><i class="sw" style="border-color:var(--route)"></i>مسار المشي (Dijkstra)</span>
+        <span><i class="sw" style="border-color:var(--straight);border-top-style:dashed"></i>خط مستقيم</span>
+        <span><i class="sw" style="border-color:var(--path)"></i>ممر</span>
+        <span>اضغطي على أي جناح عشان تضيفينه للرحلة أو تشيلينه</span>
+      </div>
+    </section>
+
+    <aside>
+      <div class="ticket">
+        <h2>الرحلة</h2>
+        <label class="field" for="start">نقطة البداية
+          <select id="start"></select>
+        </label>
+        <div class="row">
+          <label class="field">تحميل أجنحة رحلة محفوظة <input type="number" id="roadmapId" min="1" placeholder="رقم الرحلة"></label>
+          <button class="btn" id="loadRoadmap">تحميل</button>
+        </div>
+        <div id="chips" style="display:grid;gap:10px"></div>
+      </div>
+
+      <div class="ticket" aria-live="polite">
+        <h2>النتيجة</h2>
+        <div class="totals">
+          <div class="stat walk"><div class="k">مشي فعلي على الممرات</div><div class="v" id="t-walk">0</div></div>
+          <div class="stat line"><div class="k">مجموع الخط المستقيم</div><div class="v" id="t-line">0</div></div>
+        </div>
+        <ol class="legs" id="legs"></ol>
+        <p class="note" id="note"></p>
+        <p class="err" id="err"></p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  const API = "/api/v1";
+  const METERS = 2; // كل وحدة في الخريطة = 2 متر
+  const svg = document.getElementById("map");
+  const NS = "http://www.w3.org/2000/svg";
+
+  let locations = {}, zones = [], pavilions = [], paths = [];
+  let plaza = null, entrance = null;
+  let picked = new Set(), mode = "dijkstra";
+  const cache = {}; // نخزن نتائج Dijkstra عشان ما نكرر الطلب
+
+  async function api(url) {
+    const res = await fetch(API + url);
+    const text = await res.text();
+    let data; try { data = JSON.parse(text); } catch (e) { data = text; }
+    if (!res.ok) throw new Error((data && data.message) || ("خطأ " + res.status));
+    return data;
+  }
+  const err = t => document.getElementById("err").textContent = t || "";
+  const m = v => Math.round(v * METERS);
+
+  // ---------- Dijkstra من الباك إند ----------
+  async function shortest(a, b) {
+    if (a === b) return { total: 0, route: [a] };
+    const key = a + "-" + b;
+    if (!(key in cache)) {
+      try {
+        const d = await api(`/path/shortest/${a}/${b}`);
+        cache[key] = { total: d.totalDistance, route: d.locations.map(l => l.id) };
+      } catch (e) { cache[key] = null; }
+    }
+    return cache[key];
+  }
+  const straight = (a, b) => Math.hypot(locations[a].x - locations[b].x, locations[a].y - locations[b].y);
+
+  // ترتيب أقرب جار: "walk" = مسافة Dijkstra ، "line" = خط مستقيم
+  async function plan(start, picks, metric) {
+    const remaining = picks.slice(), legs = []; let cur = start, unreachable = [];
+    while (remaining.length) {
+      let best = null, bestD = Infinity, bestR = null;
+      for (const p of remaining) {
+        const r = await shortest(cur, p);
+        const d = metric === "walk" ? (r ? r.total : Infinity) : straight(cur, p);
+        if (d < bestD) { bestD = d; best = p; bestR = r; }
+      }
+      if (best === null || (metric === "walk" && !bestR)) { unreachable = remaining.slice(); break; }
+      legs.push({ to: best, line: straight(cur, best), walk: bestR ? bestR.total : null, route: bestR ? bestR.route : [cur, best] });
+      remaining.splice(remaining.indexOf(best), 1);
+      cur = best;
+    }
+    return { legs, unreachable };
+  }
+
+  // ---------- تحميل البيانات ----------
+  async function load() {
+    try {
+      const [locs, zs, pavs, ps] = await Promise.all([api("/location/get"), api("/zone/get"), api("/pavilion/get"), api("/path/get")]);
+      locs.forEach(l => locations[l.id] = l);
+      zones = zs.filter(z => z.location); pavilions = pavs.filter(p => p.location); paths = ps;
+    } catch (e) { err("ما قدرت أجيب البيانات: " + e.message + ". تأكدي إن المشروع شغال وإن ما فيه JSON Loop."); return; }
+    if (!Object.keys(locations).length) { err("قاعدة البيانات فاضية. افتحي seed.html أول."); return; }
+
+    // التقاطعات = نقاط مو زون ومو جناح
+    const junctions = Object.values(locations).filter(l => !isZone(l.id) && !pavOf(l.id));
+    // الساحة = أقرب تقاطع لمنتصف الزونات
+    let cx = 500, cy = 400;
+    if (zones.length) { cx = avg(zones.map(z => z.location.x)); cy = avg(zones.map(z => z.location.y)); }
+    plaza = nearest(junctions, cx, cy);
+    // البوابة = أوطى تقاطع في الخريطة
+    entrance = junctions.slice().sort((a, b) => b.y - a.y)[0] || null;
+
+    // نقطة البداية
+    const startSel = document.getElementById("start");
+    if (entrance) startSel.add(new Option("البوابة الرئيسية", entrance.id));
+    if (plaza && plaza !== entrance) startSel.add(new Option("الساحة المركزية", plaza.id));
+    pavilions.forEach(p => startSel.add(new Option(p.name, p.location.id)));
+
+    // الأجنحة مقسمة على الزونات
+    const chips = document.getElementById("chips");
+    zones.forEach(z => addGroup(chips, z.name, pavilions.filter(p => zoneOf(p) === z)));
+    const rest = pavilions.filter(p => !document.getElementById("chk-" + p.location.id));
+    if (rest.length) addGroup(chips, "أجنحة ثانية", rest);
+
+    // اختيار مبدئي زي النموذج
+    ["الذكاء الاصطناعي", "المياه", "جناح إيطاليا", "جناح المملكة"].forEach(n => { const p = pavilions.find(x => x.name === n); if (p) picked.add(p.location.id); });
+    if (!picked.size) pavilions.slice(0, 3).forEach(p => picked.add(p.location.id));
+    syncChips();
+    startSel.addEventListener("change", render);
+    render();
+  }
+
+  const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  function nearest(list, x, y) {
+    let best = null, bd = Infinity;
+    list.forEach(l => { const d = Math.hypot(l.x - x, l.y - y); if (d < bd) { bd = d; best = l; } });
+    return best;
+  }
+  const isZone = id => zones.some(z => z.location.id === id);
+  const pavOf = id => pavilions.find(p => p.location.id === id);
+
+  // الجناح يتبع الزون: من قائمة الزون إذا موجودة، وإلا أقرب زون له
+  function zoneOf(p) {
+    for (const z of zones) if ((z.pavilions || []).some(x => x.id === p.id)) return z;
+    let best = null, bd = Infinity;
+    zones.forEach(z => { const d = Math.hypot(z.location.x - p.location.x, z.location.y - p.location.y); if (d < bd) { bd = d; best = z; } });
+    return best;
+  }
+  function nameOf(id) {
+    const p = pavOf(id); if (p) return p.name;
+    if (entrance && id === entrance.id) return "البوابة الرئيسية";
+    if (plaza && id === plaza.id) return "الساحة المركزية";
+    const z = zones.find(z => z.location.id === id); if (z) return z.name;
+    return "تقاطع #" + id;
+  }
+  function addGroup(parent, title, list) {
+    if (!list.length) return;
+    const g = document.createElement("div"); g.className = "zone-group";
+    g.innerHTML = `<b>${title}</b><div class="chips"></div>`;
+    list.forEach(p => {
+      const id = p.location.id;
+      const lab = document.createElement("label"); lab.className = "chip";
+      lab.innerHTML = `<input type="checkbox" id="chk-${id}"> ${p.name}`;
+      lab.querySelector("input").addEventListener("change", e => { e.target.checked ? picked.add(id) : picked.delete(id); render(); });
+      g.querySelector(".chips").appendChild(lab);
+    });
+    parent.appendChild(g);
+  }
+  function syncChips() { pavilions.forEach(p => { const c = document.getElementById("chk-" + p.location.id); if (c) c.checked = picked.has(p.location.id); }); }
+
+  // ---------- الرسم ----------
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
+
+  let renderId = 0;
+  async function render() {
+    const myId = ++renderId; err("");
+    const start = +document.getElementById("start").value;
+    const picks = [...picked].filter(p => p !== start);
+    const walk = await plan(start, picks, "walk");
+    const line = await plan(start, picks, "line");
+    if (myId !== renderId) return; // فيه رسم أحدث
+
+    svg.innerHTML = "";
+    const P = plaza || { x: 500, y: 400 };
+
+    // الوادي (زينة)
+    el("path", { d: "M 40 190 C 220 270, 300 160, 480 230 S 760 330, 980 250", fill: "none", stroke: "var(--zone-b)", "stroke-width": 26, "stroke-linecap": "round", transform: `translate(${P.x - 500} ${P.y - 400})` });
+
+    // الزونات: بتلات حول الساحة
+    zones.forEach(z => {
+      const c = z.location;
+      const deg = Math.atan2(c.y - P.y, c.x - P.x) * 180 / Math.PI;
+      const r = Math.hypot(c.x - P.x, c.y - P.y);
+      el("ellipse", { cx: c.x, cy: c.y, rx: 130, ry: 92, transform: `rotate(${deg} ${c.x} ${c.y})`, fill: "var(--zone-a)", stroke: "var(--zone-b)" });
+      const lr = r + 130, rad = deg * Math.PI / 180;
+      el("text", { x: P.x + lr * Math.cos(rad), y: P.y + lr * Math.sin(rad), "text-anchor": "middle", class: "zone-label" }).textContent = z.name;
+    });
+    if (plaza) el("circle", { cx: P.x, cy: P.y, r: 42, fill: "var(--zone-b)" });
+
+    // الممرات
+    paths.forEach(p => {
+      const a = locations[p.fromLocation.id], b = locations[p.toLocation.id];
+      if (!a || !b) return;
+      el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "var(--path)", "stroke-width": 5, "stroke-linecap": "round" });
+    });
+
+    const shown = mode === "straight" ? line.legs : walk.legs;
+    const xy = id => locations[id].x + "," + locations[id].y;
+
+    // خط مستقيم
+    if (mode !== "dijkstra" && line.legs.length) {
+      el("polyline", { points: [start, ...line.legs.map(l => l.to)].map(xy).join(" "), fill: "none", stroke: "var(--straight)", "stroke-width": 3, "stroke-dasharray": "8 6", "stroke-linejoin": "round" });
+    }
+    // مسار المشي (Dijkstra)
+    if (mode !== "straight" && walk.legs.length) {
+      const full = [start]; walk.legs.forEach(l => l.route.slice(1).forEach(id => full.push(id)));
+      const pl = el("polyline", { points: full.map(xy).join(" "), fill: "none", stroke: "var(--route)", "stroke-width": 5, "stroke-linejoin": "round", "stroke-linecap": "round", class: "draw" });
+      try { pl.style.setProperty("--len", Math.ceil(pl.getTotalLength())); } catch (e) { pl.classList.remove("draw"); }
+    }
+
+    // النقاط
+    Object.values(locations).forEach(l => {
+      const pav = pavOf(l.id);
+      if (pav) {
+        const g = el("g", { class: "pav", tabindex: 0, role: "button", "aria-label": pav.name });
+        const on = picked.has(l.id) && l.id !== start;
+        const idx = shown.findIndex(s => s.to === l.id);
+        el("circle", { cx: l.x, cy: l.y, r: 15, fill: on ? "var(--accent)" : "var(--surface)", stroke: on ? "var(--accent)" : "var(--node)", "stroke-width": 2, class: "ring" }, g);
+        if (idx >= 0) el("text", { x: l.x, y: l.y + 5, "text-anchor": "middle", fill: "var(--surface)", "font-size": 13, "font-weight": 700, "font-family": "var(--font-data)" }, g).textContent = idx + 1;
+        el("text", { x: l.x, y: l.y - 22, "text-anchor": "middle", class: "node-label" }, g).textContent = pav.name;
+        const toggle = () => { picked.has(l.id) ? picked.delete(l.id) : picked.add(l.id); syncChips(); render(); };
+        g.addEventListener("click", toggle);
+        g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+      } else if (entrance && l.id === entrance.id) {
+        el("rect", { x: l.x - 10, y: l.y - 10, width: 20, height: 20, rx: 4, fill: "var(--ink)" });
+        el("text", { x: l.x, y: l.y + 32, "text-anchor": "middle", class: "node-label" }).textContent = "البوابة الرئيسية";
+      } else if (plaza && l.id === plaza.id) {
+        el("circle", { cx: l.x, cy: l.y, r: 7, fill: "var(--node)" });
+        el("text", { x: l.x, y: l.y + 26, "text-anchor": "middle", class: "node-label" }).textContent = "الساحة المركزية";
+      } else if (!isZone(l.id)) {
+        el("circle", { cx: l.x, cy: l.y, r: 5, fill: "var(--node)" });
+      }
+    });
+
+    // علامة البداية
+    if (locations[start]) el("circle", { cx: locations[start].x, cy: locations[start].y, r: 22, fill: "none", stroke: "var(--start)", "stroke-width": 3 });
+
+    // النتيجة
+    const sum = (legs, k) => legs.reduce((a, l) => a + (l[k] || 0), 0);
+    document.getElementById("t-walk").textContent = m(sum(shown, "walk")) + " م";
+    document.getElementById("t-line").textContent = m(sum(shown, "line")) + " م";
+    document.getElementById("legs").innerHTML = shown.map(l =>
+            `<li>${nameOf(l.to)} <span class="d">· ${l.walk != null ? m(l.walk) + " م مشي" : "ما فيه ممر"} · يمر على ${Math.max(l.route.length - 2, 0)} نقطة</span></li>`).join("");
+
+    const note = document.getElementById("note");
+    if (!picks.length) note.textContent = "اختاري جناح أو أكثر عشان يطلع المسار.";
+    else if (mode === "both") {
+      const same = walk.legs.map(l => l.to).join() === line.legs.map(l => l.to).join();
+      const diff = m(sum(line.legs, "walk") - sum(walk.legs, "walk"));
+      note.textContent = same ? "الطريقتين طلعوا نفس الترتيب هنا. جربي تغيرين نقطة البداية أو الأجنحة."
+              : `الترتيب اختلف. لو مشى الزائر بترتيب الخط المستقيم بيمشي ${diff} م زيادة على الممرات.`;
+    } else if (mode === "straight") note.textContent = `الخط المستقيم يقول ${m(sum(line.legs, "line"))} م، بس المشي الفعلي على الممرات بنفس الترتيب ${m(sum(line.legs, "walk"))} م.`;
+    else note.textContent = "الترتيب محسوب بمسافة المشي الحقيقية من الباك إند، والخط يمر على الممرات والتقاطعات.";
+    if (walk.unreachable.length && mode !== "straight") err("ما فيه ممرات توصل لـ: " + walk.unreachable.map(nameOf).join("، "));
+  }
+
+  // ---------- تحميل رحلة محفوظة ----------
+  document.getElementById("loadRoadmap").addEventListener("click", async () => {
+    const id = document.getElementById("roadmapId").value;
+    if (!id) return;
+    try {
+      const all = await api("/roadmap/getAll");
+      const rm = all.find(r => r.id == id);
+      if (!rm) throw new Error("ما لقيت رحلة رقم " + id);
+      picked = new Set((rm.pavilions || []).filter(p => p.location).map(p => p.location.id));
+      syncChips(); render();
+    } catch (e) { err(e.message); }
+  });
+
+  // ---------- الأزرار ----------
+  document.querySelectorAll(".mode-btn").forEach(b => b.addEventListener("click", () => {
+    mode = b.dataset.mode;
+    document.querySelectorAll(".mode-btn").forEach(x => x.setAttribute("aria-pressed", x === b));
+    render();
+  }));
+  document.getElementById("theme").addEventListener("click", e => {
+    const root = document.documentElement;
+    const dark = root.getAttribute("data-theme") === "dark";
+    root.setAttribute("data-theme", dark ? "light" : "dark");
+    e.target.textContent = dark ? "🌙 داكن" : "☀️ فاتح";
+  });
+
+  load();
+</script>
+</body>
+</html>

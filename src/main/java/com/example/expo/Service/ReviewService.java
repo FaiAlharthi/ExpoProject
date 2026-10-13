@@ -106,9 +106,10 @@ public class ReviewService {
         if(visitor.getPassport() == null || visitor.getPassport().getVisits() == null){
             throw new ApiException("You did not visit any pavilion yet");
         }
+
         List<Pavilion> pending = new ArrayList<>();
         for(Visit visit : visitor.getPassport().getVisits()){
-            if(reviewRepository.findReviewByVisitorAndPavilion(visitor, visit.getPavilion()) == null){
+            if(reviewRepository.findReviewByVisitorAndPavilion(visitor, visit.getPavilion()) == null && !pending.contains(visit.getPavilion())){
                 pending.add(visit.getPavilion());
             }
         }

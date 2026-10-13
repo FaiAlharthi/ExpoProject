@@ -27,8 +27,10 @@ public class Location {
 
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "location")
+    @JsonIgnore
     private Zone zone;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "location")
+    @JsonIgnore
     private Pavilion pavilion;
 }
