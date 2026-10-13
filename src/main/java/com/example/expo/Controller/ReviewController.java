@@ -39,4 +39,23 @@ public class ReviewController {
         return ResponseEntity.status(200).body(new ApiResponse("Review deleted"));
     }
 
+    @GetMapping("/pavilion/{pavilionId}/average")
+    public ResponseEntity<?> getPavilionAverageRating(@PathVariable Integer pavilionId) {
+        return ResponseEntity.status(200).body(reviewService.getPavilionAverageRating(pavilionId));
+    }
+
+    @GetMapping("/pending/{visitorId}")
+    public ResponseEntity<?> getPendingReviews(@PathVariable Integer visitorId) {
+        return ResponseEntity.status(200).body(reviewService.getPendingReviews(visitorId));
+    }
+
+    @GetMapping("/visitor/{visitorId}")
+    public ResponseEntity<?> getVisitorReviews(@PathVariable Integer visitorId) {
+        return ResponseEntity.status(200).body(reviewService.getVisitorReviews(visitorId));
+    }
+
+    @GetMapping("/pavilion/{pavilionId}/latest")
+    public ResponseEntity<?> getLatestReviews(@PathVariable Integer pavilionId) {
+        return ResponseEntity.status(200).body(reviewService.getLatestReviews(pavilionId));
+    }
 }
