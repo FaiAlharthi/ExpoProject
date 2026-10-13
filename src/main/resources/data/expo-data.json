@@ -6,7 +6,8 @@
       "country",
       "sourceExpo",
       "imageSource"
-    ]
+    ],
+    "paths": "Each path links two points by type and name (ZONE, ENTRANCE, PAVILION). Distance is calculated from x and y."
   },
   "zones": [
     {
@@ -834,6 +835,556 @@
       },
       "sourceExpo": "Expo 2025 Osaka",
       "imageSource": "https://commons.wikimedia.org/wiki/File:Monaco_Pavilion_at_Expo_2025.jpg"
+    }
+  ],
+  "paths": [
+    {
+      "from": "ENTRANCE:East Gate",
+      "to": "PAVILION:Spain Pavilion"
+    },
+    {
+      "from": "ENTRANCE:East Gate",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "ENTRANCE:East Gate",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "ENTRANCE:North Gate",
+      "to": "PAVILION:United States Pavilion"
+    },
+    {
+      "from": "ENTRANCE:North Gate",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "ENTRANCE:North Gate",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "ENTRANCE:South Main Gate",
+      "to": "PAVILION:Jordan Pavilion"
+    },
+    {
+      "from": "ENTRANCE:South Main Gate",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "ENTRANCE:South Main Gate",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "ENTRANCE:West Gate",
+      "to": "PAVILION:Luxembourg Pavilion"
+    },
+    {
+      "from": "ENTRANCE:West Gate",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "ENTRANCE:West Gate",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Algeria Pavilion",
+      "to": "PAVILION:Tunisia Pavilion"
+    },
+    {
+      "from": "PAVILION:Algeria Pavilion",
+      "to": "PAVILION:Vietnam Pavilion"
+    },
+    {
+      "from": "PAVILION:Algeria Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:Angola Pavilion",
+      "to": "PAVILION:Bangladesh Pavilion"
+    },
+    {
+      "from": "PAVILION:Angola Pavilion",
+      "to": "PAVILION:Senegal Pavilion"
+    },
+    {
+      "from": "PAVILION:Angola Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Australia Pavilion",
+      "to": "PAVILION:Canada Pavilion"
+    },
+    {
+      "from": "PAVILION:Australia Pavilion",
+      "to": "PAVILION:Netherlands Pavilion"
+    },
+    {
+      "from": "PAVILION:Australia Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Austria Pavilion",
+      "to": "PAVILION:France Pavilion"
+    },
+    {
+      "from": "PAVILION:Austria Pavilion",
+      "to": "PAVILION:Hungary Pavilion"
+    },
+    {
+      "from": "PAVILION:Austria Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:Azerbaijan Pavilion",
+      "to": "PAVILION:Nordic Circle Pavilion"
+    },
+    {
+      "from": "PAVILION:Azerbaijan Pavilion",
+      "to": "PAVILION:Saudi Arabia Pavilion"
+    },
+    {
+      "from": "PAVILION:Azerbaijan Pavilion",
+      "to": "PAVILION:Serbia Pavilion"
+    },
+    {
+      "from": "PAVILION:Azerbaijan Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Bahrain Pavilion",
+      "to": "PAVILION:Qatar Pavilion"
+    },
+    {
+      "from": "PAVILION:Bahrain Pavilion",
+      "to": "PAVILION:The Baltics Pavilion"
+    },
+    {
+      "from": "PAVILION:Bahrain Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Bangladesh Pavilion",
+      "to": "PAVILION:Philippines Pavilion"
+    },
+    {
+      "from": "PAVILION:Bangladesh Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Belgium Pavilion",
+      "to": "PAVILION:Philippines Pavilion"
+    },
+    {
+      "from": "PAVILION:Belgium Pavilion",
+      "to": "PAVILION:Thailand Pavilion"
+    },
+    {
+      "from": "PAVILION:Belgium Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Brazil Pavilion",
+      "to": "PAVILION:Colombia Pavilion"
+    },
+    {
+      "from": "PAVILION:Brazil Pavilion",
+      "to": "PAVILION:Malaysia Pavilion"
+    },
+    {
+      "from": "PAVILION:Brazil Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Bulgaria Pavilion",
+      "to": "PAVILION:Malta Pavilion"
+    },
+    {
+      "from": "PAVILION:Bulgaria Pavilion",
+      "to": "PAVILION:Romania Pavilion"
+    },
+    {
+      "from": "PAVILION:Bulgaria Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Cambodia Pavilion",
+      "to": "PAVILION:Nepal Pavilion"
+    },
+    {
+      "from": "PAVILION:Cambodia Pavilion",
+      "to": "PAVILION:Peru Pavilion"
+    },
+    {
+      "from": "PAVILION:Cambodia Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Canada Pavilion",
+      "to": "PAVILION:Portugal Pavilion"
+    },
+    {
+      "from": "PAVILION:Canada Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Chile Pavilion",
+      "to": "PAVILION:Germany Pavilion"
+    },
+    {
+      "from": "PAVILION:Chile Pavilion",
+      "to": "PAVILION:Oman Pavilion"
+    },
+    {
+      "from": "PAVILION:Chile Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:China Pavilion",
+      "to": "PAVILION:South Korea Pavilion"
+    },
+    {
+      "from": "PAVILION:China Pavilion",
+      "to": "PAVILION:United States Pavilion"
+    },
+    {
+      "from": "PAVILION:China Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Colombia Pavilion",
+      "to": "PAVILION:Oman Pavilion"
+    },
+    {
+      "from": "PAVILION:Colombia Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Czech Republic Pavilion",
+      "to": "PAVILION:India Pavilion"
+    },
+    {
+      "from": "PAVILION:Czech Republic Pavilion",
+      "to": "PAVILION:Luxembourg Pavilion"
+    },
+    {
+      "from": "PAVILION:Czech Republic Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Egypt Pavilion",
+      "to": "PAVILION:Hungary Pavilion"
+    },
+    {
+      "from": "PAVILION:Egypt Pavilion",
+      "to": "PAVILION:Jordan Pavilion"
+    },
+    {
+      "from": "PAVILION:Egypt Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:France Pavilion",
+      "to": "PAVILION:Italy Pavilion"
+    },
+    {
+      "from": "PAVILION:France Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:Germany Pavilion",
+      "to": "PAVILION:Netherlands Pavilion"
+    },
+    {
+      "from": "PAVILION:Germany Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Hungary Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:India Pavilion",
+      "to": "PAVILION:Kuwait Pavilion"
+    },
+    {
+      "from": "PAVILION:India Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Indonesia Pavilion",
+      "to": "PAVILION:Malaysia Pavilion"
+    },
+    {
+      "from": "PAVILION:Indonesia Pavilion",
+      "to": "PAVILION:Spain Pavilion"
+    },
+    {
+      "from": "PAVILION:Indonesia Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Ireland Pavilion",
+      "to": "PAVILION:Poland Pavilion"
+    },
+    {
+      "from": "PAVILION:Ireland Pavilion",
+      "to": "PAVILION:Thailand Pavilion"
+    },
+    {
+      "from": "PAVILION:Ireland Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Italy Pavilion",
+      "to": "PAVILION:Vietnam Pavilion"
+    },
+    {
+      "from": "PAVILION:Italy Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:Japan Pavilion",
+      "to": "PAVILION:Switzerland Pavilion"
+    },
+    {
+      "from": "PAVILION:Japan Pavilion",
+      "to": "PAVILION:United States Pavilion"
+    },
+    {
+      "from": "PAVILION:Japan Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Jordan Pavilion",
+      "to": "PAVILION:Uzbekistan Pavilion"
+    },
+    {
+      "from": "PAVILION:Jordan Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:Kuwait Pavilion",
+      "to": "PAVILION:Switzerland Pavilion"
+    },
+    {
+      "from": "PAVILION:Kuwait Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Luxembourg Pavilion",
+      "to": "PAVILION:United Kingdom Pavilion"
+    },
+    {
+      "from": "PAVILION:Luxembourg Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Malaysia Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Malta Pavilion",
+      "to": "PAVILION:Monaco Pavilion"
+    },
+    {
+      "from": "PAVILION:Malta Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Monaco Pavilion",
+      "to": "PAVILION:Qatar Pavilion"
+    },
+    {
+      "from": "PAVILION:Monaco Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Nepal Pavilion",
+      "to": "PAVILION:Senegal Pavilion"
+    },
+    {
+      "from": "PAVILION:Nepal Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Netherlands Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Nordic Circle Pavilion",
+      "to": "PAVILION:The Baltics Pavilion"
+    },
+    {
+      "from": "PAVILION:Nordic Circle Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Oman Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Peru Pavilion",
+      "to": "PAVILION:Poland Pavilion"
+    },
+    {
+      "from": "PAVILION:Peru Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Philippines Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Poland Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Portugal Pavilion",
+      "to": "PAVILION:Spain Pavilion"
+    },
+    {
+      "from": "PAVILION:Portugal Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Qatar Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Romania Pavilion",
+      "to": "PAVILION:Serbia Pavilion"
+    },
+    {
+      "from": "PAVILION:Romania Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Saudi Arabia Pavilion",
+      "to": "PAVILION:Serbia Pavilion"
+    },
+    {
+      "from": "PAVILION:Saudi Arabia Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Senegal Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:Serbia Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Singapore Pavilion",
+      "to": "PAVILION:South Korea Pavilion"
+    },
+    {
+      "from": "PAVILION:Singapore Pavilion",
+      "to": "PAVILION:United Arab Emirates Pavilion"
+    },
+    {
+      "from": "PAVILION:Singapore Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:South Korea Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Spain Pavilion",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "PAVILION:Switzerland Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Thailand Pavilion",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "PAVILION:The Baltics Pavilion",
+      "to": "ZONE:Collaboration"
+    },
+    {
+      "from": "PAVILION:Tunisia Pavilion",
+      "to": "PAVILION:Turkmenistan Pavilion"
+    },
+    {
+      "from": "PAVILION:Tunisia Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:Turkiye Pavilion",
+      "to": "PAVILION:Turkmenistan Pavilion"
+    },
+    {
+      "from": "PAVILION:Turkiye Pavilion",
+      "to": "PAVILION:Uzbekistan Pavilion"
+    },
+    {
+      "from": "PAVILION:Turkiye Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:Turkmenistan Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:United Arab Emirates Pavilion",
+      "to": "PAVILION:United Kingdom Pavilion"
+    },
+    {
+      "from": "PAVILION:United Arab Emirates Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:United Kingdom Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:United States Pavilion",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "PAVILION:Uzbekistan Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "PAVILION:Vietnam Pavilion",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "ZONE:Collaboration",
+      "to": "ZONE:Culture"
+    },
+    {
+      "from": "ZONE:Collaboration",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "ZONE:Collaboration",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "ZONE:Collaboration",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "ZONE:Culture",
+      "to": "ZONE:Humanity"
+    },
+    {
+      "from": "ZONE:Culture",
+      "to": "ZONE:Technology"
+    },
+    {
+      "from": "ZONE:Humanity",
+      "to": "ZONE:Planet"
+    },
+    {
+      "from": "ZONE:Planet",
+      "to": "ZONE:Technology"
     }
   ]
 }

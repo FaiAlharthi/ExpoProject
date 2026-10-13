@@ -1,4 +1,4 @@
-package com.example.expo.Dto;
+package com.example.expo.Dto.Out;
 
 import com.example.expo.Model.Location;
 import lombok.AllArgsConstructor;

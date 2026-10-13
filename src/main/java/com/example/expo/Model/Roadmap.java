@@ -76,6 +76,13 @@ public class Roadmap {
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime createdAt;
 
+    // set by the AI, breaks are saved as json text
+    @Column(columnDefinition = "TEXT")
+    private String aiBreaks;
+
+    @Column(columnDefinition = "TEXT")
+    private String aiSummary;
+
     @ManyToOne
     @JoinColumn
     @JsonIgnore
@@ -87,6 +94,10 @@ public class Roadmap {
     private Entrance entrance;
 
     // roadmap stops
+    // optional interests added for this day only
+    @ManyToMany
+    private Set<Interest> extraInterests;
+
     @OneToMany(mappedBy = "roadmap")
     private Set<Visit> visits;
 }

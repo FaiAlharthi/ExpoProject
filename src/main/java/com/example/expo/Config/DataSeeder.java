@@ -2,10 +2,12 @@ package com.example.expo.Config;
 
 import com.example.expo.Model.Entrance;
 import com.example.expo.Model.Location;
+import com.example.expo.Model.Path;
 import com.example.expo.Model.Pavilion;
 import com.example.expo.Model.Zone;
 import com.example.expo.Repository.EntranceRepository;
 import com.example.expo.Repository.LocationRepository;
+import com.example.expo.Repository.PathRepository;
 import com.example.expo.Repository.PavilionRepository;
 import com.example.expo.Repository.ZoneRepository;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -22,7 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// fills the database from data/expo-data.json on startup, only if it is empty
+// fills the database from data/expo-data.json on startup
+// zones, entrances and pavilions only if they are empty, paths only if there are no paths
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
@@ -30,16 +33,22 @@ public class DataSeeder implements CommandLineRunner {
     private final ZoneRepository zoneRepository;
     private final EntranceRepository entranceRepository;
     private final PavilionRepository pavilionRepository;
+    private final PathRepository pathRepository;
 
     @Override
     public void run(String... args) throws Exception {
-        if(zoneRepository.count() > 0 || entranceRepository.count() > 0 || pavilionRepository.count() > 0){
-            return;
-        }
-
         InputStream file = new ClassPathResource("data/expo-data.json").getInputStream();
         SeedData data = new ObjectMapper().readValue(file, SeedData.class);
 
+        if(zoneRepository.count() == 0 && entranceRepository.count() == 0 && pavilionRepository.count() == 0){
+            seedPlaces(data);
+        }
+        if(pathRepository.count() == 0 && data.getPaths() != null){
+            seedPaths(data);
+        }
+    }
+
+    private void seedPlaces(SeedData data){
         Map<String, Zone> zones = new HashMap<>();
         for(SeedZone seedZone : data.getZones()){
             Zone zone = new Zone();
@@ -69,6 +78,33 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
+    // finds the points by type and name, distance is calculated from x and y
+    private void seedPaths(SeedData data){
+        Map<String, Location> points = new HashMap<>();
+        for(Zone zone : zoneRepository.findAll()){
+            points.put("ZONE:" + zone.getName(), zone.getLocation());
+        }
+        for(Entrance entrance : entranceRepository.findAll()){
+            points.put("ENTRANCE:" + entrance.getName(), entrance.getLocation());
+        }
+        for(Pavilion pavilion : pavilionRepository.findAll()){
+            points.put("PAVILION:" + pavilion.getName(), pavilion.getLocation());
+        }
+
+        for(SeedPath seedPath : data.getPaths()){
+            Location from = points.get(seedPath.getFrom());
+            Location to = points.get(seedPath.getTo());
+            if(from == null || to == null){
+                continue;
+            }
+            Path path = new Path();
+            path.setFromLocation(from);
+            path.setToLocation(to);
+            path.setDistance(Math.sqrt(Math.pow(to.getX() - from.getX(), 2) + Math.pow(to.getY() - from.getY(), 2)));
+            pathRepository.save(path);
+        }
+    }
+
     private Location saveLocation(SeedLocation seedLocation){
         Location location = new Location();
         location.setX(seedLocation.getX());
@@ -84,6 +120,15 @@ public class DataSeeder implements CommandLineRunner {
         private List<SeedZone> zones;
         private List<SeedEntrance> entrances;
         private List<SeedPavilion> pavilions;
+        private List<SeedPath> paths;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SeedPath {
+        private String from;
+        private String to;
     }
 
     @Data
