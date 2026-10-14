@@ -12,19 +12,20 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 public class Passport {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // generated in service, e.g. EXPO30-000012
-    @Column(columnDefinition = "VARCHAR(13) unique")
-    private String passportNumber;
+    @Column(columnDefinition = "VARCHAR(13) UNIQUE")
+    private String passportNumber; // Generated in service, e.g. EXPO30-000012
 
-    // updated by visits count
-    @Pattern(regexp = "^(BRONZE|SILVER|GOLD)$", message = "explorer level must be BRONZE, SILVER or GOLD")
+    @Pattern(regexp = "^(BRONZE|SILVER|GOLD)$", message = "Explorer level must be BRONZE, SILVER or GOLD")
     @Column(columnDefinition = "VARCHAR(6)")
-    private String explorerLevel;
+    private String explorerLevel; // Updated by visits count
 
+    //Relations
     @OneToOne
     @JoinColumn
     @JsonIgnore

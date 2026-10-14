@@ -13,47 +13,46 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 public class Profile {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotEmpty(message = "full name cannot be empty")
-    @Size(max = 50, message = "full name should be 50 letters max")
+    @NotEmpty(message = "Full name cannot be empty")
+    @Size(max = 50, message = "Full name should be 50 letters max")
     @Column(columnDefinition = "VARCHAR(50) not null")
     private String fullName;
 
-    @NotEmpty(message = "username cannot be empty")
-    @Size(min = 4, max = 20, message = "username must be between 4 and 20 characters")
-    @Column(columnDefinition = "VARCHAR(20) not null unique")
+    @NotEmpty(message = "Username cannot be empty")
+    @Size(min = 4, max = 20, message = "Username must be between 4 and 20 characters")
+    @Column(columnDefinition = "VARCHAR(20) NOT NULL UNIQUE")
     private String username;
 
-    // not encrypted for now
-    @NotEmpty(message = "password cannot be empty")
-    @Size(min = 8, message = "password must be at least 8 characters")
+    @NotEmpty(message = "Password cannot be empty")
+    @Size(min = 8, message = "Password must be at least 8 characters")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(columnDefinition = "VARCHAR(255) not null")
-    private String password;
+    @Column(columnDefinition = "VARCHAR(255) NOT NULL")
+    private String password; // NOT encrypted for now !!!!!!!!!!!
 
-    @NotEmpty(message = "email cannot be empty")
-    @Email(message = "email must be in a valid form")
-    @Column(columnDefinition = "VARCHAR(100) not null unique")
+    @NotEmpty(message = "Email cannot be empty")
+    @Email(message = "Email must be in a valid form")
+    @Column(columnDefinition = "VARCHAR(100) NOT NULL UNIQUE")
     private String email;
 
-    // international format
-    @NotEmpty(message = "phone cannot be empty")
-    @Pattern(regexp = "^\\+[1-9]\\d{7,14}$", message = "phone must be in international format, e.g. +966501234567")
-    @Column(columnDefinition = "VARCHAR(16) not null")
-    private String phone;
+    @NotEmpty(message = "Phone cannot be empty")
+    @Pattern(regexp = "^\\+[1-9]\\d{7,14}$", message = "Phone must be in international format, e.g. +966501234567")
+    @Column(columnDefinition = "VARCHAR(16) NOT NULL")
+    private String phone; // International format
 
-    // set when an admin or visitor is added
-    @Pattern(regexp = "^(ADMIN|VISITOR)$", message = "role must be ADMIN or VISITOR")
+    @Pattern(regexp = "^(ADMIN|VISITOR)$", message = "Role must be ADMIN or VISITOR")
     @Column(columnDefinition = "VARCHAR(7)")
-    private String role;
+    private String role; // Set when an admin or visitor is added
 
-    // set in service
     @Column(columnDefinition = "DATETIME")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // Set in service
 
+    //Relations
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "profile")
     @PrimaryKeyJoinColumn
     private Admin admin;

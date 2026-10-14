@@ -16,25 +16,26 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 public class Review {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotNull(message = "rating should not be empty")
-    @Min(value = 1, message = "rating must be at least 1")
-    @Max(value = 5, message = "rating must be at most 5")
+    @NotNull(message = "Rating cannot be empty")
+    @Min(value = 1, message = "Rating must be at least 1")
+    @Max(value = 5, message = "Rating must be at most 5")
     @Column(nullable = false)
     private Integer rating;
 
-    @Size(max = 500, message = "comment must be less than 500 characters")
+    @Size(max = 500, message = "A comment must be less than 500 characters")
     @Column(length = 500)
     private String comment;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-
-
+    //Relations
     @ManyToOne
     @JoinColumn
     @JsonIgnore

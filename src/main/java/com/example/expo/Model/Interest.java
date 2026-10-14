@@ -14,15 +14,18 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 public class Interest {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotEmpty(message = "name should not be empty")
-    @Size(min = 2, max = 50, message = "name must be between 2 and 50 characters")
+    @NotEmpty(message = "Name cannot be empty!")
+    @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters.")
     @Column(nullable = false, unique = true)
     private String name;
 
+    //Relations
     @ManyToMany(mappedBy = "interests")
     @JsonIgnore
     private Set<Visitor> visitors;

@@ -11,14 +11,17 @@ import lombok.*;
 @NoArgsConstructor
 @Entity
 public class Admin {
+
+    //Variables
     @Id
     private Integer id;
 
-    @NotEmpty(message = "job title cannot be empty")
-    @Size(max = 50, message = "job title should be 50 letters max")
-    @Column(columnDefinition = "VARCHAR(50) not null")
+    @NotEmpty(message = "Job title cannot be empty!")
+    @Size(max = 50, message = "Job title should not be longer than 50 letters.")
+    @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String jobTitle;
 
+    //Relations
     @OneToOne
     @MapsId
     @JsonIgnore
