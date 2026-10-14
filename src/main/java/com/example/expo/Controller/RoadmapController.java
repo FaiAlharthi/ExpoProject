@@ -2,6 +2,7 @@ package com.example.expo.Controller;
 
 import com.example.expo.Api.ApiResponse;
 import com.example.expo.Dto.In.GenerateRoadmapDTO;
+import com.example.expo.Dto.In.ReorderStopsDTO;
 import com.example.expo.Model.Roadmap;
 import com.example.expo.Service.RoadmapService;
 import jakarta.validation.Valid;
@@ -40,6 +41,37 @@ public class RoadmapController {
     @GetMapping("/getStops/{roadmapId}")
     public ResponseEntity<?> getStops(@PathVariable Integer roadmapId){
         return ResponseEntity.status(200).body(roadmapService.getStops(roadmapId));
+    }
+
+    @GetMapping("/visitor/{visitorId}")
+    public ResponseEntity<?> getVisitorRoadmaps(@PathVariable Integer visitorId){
+        return ResponseEntity.status(200).body(roadmapService.getVisitorRoadmaps(visitorId));
+    }
+
+    @PostMapping("/addStop/{roadmapId}/{pavilionId}/{position}")
+    public ResponseEntity<?> addStop(@PathVariable Integer roadmapId, @PathVariable Integer pavilionId, @PathVariable Integer position){
+        return ResponseEntity.status(200).body(roadmapService.addStop(roadmapId, pavilionId, position));
+    }
+
+    @DeleteMapping("/removeStop/{roadmapId}/{visitId}")
+    public ResponseEntity<?> removeStop(@PathVariable Integer roadmapId, @PathVariable Integer visitId){
+        return ResponseEntity.status(200).body(roadmapService.removeStop(roadmapId, visitId));
+    }
+
+    @PutMapping("/reorder/{roadmapId}")
+    public ResponseEntity<?> reorderStops(@PathVariable Integer roadmapId, @RequestBody @Valid ReorderStopsDTO dto){
+        return ResponseEntity.status(200).body(roadmapService.reorderStops(roadmapId, dto));
+    }
+
+    @PutMapping("/makeStatic/{roadmapId}")
+    public ResponseEntity<?> makeStatic(@PathVariable Integer roadmapId){
+        roadmapService.makeStatic(roadmapId);
+        return ResponseEntity.status(200).body(new ApiResponse("roadmap is static now"));
+    }
+
+    @PutMapping("/makeDynamic/{roadmapId}")
+    public ResponseEntity<?> makeDynamic(@PathVariable Integer roadmapId){
+        return ResponseEntity.status(200).body(roadmapService.makeDynamic(roadmapId));
     }
 
     /*

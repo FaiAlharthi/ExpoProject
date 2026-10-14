@@ -16,10 +16,6 @@ import java.util.Set;
 @NoArgsConstructor
 public class GenerateRoadmapDTO {
 
-    @NotEmpty(message = "plan type cannot be empty")
-    @Pattern(regexp = "^(STATIC|DYNAMIC)$", message = "plan type must be STATIC or DYNAMIC")
-    private String planType;
-
     @NotNull(message = "visit date cannot be empty")
     private LocalDate visitDate;
 
