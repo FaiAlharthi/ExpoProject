@@ -2,6 +2,7 @@ package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
 import com.example.expo.Dto.Out.RoadmapRouteResponse;
+import com.example.expo.Dto.Out.RouteStopResponse;
 import com.example.expo.Dto.Out.ShortestPathResponse;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Path;
@@ -150,7 +151,8 @@ public class PathService {
         if(start == null){
             throw new ApiException("Start location not found");
         }
-        return buildRoute(roadmap, start);
+        // from the visitor place: the path goes only to the pavilions not visited yet
+        return buildRoute(roadmap, start, false);
     }
     // ===== يولّد الممرات تلقائي من أماكن الزونات والأجنحة والبوابات =====
     public Integer generatePaths(){
@@ -296,25 +298,36 @@ public class PathService {
         if(roadmap.getEntrance() == null || roadmap.getEntrance().getLocation() == null){
             throw new ApiException("Roadmap entrance has no location");
         }
-        return buildRoute(roadmap, roadmap.getEntrance().getLocation());
+        // from the entrance: the path goes through all stops, visited ones included
+        return buildRoute(roadmap, roadmap.getEntrance().getLocation(), true);
     }
 
     // follows the roadmap order (stopOrder) and draws the shortest path between each stop and the next
-    private RoadmapRouteResponse buildRoute(Roadmap roadmap, Location start){
-        List<Visit> stops = new ArrayList<>();
+    // visitOrder always has all stops, the path skips visited stops when drawPathToVisited is false
+    private RoadmapRouteResponse buildRoute(Roadmap roadmap, Location start, boolean drawPathToVisited){
+        List<Visit> allStops = new ArrayList<>();
         if(roadmap.getVisits() != null){
             for(Visit visit : roadmap.getVisits()){
-                if(!visit.getIsVisited() && visit.getPavilion() != null && visit.getPavilion().getLocation() != null){
-                    stops.add(visit);
+                if(visit.getPavilion() != null && visit.getPavilion().getLocation() != null){
+                    allStops.add(visit);
                 }
+            }
+        }
+        allStops.sort(Comparator.comparing(Visit::getStopOrder, Comparator.nullsLast(Comparator.naturalOrder())));
+
+        List<RouteStopResponse> visitOrder = new ArrayList<>();
+        List<Visit> stops = new ArrayList<>();
+        for(Visit visit : allStops){
+            visitOrder.add(new RouteStopResponse(visit.getId(), visit.getStopOrder(), visit.getPavilion().getId(),
+                    visit.getPavilion().getName(), visit.getIsVisited()));
+            if(drawPathToVisited || !visit.getIsVisited()){
+                stops.add(visit);
             }
         }
         if(stops.isEmpty()){
             throw new ApiException("Roadmap has no remaining pavilions");
         }
-        stops.sort(Comparator.comparing(Visit::getStopOrder, Comparator.nullsLast(Comparator.naturalOrder())));
 
-        List<String> visitOrder = new ArrayList<>();
         List<Location> fullRoute = new ArrayList<>();
         double totalDistance = 0;
 
@@ -335,7 +348,6 @@ public class PathService {
                 fullRoute.add(bestPath.getLocations().get(i));
             }
             totalDistance = totalDistance + bestPath.getTotalDistance();
-            visitOrder.add(nextPavilion.getName());
 
             // this pavilion becomes the new start point
             current = nextPavilion.getLocation();

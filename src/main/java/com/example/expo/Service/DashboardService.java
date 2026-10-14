@@ -96,13 +96,9 @@ public class DashboardService {
         }
 
         Map<String, Long> entrances = new HashMap<>();
-        long dynamicCount = 0;
         for(Roadmap roadmap : roadmaps){
             if(roadmap.getEntrance() != null){
                 entrances.merge(roadmap.getEntrance().getName(), 1L, Long::sum);
-            }
-            if("DYNAMIC".equals(roadmap.getPlanType())){
-                dynamicCount++;
             }
         }
 
@@ -110,8 +106,6 @@ public class DashboardService {
                 (long) visitors.size(),
                 (long) visits.size(),
                 (long) roadmaps.size(),
-                roadmaps.size() - dynamicCount,
-                dynamicCount,
                 top(mostVisited),
                 top(topRated),
                 top(lowestRated),

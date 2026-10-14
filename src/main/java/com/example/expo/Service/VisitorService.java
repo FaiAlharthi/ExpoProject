@@ -1,6 +1,7 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
+import com.example.expo.Dto.In.VisitorRegisterRequest;
 import com.example.expo.Dto.Out.InterestResponse;
 import com.example.expo.Dto.Out.VisitorResponse;
 import com.example.expo.Model.Interest;
@@ -16,7 +17,9 @@ import com.example.expo.Repository.VisitRepository;
 import com.example.expo.Repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -62,18 +65,30 @@ public class VisitorService {
                 profile.getCreatedAt());
     }
 
-    public void addVisitor(Integer profileId, Visitor visitor){
-        Profile profile = profileRepository.findProfileById(profileId);
-        if(profile == null){
-            throw new ApiException("profile not found");
+    // creates the profile (role VISITOR), the visitor and the passport together
+    @Transactional
+    public void registerVisitor(VisitorRegisterRequest request){
+        if(profileRepository.findProfileByUsername(request.getUsername()) != null){
+            throw new ApiException("username already exists");
         }
-        if(visitorRepository.findVisitorById(profileId) != null){
-            throw new ApiException("this profile already has visitor");
+        if(profileRepository.findProfileByEmail(request.getEmail()) != null){
+            throw new ApiException("email already exists");
         }
-        if(profile.getAdmin() != null){
-            throw new ApiException("this profile is already an admin");
-        }
+        Profile profile = new Profile();
+        profile.setFullName(request.getFullName());
+        profile.setUsername(request.getUsername());
+        profile.setPassword(request.getPassword());
+        profile.setEmail(request.getEmail());
+        profile.setPhone(request.getPhone());
         profile.setRole("VISITOR");
+        profile.setCreatedAt(LocalDateTime.now());
+        profileRepository.save(profile);
+
+        Visitor visitor = new Visitor();
+        visitor.setAge(request.getAge());
+        visitor.setGender(request.getGender());
+        visitor.setPreferredLanguage(request.getPreferredLanguage());
+        visitor.setNationality(request.getNationality());
         visitor.setProfile(profile);
         Visitor savedVisitor = visitorRepository.save(visitor);
 
@@ -103,7 +118,6 @@ public class VisitorService {
         }
         clearRoadmapStops(visitor);
         visitor.getProfile().setVisitor(null);
-        visitor.getProfile().setRole(null);
         visitorRepository.delete(visitor);
     }
 

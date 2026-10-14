@@ -1,6 +1,7 @@
 package com.example.expo.Controller;
 
 import com.example.expo.Api.ApiResponse;
+import com.example.expo.Dto.In.VisitorRegisterRequest;
 import com.example.expo.Model.Visitor;
 import com.example.expo.Service.VisitorService;
 import jakarta.validation.Valid;
@@ -24,10 +25,10 @@ public class VisitorController {
         return ResponseEntity.status(200).body(visitorService.getVisitor(id));
     }
 
-    @PostMapping("/createVisitor/{profileId}")
-    public ResponseEntity<?> createVisitor(@PathVariable Integer profileId, @RequestBody @Valid Visitor visitor){
-        visitorService.addVisitor(profileId, visitor);
-        return ResponseEntity.status(200).body(new ApiResponse("visitor added"));
+    @PostMapping("/register")
+    public ResponseEntity<?> registerVisitor(@RequestBody @Valid VisitorRegisterRequest request){
+        visitorService.registerVisitor(request);
+        return ResponseEntity.status(200).body(new ApiResponse("visitor registered"));
     }
 
     @DeleteMapping("/deleteVisitor/{id}")

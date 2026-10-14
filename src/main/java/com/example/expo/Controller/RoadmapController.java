@@ -63,12 +63,6 @@ public class RoadmapController {
         return ResponseEntity.status(200).body(roadmapService.reorderStops(roadmapId, request));
     }
 
-    @PutMapping("/makeStatic/{roadmapId}")
-    public ResponseEntity<?> makeStatic(@PathVariable Integer roadmapId){
-        roadmapService.makeStatic(roadmapId);
-        return ResponseEntity.status(200).body(new ApiResponse("roadmap is static now"));
-    }
-
     @PutMapping("/makeDynamic/{roadmapId}")
     public ResponseEntity<?> makeDynamic(@PathVariable Integer roadmapId){
         return ResponseEntity.status(200).body(roadmapService.makeDynamic(roadmapId));

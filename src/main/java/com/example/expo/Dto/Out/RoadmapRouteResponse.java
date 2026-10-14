@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RoadmapRouteResponse {
-    private List<String> visitOrder;   // أسماء الأجنحة بالترتيب
+    private List<RouteStopResponse> visitOrder;   // كل محطات الخطة بالترتيب، والمزارة isVisited = true
     private Double totalDistance;       // مجموع المشي
     private List<Location> route;       // كل النقاط اللي يمشي عليها
     private String exitEntrance;       // البوابة اللي يطلع منها

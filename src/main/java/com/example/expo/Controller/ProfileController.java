@@ -14,20 +14,9 @@ import org.springframework.web.bind.annotation.*;
 public class ProfileController {
     private final ProfileService profileService;
 
-    @GetMapping("/getAll")
-    public ResponseEntity<?> getAllProfiles(){
-        return ResponseEntity.status(200).body(profileService.getAllProfiles());
-    }
-
     @GetMapping("/get/{id}")
     public ResponseEntity<?> getProfile(@PathVariable Integer id){
         return ResponseEntity.status(200).body(profileService.getProfile(id));
-    }
-
-    @PostMapping("/createProfile")
-    public ResponseEntity<?> createProfile(@RequestBody @Valid Profile profile){
-        profileService.addProfile(profile);
-        return ResponseEntity.status(200).body(new ApiResponse("profile added"));
     }
 
     @DeleteMapping("/deleteProfile/{id}")

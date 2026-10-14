@@ -13,7 +13,6 @@ import java.util.List;
 public class RoadmapResponse {
     private Integer roadmapId;
     private LocalDate visitDate;
-    private String planType;
     private String summary;
     private Boolean aiUsed;
     private List<RoadmapBreakResponse> breaks;

@@ -9,6 +9,7 @@ import com.example.expo.Dto.Out.RoadmapStopResponse;
 import com.example.expo.Model.Entrance;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Interest;
+import com.example.expo.Model.Passport;
 import com.example.expo.Model.Pavilion;
 import com.example.expo.Model.Review;
 import com.example.expo.Model.Roadmap;
@@ -29,6 +30,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -197,14 +199,12 @@ public class RoadmapService {
                     pavilion.getImageUrl(), visit.getIsVisited(), visit.getVisitedAt()));
         }
         // a summary means the AI made this roadmap
-        return new RoadmapResponse(roadmap.getId(), roadmap.getVisitDate(), roadmap.getPlanType(), roadmap.getAiSummary(),
+        return new RoadmapResponse(roadmap.getId(), roadmap.getVisitDate(), roadmap.getAiSummary(),
                 roadmap.getAiSummary() != null, breaks, stops);
     }
 
     private Roadmap toRoadmap(GenerateRoadmapRequest request){
         Roadmap roadmap = new Roadmap();
-        // a new or regenerated roadmap is always static
-        roadmap.setPlanType("STATIC");
         roadmap.setVisitDate(request.getVisitDate());
         roadmap.setPartyType(request.getPartyType());
         roadmap.setPartySize(request.getPartySize());
@@ -354,10 +354,19 @@ public class RoadmapService {
         if(position == null || position < minPosition || position > maxPosition){
             throw new ApiException("position must be between " + minPosition + " and " + maxPosition);
         }
-        Visit stop = new Visit();
+        // visited today outside the plan: the same visit joins the roadmap as visited
+        Visit stop = null;
+        Passport passport = roadmap.getVisitor().getPassport();
+        if(passport != null){
+            stop = visitRepository.findVisitByPassportAndPavilionAndRoadmapIsNullAndVisitedAtBetween(passport, pavilion,
+                    roadmap.getVisitDate().atStartOfDay(), roadmap.getVisitDate().atTime(LocalTime.MAX));
+        }
+        if(stop == null){
+            stop = new Visit();
+            stop.setPavilion(pavilion);
+            stop.setIsVisited(false);
+        }
         stop.setRoadmap(roadmap);
-        stop.setPavilion(pavilion);
-        stop.setIsVisited(false);
         stops.add(position - 1, stop);
         renumberStops(stops);
         return toRoadmapResponse(roadmap);
@@ -413,21 +422,7 @@ public class RoadmapService {
         return toRoadmapResponse(roadmap);
     }
 
-    // only changes the type, the stops stay the same
-    public void makeStatic(Integer roadmapId){
-        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
-            throw new ApiException("roadmap not found");
-        }
-        checkNotPast(roadmap);
-        if(roadmap.getPlanType().equals("STATIC")){
-            throw new ApiException("roadmap is already static");
-        }
-        roadmap.setPlanType("STATIC");
-        roadmapRepository.save(roadmap);
-    }
-
-    // keeps the visited stops, regenerates the rest based on the reviews of the visited ones
+    // regenerates the stops not visited yet based on the reviews of the visited ones, can be used again any time
     public RoadmapResponse makeDynamic(Integer roadmapId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
@@ -515,7 +510,6 @@ public class RoadmapService {
         visitRepository.deleteAll(plannedStops);
         renumberStops(visitedStops);
         saveStops(roadmap, ordered, visitedStops.size());
-        roadmap.setPlanType("DYNAMIC");
         roadmapRepository.save(roadmap);
 
         RoadmapResponse result = toRoadmapResponse(roadmap);
@@ -761,7 +755,6 @@ public class RoadmapService {
     }
 
     private void copyAnswers(Roadmap from, Roadmap to){
-        to.setPlanType(from.getPlanType());
         to.setVisitDate(from.getVisitDate());
         to.setPartyType(from.getPartyType());
         to.setPartySize(from.getPartySize());

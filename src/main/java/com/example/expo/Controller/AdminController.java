@@ -21,17 +21,6 @@ public class AdminController {
         return ResponseEntity.status(200).body(dashboardService.getDashboard());
     }
 
-    @GetMapping("/getAll")
-    public ResponseEntity<?> getAllAdmins(){
-        return ResponseEntity.status(200).body(adminService.getAllAdmins());
-    }
-
-    @PostMapping("/createAdmin/{profileId}")
-    public ResponseEntity<?> createAdmin(@PathVariable Integer profileId, @RequestBody @Valid Admin admin){
-        adminService.addAdmin(profileId, admin);
-        return ResponseEntity.status(200).body(new ApiResponse("admin added"));
-    }
-
     @DeleteMapping("/deleteAdmin/{id}")
     public ResponseEntity<?> deleteAdmin(@PathVariable Integer id){
         adminService.deleteAdmin(id);

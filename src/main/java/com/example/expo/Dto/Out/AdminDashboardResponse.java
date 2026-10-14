@@ -14,8 +14,6 @@ public class AdminDashboardResponse {
     private Long totalVisitors;
     private Long totalCheckIns;
     private Long totalRoadmaps;
-    private Long staticRoadmaps;
-    private Long dynamicRoadmaps;
     private List<PavilionStatResponse> mostVisitedPavilions;
     private List<PavilionStatResponse> topRatedPavilions;
     private List<PavilionStatResponse> lowestRatedPavilions;

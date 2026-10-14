@@ -17,14 +17,6 @@ public class ProfileService {
     private final ProfileRepository profileRepository;
     private final VisitorService visitorService;
 
-    public List<ProfileResponse> getAllProfiles(){
-        List<ProfileResponse> profiles = new ArrayList<>();
-        for(Profile profile : profileRepository.findAll()){
-            profiles.add(toProfileResponse(profile));
-        }
-        return profiles;
-    }
-
     public ProfileResponse getProfile(Integer id){
         Profile profile = profileRepository.findProfileById(id);
         if(profile == null){
@@ -36,19 +28,6 @@ public class ProfileService {
     private ProfileResponse toProfileResponse(Profile profile){
         return new ProfileResponse(profile.getId(), profile.getFullName(), profile.getUsername(), profile.getEmail(),
                 profile.getPhone(), profile.getRole(), profile.getCreatedAt());
-    }
-
-    public void addProfile(Profile profile){
-        if(profileRepository.findProfileByUsername(profile.getUsername()) != null){
-            throw new ApiException("username already exists");
-        }
-        if(profileRepository.findProfileByEmail(profile.getEmail()) != null){
-            throw new ApiException("email already exists");
-        }
-        // role is set when an admin or visitor is added
-        profile.setRole(null);
-        profile.setCreatedAt(LocalDateTime.now());
-        profileRepository.save(profile);
     }
 
     public void updateProfile(Integer id, Profile profile){
