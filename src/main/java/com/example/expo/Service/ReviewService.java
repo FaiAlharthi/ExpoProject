@@ -18,6 +18,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final VisitorRepository visitorRepository;
     private final PavilionRepository pavilionRepository;
+    private final ModerationService moderationService;
 
     public List<Review>getAllReviews(){
         return reviewRepository.findAll();
@@ -50,6 +51,8 @@ public class ReviewService {
         if(reviewRepository.findReviewByVisitorAndPavilion(visitor, pavilion) != null){
             throw new ApiException("You already reviewed this pavilion");
         }
+        // AI checks the comment for racism and rude language
+        moderationService.checkComment(review.getComment());
         review.setVisitor(visitor);
         review.setPavilion(pavilion);
         review.setCreatedAt(LocalDateTime.now());
@@ -67,6 +70,7 @@ public class ReviewService {
         if(!oldReview.getVisitor().getId().equals(visitorId)){
             throw new ApiException("You can only update your own review");
         }
+        moderationService.checkComment(review.getComment());
         oldReview.setRating(review.getRating());
         oldReview.setComment(review.getComment());
         reviewRepository.save(oldReview);

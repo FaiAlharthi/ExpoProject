@@ -14,7 +14,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GenerateRoadmapDTO {
+public class GenerateRoadmapRequest {
 
     @NotNull(message = "visit date cannot be empty")
     private LocalDate visitDate;

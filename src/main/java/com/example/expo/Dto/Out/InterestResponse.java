@@ -7,9 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoadmapBreakDTO {
-    private String type;
-    private String time;
-    private Integer minutes;
-    private String note;
+public class InterestResponse {
+    private Integer id;
+    private String name;
+    private String nameAr;
 }

@@ -3,6 +3,7 @@ package com.example.expo.Controller;
 import com.example.expo.Api.ApiResponse;
 import com.example.expo.Model.Admin;
 import com.example.expo.Service.AdminService;
+import com.example.expo.Service.DashboardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,12 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AdminController {
     private final AdminService adminService;
+    private final DashboardService dashboardService;
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<?> getDashboard(){
+        return ResponseEntity.status(200).body(dashboardService.getDashboard());
+    }
 
     @GetMapping("/getAll")
     public ResponseEntity<?> getAllAdmins(){

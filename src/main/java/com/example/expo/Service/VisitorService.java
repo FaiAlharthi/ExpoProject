@@ -1,17 +1,24 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
+import com.example.expo.Dto.Out.InterestResponse;
+import com.example.expo.Dto.Out.VisitorResponse;
 import com.example.expo.Model.Interest;
 import com.example.expo.Model.Passport;
 import com.example.expo.Model.Profile;
+import com.example.expo.Model.Roadmap;
+import com.example.expo.Model.Visit;
 import com.example.expo.Model.Visitor;
 import com.example.expo.Repository.InterestRepository;
 import com.example.expo.Repository.PassportRepository;
 import com.example.expo.Repository.ProfileRepository;
+import com.example.expo.Repository.VisitRepository;
 import com.example.expo.Repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -21,9 +28,38 @@ public class VisitorService {
     private final ProfileRepository profileRepository;
     private final InterestRepository interestRepository;
     private final PassportRepository passportRepository;
+    private final VisitRepository visitRepository;
 
-    public List<Visitor> getAllVisitors(){
-        return visitorRepository.findAll();
+    public List<VisitorResponse> getAllVisitors(){
+        List<VisitorResponse> visitors = new ArrayList<>();
+        for(Visitor visitor : visitorRepository.findAll()){
+            visitors.add(toVisitorResponse(visitor));
+        }
+        return visitors;
+    }
+
+    public VisitorResponse getVisitor(Integer id){
+        Visitor visitor = visitorRepository.findVisitorById(id);
+        if(visitor == null){
+            throw new ApiException("visitor not found");
+        }
+        return toVisitorResponse(visitor);
+    }
+
+    private VisitorResponse toVisitorResponse(Visitor visitor){
+        Profile profile = visitor.getProfile();
+        List<InterestResponse> interests = new ArrayList<>();
+        if(visitor.getInterests() != null){
+            for(Interest interest : visitor.getInterests()){
+                interests.add(new InterestResponse(interest.getId(), interest.getName(), interest.getNameAr()));
+            }
+            interests.sort(Comparator.comparing(InterestResponse::getId));
+        }
+        Passport passport = visitor.getPassport();
+        return new VisitorResponse(visitor.getId(), profile.getFullName(), profile.getUsername(), profile.getEmail(),
+                profile.getPhone(), visitor.getAge(), visitor.getGender(), visitor.getPreferredLanguage(), visitor.getNationality(),
+                interests, passport == null ? null : passport.getPassportNumber(),
+                profile.getCreatedAt());
     }
 
     public void addVisitor(Integer profileId, Visitor visitor){
@@ -44,7 +80,6 @@ public class VisitorService {
         // every new visitor gets a passport
         Passport passport = new Passport();
         passport.setPassportNumber(String.format("EXPO30-%06d", savedVisitor.getId()));
-        passport.setExplorerLevel("BRONZE");
         passport.setVisitor(savedVisitor);
         passportRepository.save(passport);
     }
@@ -66,9 +101,44 @@ public class VisitorService {
         if(visitor == null){
             throw new ApiException("visitor not found");
         }
+        clearRoadmapStops(visitor);
         visitor.getProfile().setVisitor(null);
         visitor.getProfile().setRole(null);
         visitorRepository.delete(visitor);
+    }
+
+    // before deleting a visitor: planned stops are deleted, visited ones are unlinked
+    // from the roadmap so they are deleted with the passport
+    public void clearRoadmapStops(Visitor visitor){
+        if(visitor.getRoadmaps() == null){
+            return;
+        }
+        for(Roadmap roadmap : visitor.getRoadmaps()){
+            for(Visit visit : visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap)){
+                if(visit.getIsVisited()){
+                    visit.setRoadmap(null);
+                    visitRepository.save(visit);
+                }else{
+                    visitRepository.delete(visit);
+                }
+            }
+            roadmap.setVisits(null);
+        }
+    }
+
+    public void removeInterestFromVisitor(Integer visitorId, Integer interestId){
+        Visitor visitor = visitorRepository.findVisitorById(visitorId);
+        if(visitor == null){
+            throw new ApiException("visitor not found");
+        }
+        Interest interest = interestRepository.findInterestById(interestId);
+        if(interest == null){
+            throw new ApiException("interest not found");
+        }
+        if(!visitor.getInterests().removeIf(i -> i.getId().equals(interestId))){
+            throw new ApiException("visitor does not have this interest");
+        }
+        visitorRepository.save(visitor);
     }
 
     public void addInterestToVisitor(Integer visitorId, Integer interestId){

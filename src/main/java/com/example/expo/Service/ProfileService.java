@@ -1,21 +1,41 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
+import com.example.expo.Dto.Out.ProfileResponse;
 import com.example.expo.Model.Profile;
 import com.example.expo.Repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
     private final ProfileRepository profileRepository;
+    private final VisitorService visitorService;
 
-    public List<Profile> getAllProfiles(){
-        return profileRepository.findAll();
+    public List<ProfileResponse> getAllProfiles(){
+        List<ProfileResponse> profiles = new ArrayList<>();
+        for(Profile profile : profileRepository.findAll()){
+            profiles.add(toProfileResponse(profile));
+        }
+        return profiles;
+    }
+
+    public ProfileResponse getProfile(Integer id){
+        Profile profile = profileRepository.findProfileById(id);
+        if(profile == null){
+            throw new ApiException("profile not found");
+        }
+        return toProfileResponse(profile);
+    }
+
+    private ProfileResponse toProfileResponse(Profile profile){
+        return new ProfileResponse(profile.getId(), profile.getFullName(), profile.getUsername(), profile.getEmail(),
+                profile.getPhone(), profile.getRole(), profile.getCreatedAt());
     }
 
     public void addProfile(Profile profile){
@@ -56,6 +76,9 @@ public class ProfileService {
         Profile profile = profileRepository.findProfileById(id);
         if(profile == null){
             throw new ApiException("profile not found");
+        }
+        if(profile.getVisitor() != null){
+            visitorService.clearRoadmapStops(profile.getVisitor());
         }
         profileRepository.delete(profile);
     }

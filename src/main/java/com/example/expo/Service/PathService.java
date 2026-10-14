@@ -1,8 +1,8 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
-import com.example.expo.Dto.Out.RoadmapRouteDTO;
-import com.example.expo.Dto.Out.ShortestPathDTO;
+import com.example.expo.Dto.Out.RoadmapRouteResponse;
+import com.example.expo.Dto.Out.ShortestPathResponse;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Path;
 import com.example.expo.Model.Pavilion;
@@ -73,7 +73,7 @@ public class PathService {
     }
 
     // ===== Dijkstra: أقصر طريق على الممرات بين نقطتين =====
-    public ShortestPathDTO getShortestPath(Integer fromId, Integer toId){
+    public ShortestPathResponse getShortestPath(Integer fromId, Integer toId){
         Location start = locationRepository.findLocationById(fromId);
         Location end = locationRepository.findLocationById(toId);
         if(start == null || end == null){
@@ -137,11 +137,11 @@ public class PathService {
             route.add(0, locationRepository.findLocationById(step));
             step = previous.get(step);
         }
-        return new ShortestPathDTO(distance.get(end.getId()), route);
+        return new ShortestPathResponse(distance.get(end.getId()), route);
     }
 
     // ===== مسار الرحلة من نقطة يحددها الزائر (مثلاً مكانه الحين) =====
-    public RoadmapRouteDTO getRoadmapRoute(Integer roadmapId, Integer startLocationId){
+    public RoadmapRouteResponse getRoadmapRoute(Integer roadmapId, Integer startLocationId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
             throw new ApiException("Roadmap not found");
@@ -288,7 +288,7 @@ public class PathService {
         }
     }
     // ===== مسار الرحلة من بوابة الدخول اللي اختارها الزائر =====
-    public RoadmapRouteDTO getRoadmapRouteFromEntrance(Integer roadmapId){
+    public RoadmapRouteResponse getRoadmapRouteFromEntrance(Integer roadmapId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
             throw new ApiException("Roadmap not found");
@@ -300,7 +300,7 @@ public class PathService {
     }
 
     // follows the roadmap order (stopOrder) and draws the shortest path between each stop and the next
-    private RoadmapRouteDTO buildRoute(Roadmap roadmap, Location start){
+    private RoadmapRouteResponse buildRoute(Roadmap roadmap, Location start){
         List<Visit> stops = new ArrayList<>();
         if(roadmap.getVisits() != null){
             for(Visit visit : roadmap.getVisits()){
@@ -323,7 +323,7 @@ public class PathService {
 
         for(Visit stop : stops){
             Pavilion nextPavilion = stop.getPavilion();
-            ShortestPathDTO bestPath;
+            ShortestPathResponse bestPath;
             try {
                 bestPath = getShortestPath(current.getId(), nextPavilion.getLocation().getId());
             } catch (ApiException e) {
@@ -343,12 +343,12 @@ public class PathService {
 
         // 4) بعد آخر جناح: نطلع من أقرب بوابة
         String exitEntrance = null;
-        ShortestPathDTO exitPath = null;
+        ShortestPathResponse exitPath = null;
         for(Entrance entrance : entranceRepository.findAll()){
             if(entrance.getLocation() == null){
                 continue;
             }
-            ShortestPathDTO path;
+            ShortestPathResponse path;
             try {
                 path = getShortestPath(current.getId(), entrance.getLocation().getId());
             } catch (ApiException e) {
@@ -366,7 +366,7 @@ public class PathService {
             totalDistance = totalDistance + exitPath.getTotalDistance();
         }
 
-        return new RoadmapRouteDTO(visitOrder, totalDistance, fullRoute, exitEntrance);
+        return new RoadmapRouteResponse(visitOrder, totalDistance, fullRoute, exitEntrance);
     }
 
 }

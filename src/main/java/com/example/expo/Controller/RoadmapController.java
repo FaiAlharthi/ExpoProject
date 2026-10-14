@@ -1,8 +1,8 @@
 package com.example.expo.Controller;
 
 import com.example.expo.Api.ApiResponse;
-import com.example.expo.Dto.In.GenerateRoadmapDTO;
-import com.example.expo.Dto.In.ReorderStopsDTO;
+import com.example.expo.Dto.In.GenerateRoadmapRequest;
+import com.example.expo.Dto.In.ReorderStopsRequest;
 import com.example.expo.Model.Roadmap;
 import com.example.expo.Service.RoadmapService;
 import jakarta.validation.Valid;
@@ -34,8 +34,8 @@ public class RoadmapController {
     }
 
     @PostMapping("/generate/{visitorId}/{entranceId}")
-    public ResponseEntity<?> generateRoadmap(@PathVariable Integer visitorId, @PathVariable Integer entranceId, @RequestBody @Valid GenerateRoadmapDTO dto){
-        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(visitorId, entranceId, dto));
+    public ResponseEntity<?> generateRoadmap(@PathVariable Integer visitorId, @PathVariable Integer entranceId, @RequestBody @Valid GenerateRoadmapRequest request){
+        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(visitorId, entranceId, request));
     }
 
     @GetMapping("/getStops/{roadmapId}")
@@ -59,8 +59,8 @@ public class RoadmapController {
     }
 
     @PutMapping("/reorder/{roadmapId}")
-    public ResponseEntity<?> reorderStops(@PathVariable Integer roadmapId, @RequestBody @Valid ReorderStopsDTO dto){
-        return ResponseEntity.status(200).body(roadmapService.reorderStops(roadmapId, dto));
+    public ResponseEntity<?> reorderStops(@PathVariable Integer roadmapId, @RequestBody @Valid ReorderStopsRequest request){
+        return ResponseEntity.status(200).body(roadmapService.reorderStops(roadmapId, request));
     }
 
     @PutMapping("/makeStatic/{roadmapId}")

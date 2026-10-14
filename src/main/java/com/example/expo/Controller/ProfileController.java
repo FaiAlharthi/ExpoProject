@@ -19,6 +19,11 @@ public class ProfileController {
         return ResponseEntity.status(200).body(profileService.getAllProfiles());
     }
 
+    @GetMapping("/get/{id}")
+    public ResponseEntity<?> getProfile(@PathVariable Integer id){
+        return ResponseEntity.status(200).body(profileService.getProfile(id));
+    }
+
     @PostMapping("/createProfile")
     public ResponseEntity<?> createProfile(@RequestBody @Valid Profile profile){
         profileService.addProfile(profile);

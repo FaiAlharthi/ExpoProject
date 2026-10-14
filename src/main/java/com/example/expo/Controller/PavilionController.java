@@ -24,6 +24,11 @@ public class PavilionController {
         return ResponseEntity.status(200).body(pavilionService.getAllPavilion());
     }
 
+    @GetMapping("/details/{pavilionId}")
+    public ResponseEntity<?> getPavilionDetails(@PathVariable Integer pavilionId) {
+        return ResponseEntity.status(200).body(pavilionService.getPavilionDetails(pavilionId));
+    }
+
     @PostMapping("/add/{zoneId}/{locationId}")
     public ResponseEntity<?> addPavilion(@PathVariable Integer zoneId, @PathVariable Integer locationId, @RequestBody @Valid Pavilion pavilion) {
         pavilionService.addPavilion(zoneId, locationId, pavilion);

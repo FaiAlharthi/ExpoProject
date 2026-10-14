@@ -10,12 +10,12 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoadmapDTO {
+public class RoadmapResponse {
     private Integer roadmapId;
     private LocalDate visitDate;
     private String planType;
     private String summary;
     private Boolean aiUsed;
-    private List<RoadmapBreakDTO> breaks;
-    private List<RoadmapStopDTO> stops;
+    private List<RoadmapBreakResponse> breaks;
+    private List<RoadmapStopResponse> stops;
 }

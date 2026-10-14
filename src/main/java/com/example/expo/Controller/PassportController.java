@@ -19,6 +19,11 @@ public class PassportController {
         return ResponseEntity.status(200).body(passportService.getAllPassports());
     }
 
+    @GetMapping("/visitor/{visitorId}")
+    public ResponseEntity<?> getVisitorPassport(@PathVariable Integer visitorId){
+        return ResponseEntity.status(200).body(passportService.getVisitorPassport(visitorId));
+    }
+
     @DeleteMapping("/deletePassport/{id}")
     public ResponseEntity<?> deletePassport(@PathVariable Integer id){
         passportService.deletePassport(id);

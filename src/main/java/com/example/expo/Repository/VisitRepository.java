@@ -27,5 +27,8 @@ public interface VisitRepository extends JpaRepository<Visit, Integer> {
     List<Visit> findVisitsByPassportAndIsVisitedTrue(Passport passport);
 
     // planned stop for this pavilion in the roadmap
+    // all real visits, used in the admin dashboard
+    List<Visit> findVisitsByIsVisitedTrue();
+
     Visit findVisitByRoadmapAndPavilionAndIsVisitedFalse(Roadmap roadmap, Pavilion pavilion);
 }

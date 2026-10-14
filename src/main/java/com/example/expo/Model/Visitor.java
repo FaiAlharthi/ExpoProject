@@ -46,9 +46,6 @@ public class Visitor {
     private Profile profile;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "visitor")
-    private AiChatbot aiChatbot;
-
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "visitor")
     private Passport passport;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "visitor")

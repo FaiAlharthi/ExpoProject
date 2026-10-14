@@ -32,27 +32,16 @@ public class VisitService {
         return visitRepository.findAll();
     }
 
+    // same as check-in but by passport, the visit goes to the passport only as checked in
     public void addVisit(Integer passportId, Integer pavilionId){
         Passport passport = passportRepository.findPassportById(passportId);
         if(passport == null){
             throw new ApiException("passport not found");
         }
-        Pavilion pavilion = pavilionRepository.findPavilionById(pavilionId);
-        if(pavilion == null){
-            throw new ApiException("pavilion not found");
+        if(passport.getVisitor() == null){
+            throw new ApiException("passport has no visitor");
         }
-        // one visit per pavilion per day
-        LocalDate today = LocalDate.now();
-        if(visitRepository.existsByPassportAndPavilionAndVisitedAtBetween(passport, pavilion, today.atStartOfDay(), today.atTime(LocalTime.MAX))){
-            throw new ApiException("this pavilion is already visited today");
-        }
-        Visit visit = new Visit();
-        visit.setVisitedAt(LocalDateTime.now());
-        visit.setIsVisited(true);
-        visit.setPassport(passport);
-        visit.setPavilion(pavilion);
-        visitRepository.save(visit);
-        updateExplorerLevel(passport);
+        checkIn(passport.getVisitor().getId(), pavilionId);
     }
 
     // works on any pavilion, if it is planned in today's roadmap it gets marked as visited
@@ -86,35 +75,26 @@ public class VisitService {
         visit.setIsVisited(true);
         visit.setVisitedAt(LocalDateTime.now());
         visitRepository.save(visit);
-        updateExplorerLevel(passport);
     }
 
+    // only planned stops can be deleted, a visited pavilion stays in the passport
     public void deleteVisit(Integer id){
         Visit visit = visitRepository.findVisitById(id);
         if(visit == null){
             throw new ApiException("visit not found");
         }
-        // planned stops have no passport yet
-        Passport passport = visit.getPassport();
-        if(passport != null){
-            passport.getVisits().remove(visit);
+        if(visit.getIsVisited()){
+            throw new ApiException("you cannot delete a visited pavilion");
         }
+        Roadmap roadmap = visit.getRoadmap();
         visitRepository.delete(visit);
-        if(passport != null){
-            updateExplorerLevel(passport);
+        // keep the roadmap order 1, 2, 3...
+        if(roadmap != null){
+            int order = 0;
+            for(Visit stop : visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap)){
+                stop.setStopOrder(++order);
+                visitRepository.save(stop);
+            }
         }
-    }
-
-    // BRONZE 0+, SILVER 10+, GOLD 25+
-    private void updateExplorerLevel(Passport passport){
-        Long visitsCount = visitRepository.countByPassportAndIsVisitedTrue(passport);
-        if(visitsCount >= 25){
-            passport.setExplorerLevel("GOLD");
-        }else if(visitsCount >= 10){
-            passport.setExplorerLevel("SILVER");
-        }else{
-            passport.setExplorerLevel("BRONZE");
-        }
-        passportRepository.save(passport);
     }
 }

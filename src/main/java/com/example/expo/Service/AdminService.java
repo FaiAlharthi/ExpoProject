@@ -1,6 +1,7 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
+import com.example.expo.Dto.Out.AdminResponse;
 import com.example.expo.Model.Admin;
 import com.example.expo.Model.Profile;
 import com.example.expo.Repository.AdminRepository;
@@ -8,6 +9,7 @@ import com.example.expo.Repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -16,8 +18,14 @@ public class AdminService {
     private final AdminRepository adminRepository;
     private final ProfileRepository profileRepository;
 
-    public List<Admin> getAllAdmins(){
-        return adminRepository.findAll();
+    public List<AdminResponse> getAllAdmins(){
+        List<AdminResponse> admins = new ArrayList<>();
+        for(Admin admin : adminRepository.findAll()){
+            Profile profile = admin.getProfile();
+            admins.add(new AdminResponse(admin.getId(), profile.getFullName(), profile.getUsername(), profile.getEmail(),
+                    profile.getPhone(), admin.getJobTitle()));
+        }
+        return admins;
     }
 
     public void addAdmin(Integer profileId, Admin admin){

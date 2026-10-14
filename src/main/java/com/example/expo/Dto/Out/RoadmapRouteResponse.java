@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoadmapRouteDTO {
+public class RoadmapRouteResponse {
     private List<String> visitOrder;   // أسماء الأجنحة بالترتيب
     private Double totalDistance;       // مجموع المشي
     private List<Location> route;       // كل النقاط اللي يمشي عليها

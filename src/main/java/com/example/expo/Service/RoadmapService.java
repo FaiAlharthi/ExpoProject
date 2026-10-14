@@ -1,11 +1,11 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
-import com.example.expo.Dto.In.GenerateRoadmapDTO;
-import com.example.expo.Dto.In.ReorderStopsDTO;
-import com.example.expo.Dto.Out.RoadmapBreakDTO;
-import com.example.expo.Dto.Out.RoadmapDTO;
-import com.example.expo.Dto.Out.RoadmapStopDTO;
+import com.example.expo.Dto.In.GenerateRoadmapRequest;
+import com.example.expo.Dto.In.ReorderStopsRequest;
+import com.example.expo.Dto.Out.RoadmapBreakResponse;
+import com.example.expo.Dto.Out.RoadmapResponse;
+import com.example.expo.Dto.Out.RoadmapStopResponse;
 import com.example.expo.Model.Entrance;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Interest;
@@ -79,7 +79,7 @@ public class RoadmapService {
     }
 
     // creates the day roadmap, or replaces it if it already exists
-    public RoadmapDTO generateRoadmap(Integer visitorId, Integer entranceId, GenerateRoadmapDTO dto){
+    public RoadmapResponse generateRoadmap(Integer visitorId, Integer entranceId, GenerateRoadmapRequest request){
         Visitor visitor = visitorRepository.findVisitorById(visitorId);
         if(visitor == null){
             throw new ApiException("visitor not found");
@@ -92,8 +92,8 @@ public class RoadmapService {
             throw new ApiException("add at least 3 interests first");
         }
         Set<Interest> extraInterests = new HashSet<>();
-        if(dto.getExtraInterestIds() != null){
-            for(Integer interestId : dto.getExtraInterestIds()){
+        if(request.getExtraInterestIds() != null){
+            for(Integer interestId : request.getExtraInterestIds()){
                 Interest interest = interestRepository.findInterestById(interestId);
                 if(interest == null){
                     throw new ApiException("interest not found");
@@ -101,7 +101,7 @@ public class RoadmapService {
                 extraInterests.add(interest);
             }
         }
-        Roadmap answers = toRoadmap(dto);
+        Roadmap answers = toRoadmap(request);
         checkDateAndTime(answers);
         if(answers.getVisitDate().isBefore(LocalDate.now())){
             throw new ApiException("cannot generate a roadmap for a past day");
@@ -160,26 +160,26 @@ public class RoadmapService {
         roadmapRepository.save(roadmap);
 
         saveStops(roadmap, ordered, lastOrder);
-        RoadmapDTO result = toRoadmapDTO(roadmap);
+        RoadmapResponse result = toRoadmapResponse(roadmap);
         result.setAiUsed(aiUsed);
         return result;
     }
 
-    public RoadmapDTO getStops(Integer roadmapId){
+    public RoadmapResponse getStops(Integer roadmapId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
             throw new ApiException("roadmap not found");
         }
-        return toRoadmapDTO(roadmap);
+        return toRoadmapResponse(roadmap);
     }
 
-    private RoadmapDTO toRoadmapDTO(Roadmap roadmap){
-        List<RoadmapBreakDTO> breaks = new ArrayList<>();
+    private RoadmapResponse toRoadmapResponse(Roadmap roadmap){
+        List<RoadmapBreakResponse> breaks = new ArrayList<>();
         if(roadmap.getAiBreaks() != null){
             try{
                 for(Object item : objectMapper.readValue(roadmap.getAiBreaks(), List.class)){
                     Map<?, ?> b = (Map<?, ?>) item;
-                    breaks.add(new RoadmapBreakDTO(
+                    breaks.add(new RoadmapBreakResponse(
                             b.get("type") == null ? null : b.get("type").toString(),
                             b.get("time") == null ? null : b.get("time").toString(),
                             b.get("minutes") instanceof Number n ? n.intValue() : null,
@@ -189,33 +189,33 @@ public class RoadmapService {
                 breaks = new ArrayList<>();
             }
         }
-        List<RoadmapStopDTO> stops = new ArrayList<>();
+        List<RoadmapStopResponse> stops = new ArrayList<>();
         for(Visit visit : visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap)){
             Pavilion pavilion = visit.getPavilion();
-            stops.add(new RoadmapStopDTO(visit.getId(), visit.getStopOrder(), pavilion.getId(), pavilion.getName(),
+            stops.add(new RoadmapStopResponse(visit.getId(), visit.getStopOrder(), pavilion.getId(), pavilion.getName(),
                     pavilion.getCountry(), pavilion.getZone() == null ? null : pavilion.getZone().getName(),
                     pavilion.getImageUrl(), visit.getIsVisited(), visit.getVisitedAt()));
         }
         // a summary means the AI made this roadmap
-        return new RoadmapDTO(roadmap.getId(), roadmap.getVisitDate(), roadmap.getPlanType(), roadmap.getAiSummary(),
+        return new RoadmapResponse(roadmap.getId(), roadmap.getVisitDate(), roadmap.getPlanType(), roadmap.getAiSummary(),
                 roadmap.getAiSummary() != null, breaks, stops);
     }
 
-    private Roadmap toRoadmap(GenerateRoadmapDTO dto){
+    private Roadmap toRoadmap(GenerateRoadmapRequest request){
         Roadmap roadmap = new Roadmap();
         // a new or regenerated roadmap is always static
         roadmap.setPlanType("STATIC");
-        roadmap.setVisitDate(dto.getVisitDate());
-        roadmap.setPartyType(dto.getPartyType());
-        roadmap.setPartySize(dto.getPartySize());
-        roadmap.setArrivalTime(dto.getArrivalTime());
-        roadmap.setDepartureTime(dto.getDepartureTime());
-        roadmap.setExperienceTypes(dto.getExperienceTypes());
-        roadmap.setVisitPace(dto.getVisitPace());
-        roadmap.setIncludePrayerBreaks(dto.getIncludePrayerBreaks() != null && dto.getIncludePrayerBreaks());
-        roadmap.setIncludeMealBreaks(dto.getIncludeMealBreaks() != null && dto.getIncludeMealBreaks());
-        roadmap.setIncludeChildRestBreaks(dto.getIncludeChildRestBreaks() != null && dto.getIncludeChildRestBreaks());
-        roadmap.setAllowRevisits(dto.getAllowRevisits());
+        roadmap.setVisitDate(request.getVisitDate());
+        roadmap.setPartyType(request.getPartyType());
+        roadmap.setPartySize(request.getPartySize());
+        roadmap.setArrivalTime(request.getArrivalTime());
+        roadmap.setDepartureTime(request.getDepartureTime());
+        roadmap.setExperienceTypes(request.getExperienceTypes());
+        roadmap.setVisitPace(request.getVisitPace());
+        roadmap.setIncludePrayerBreaks(request.getIncludePrayerBreaks() != null && request.getIncludePrayerBreaks());
+        roadmap.setIncludeMealBreaks(request.getIncludeMealBreaks() != null && request.getIncludeMealBreaks());
+        roadmap.setIncludeChildRestBreaks(request.getIncludeChildRestBreaks() != null && request.getIncludeChildRestBreaks());
+        roadmap.setAllowRevisits(request.getAllowRevisits());
         return roadmap;
     }
 
@@ -316,20 +316,20 @@ public class RoadmapService {
     }
 
     // all roadmaps of the visitor, newest day first
-    public List<RoadmapDTO> getVisitorRoadmaps(Integer visitorId){
+    public List<RoadmapResponse> getVisitorRoadmaps(Integer visitorId){
         Visitor visitor = visitorRepository.findVisitorById(visitorId);
         if(visitor == null){
             throw new ApiException("visitor not found");
         }
-        List<RoadmapDTO> roadmaps = new ArrayList<>();
+        List<RoadmapResponse> roadmaps = new ArrayList<>();
         for(Roadmap roadmap : roadmapRepository.findRoadmapsByVisitorOrderByVisitDateDesc(visitor)){
-            roadmaps.add(toRoadmapDTO(roadmap));
+            roadmaps.add(toRoadmapResponse(roadmap));
         }
         return roadmaps;
     }
 
     // adds a pavilion in the chosen position, only after the visited stops
-    public RoadmapDTO addStop(Integer roadmapId, Integer pavilionId, Integer position){
+    public RoadmapResponse addStop(Integer roadmapId, Integer pavilionId, Integer position){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
             throw new ApiException("roadmap not found");
@@ -360,11 +360,11 @@ public class RoadmapService {
         stop.setIsVisited(false);
         stops.add(position - 1, stop);
         renumberStops(stops);
-        return toRoadmapDTO(roadmap);
+        return toRoadmapResponse(roadmap);
     }
 
     // only unvisited stops can be removed
-    public RoadmapDTO removeStop(Integer roadmapId, Integer visitId){
+    public RoadmapResponse removeStop(Integer roadmapId, Integer visitId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
             throw new ApiException("roadmap not found");
@@ -379,11 +379,11 @@ public class RoadmapService {
         }
         visitRepository.delete(stop);
         renumberStops(visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap));
-        return toRoadmapDTO(roadmap);
+        return toRoadmapResponse(roadmap);
     }
 
     // visited stops keep their place, unvisited stops take the new order
-    public RoadmapDTO reorderStops(Integer roadmapId, ReorderStopsDTO dto){
+    public RoadmapResponse reorderStops(Integer roadmapId, ReorderStopsRequest request){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
             throw new ApiException("roadmap not found");
@@ -396,8 +396,8 @@ public class RoadmapService {
                 unvisited.put(stop.getId(), stop);
             }
         }
-        if(dto.getVisitIds().size() != unvisited.size() || !unvisited.keySet().containsAll(dto.getVisitIds())
-                || new HashSet<>(dto.getVisitIds()).size() != dto.getVisitIds().size()){
+        if(request.getVisitIds().size() != unvisited.size() || !unvisited.keySet().containsAll(request.getVisitIds())
+                || new HashSet<>(request.getVisitIds()).size() != request.getVisitIds().size()){
             throw new ApiException("send every unvisited stop of this roadmap once");
         }
         List<Visit> reordered = new ArrayList<>();
@@ -406,11 +406,11 @@ public class RoadmapService {
             if(stop.getIsVisited()){
                 reordered.add(stop);
             }else{
-                reordered.add(unvisited.get(dto.getVisitIds().get(next++)));
+                reordered.add(unvisited.get(request.getVisitIds().get(next++)));
             }
         }
         renumberStops(reordered);
-        return toRoadmapDTO(roadmap);
+        return toRoadmapResponse(roadmap);
     }
 
     // only changes the type, the stops stay the same
@@ -428,7 +428,7 @@ public class RoadmapService {
     }
 
     // keeps the visited stops, regenerates the rest based on the reviews of the visited ones
-    public RoadmapDTO makeDynamic(Integer roadmapId){
+    public RoadmapResponse makeDynamic(Integer roadmapId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         if(roadmap == null){
             throw new ApiException("roadmap not found");
@@ -518,7 +518,7 @@ public class RoadmapService {
         roadmap.setPlanType("DYNAMIC");
         roadmapRepository.save(roadmap);
 
-        RoadmapDTO result = toRoadmapDTO(roadmap);
+        RoadmapResponse result = toRoadmapResponse(roadmap);
         result.setAiUsed(aiUsed);
         return result;
     }
@@ -634,13 +634,17 @@ public class RoadmapService {
         if(roadmap == null){
             throw new ApiException("roadmap not found");
         }
-        // keep visits, only unlink them
-        if(roadmap.getVisits() != null){
-            for(Visit visit : roadmap.getVisits()){
+        // planned stops are deleted, visited ones stay in the passport without the roadmap
+        for(Visit visit : visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap)){
+            if(visit.getIsVisited()){
                 visit.setRoadmap(null);
+                visit.setStopOrder(null);
                 visitRepository.save(visit);
+            }else{
+                visitRepository.delete(visit);
             }
         }
+        roadmap.setVisits(null);
         roadmapRepository.delete(roadmap);
     }
 
@@ -780,8 +784,9 @@ public class RoadmapService {
 
     // date must be in expo period, departure after arrival
     private void checkDateAndTime(Roadmap roadmap){
-        if(roadmap.getVisitDate().isBefore(LocalDate.of(2030, 10, 1)) || roadmap.getVisitDate().isAfter(LocalDate.of(2031, 3, 31))){
-            throw new ApiException("visit date must be between 2030-10-01 and 2031-03-31");
+        // test period with the same days as the real expo (2030-10-01 to 2031-03-31)
+        if(roadmap.getVisitDate().isBefore(LocalDate.of(2026, 10, 1)) || roadmap.getVisitDate().isAfter(LocalDate.of(2027, 3, 31))){
+            throw new ApiException("visit date must be between 2026-10-01 and 2027-03-31");
         }
         if(!roadmap.getDepartureTime().isAfter(roadmap.getArrivalTime())){
             throw new ApiException("departure time must be after arrival time");

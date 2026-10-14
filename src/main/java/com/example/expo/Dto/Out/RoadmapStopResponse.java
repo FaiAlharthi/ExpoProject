@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoadmapStopDTO {
+public class RoadmapStopResponse {
     private Integer visitId;
     private Integer stopOrder;
     private Integer pavilionId;

@@ -19,6 +19,11 @@ public class VisitorController {
         return ResponseEntity.status(200).body(visitorService.getAllVisitors());
     }
 
+    @GetMapping("/get/{id}")
+    public ResponseEntity<?> getVisitor(@PathVariable Integer id){
+        return ResponseEntity.status(200).body(visitorService.getVisitor(id));
+    }
+
     @PostMapping("/createVisitor/{profileId}")
     public ResponseEntity<?> createVisitor(@PathVariable Integer profileId, @RequestBody @Valid Visitor visitor){
         visitorService.addVisitor(profileId, visitor);
@@ -35,6 +40,12 @@ public class VisitorController {
     public ResponseEntity<?> addInterestToVisitor(@PathVariable Integer visitorId, @PathVariable Integer interestId){
         visitorService.addInterestToVisitor(visitorId, interestId);
         return ResponseEntity.status(200).body(new ApiResponse("interest added to visitor"));
+    }
+
+    @DeleteMapping("/{visitorId}/removeInterest/{interestId}")
+    public ResponseEntity<?> removeInterestFromVisitor(@PathVariable Integer visitorId, @PathVariable Integer interestId){
+        visitorService.removeInterestFromVisitor(visitorId, interestId);
+        return ResponseEntity.status(200).body(new ApiResponse("interest removed from visitor"));
     }
 
     @PutMapping("/updateVisitor/{id}")
