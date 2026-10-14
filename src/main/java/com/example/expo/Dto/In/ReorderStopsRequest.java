@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReorderStopsDTO {
+public class ReorderStopsRequest {
 
     @NotEmpty(message = "visit ids cannot be empty")
     private List<Integer> visitIds;

@@ -1,6 +1,8 @@
 package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
+import com.example.expo.Dto.Out.PavilionDetailsResponse;
+import com.example.expo.Dto.Out.PavilionReviewResponse;
 import com.example.expo.Model.*;
 import com.example.expo.Repository.*;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,25 @@ public class PavilionService {
     private final LocationRepository locationRepository;
     private final VisitorRepository visitorRepository;
     private final ReviewRepository reviewRepository;
+
+    // pavilion page with the reviews of the visitors
+    public PavilionDetailsResponse getPavilionDetails(Integer pavilionId){
+        Pavilion pavilion = pavilionRepository.findPavilionById(pavilionId);
+        if(pavilion == null){
+            throw new ApiException("Pavilion not found");
+        }
+        List<PavilionReviewResponse> reviews = new ArrayList<>();
+        for(Review review : reviewRepository.findReviewsByPavilionOrderByCreatedAtDesc(pavilion)){
+            String visitorName = review.getVisitor() == null || review.getVisitor().getUser() == null
+                    ? null : review.getVisitor().getUser().getFullName();
+            reviews.add(new PavilionReviewResponse(review.getId(), visitorName, review.getRating(), review.getComment(), review.getCreatedAt()));
+        }
+        Zone zone = pavilion.getZone();
+        Location location = pavilion.getLocation();
+        return new PavilionDetailsResponse(pavilion.getId(), pavilion.getName(), pavilion.getCountry(), pavilion.getDescription(),
+                pavilion.getImageUrl(), zone == null ? null : zone.getId(), zone == null ? null : zone.getName(),
+                location == null ? null : location.getX(), location == null ? null : location.getY(), reviews);
+    }
 
     public List<Pavilion>getAllPavilion(){
         return pavilionRepository.findAll();

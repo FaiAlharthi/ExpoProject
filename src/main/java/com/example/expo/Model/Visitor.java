@@ -43,10 +43,7 @@ public class Visitor {
     @OneToOne
     @MapsId
     @JsonIgnore
-    private Profile profile;
-
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "visitor")
-    private AiChatbot aiChatbot;
+    private User user;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "visitor")
     private Passport passport;

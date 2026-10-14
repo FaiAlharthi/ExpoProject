@@ -10,8 +10,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoadmapRouteDTO {
-    private List<String> visitOrder;   // أسماء الأجنحة بالترتيب
+public class RoadmapRouteResponse {
+    private List<RouteStopResponse> visitOrder;   // كل محطات الخطة بالترتيب، والمزارة isVisited = true
     private Double totalDistance;       // مجموع المشي
     private List<Location> route;       // كل النقاط اللي يمشي عليها
     private String exitEntrance;       // البوابة اللي يطلع منها

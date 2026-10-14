@@ -21,10 +21,6 @@ public class Passport {
     @Column(columnDefinition = "VARCHAR(13) UNIQUE")
     private String passportNumber; // Generated in service, e.g. EXPO30-000012
 
-    @Pattern(regexp = "^(BRONZE|SILVER|GOLD)$", message = "Explorer level must be BRONZE, SILVER or GOLD")
-    @Column(columnDefinition = "VARCHAR(6)")
-    private String explorerLevel; // Updated by visits count
-
     //Relations
     @OneToOne
     @JoinColumn

@@ -2,11 +2,13 @@ package com.example.expo.Controller;
 
 
 import com.example.expo.Api.ApiResponse;
+import com.example.expo.Model.User;
 import com.example.expo.Model.Review;
 import com.example.expo.Service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,21 +23,21 @@ public class ReviewController {
         return ResponseEntity.status(200).body(reviewService.getAllReviews());
     }
 
-    @PostMapping("/add/{visitorId}/{pavilionId}")
-    public ResponseEntity<?> addReview(@PathVariable Integer visitorId, @PathVariable Integer pavilionId, @RequestBody @Valid Review review) {
-        reviewService.addReview(visitorId, pavilionId, review);
+    @PostMapping("/add/{pavilionId}")
+    public ResponseEntity<?> addReview(@AuthenticationPrincipal User user, @PathVariable Integer pavilionId, @RequestBody @Valid Review review) {
+        reviewService.addReview(user.getId(), pavilionId, review);
         return ResponseEntity.status(200).body(new ApiResponse("Review added"));
     }
 
-    @PutMapping("/update/{visitorId}/{reviewId}")
-    public ResponseEntity<?> updateReview(@PathVariable Integer visitorId, @PathVariable Integer reviewId, @RequestBody @Valid Review review) {
-        reviewService.updateReview(visitorId, reviewId, review);
+    @PutMapping("/update/{reviewId}")
+    public ResponseEntity<?> updateReview(@AuthenticationPrincipal User user, @PathVariable Integer reviewId, @RequestBody @Valid Review review) {
+        reviewService.updateReview(user.getId(), reviewId, review);
         return ResponseEntity.status(200).body(new ApiResponse("Review updated"));
     }
 
-    @DeleteMapping("/delete/{visitorId}/{reviewId}")
-    public ResponseEntity<?> deleteReview(@PathVariable Integer visitorId, @PathVariable Integer reviewId) {
-        reviewService.deleteReview(visitorId, reviewId);
+    @DeleteMapping("/delete/{reviewId}")
+    public ResponseEntity<?> deleteReview(@AuthenticationPrincipal User user, @PathVariable Integer reviewId) {
+        reviewService.deleteReview(user, reviewId);
         return ResponseEntity.status(200).body(new ApiResponse("Review deleted"));
     }
 
@@ -44,14 +46,14 @@ public class ReviewController {
         return ResponseEntity.status(200).body(reviewService.getPavilionAverageRating(pavilionId));
     }
 
-    @GetMapping("/pending/{visitorId}")
-    public ResponseEntity<?> getPendingReviews(@PathVariable Integer visitorId) {
-        return ResponseEntity.status(200).body(reviewService.getPendingReviews(visitorId));
+    @GetMapping("/getPending")
+    public ResponseEntity<?> getPendingReviews(@AuthenticationPrincipal User user) {
+        return ResponseEntity.status(200).body(reviewService.getPendingReviews(user.getId()));
     }
 
-    @GetMapping("/visitor/{visitorId}")
-    public ResponseEntity<?> getVisitorReviews(@PathVariable Integer visitorId) {
-        return ResponseEntity.status(200).body(reviewService.getVisitorReviews(visitorId));
+    @GetMapping("/getMyReviews")
+    public ResponseEntity<?> getVisitorReviews(@AuthenticationPrincipal User user) {
+        return ResponseEntity.status(200).body(reviewService.getVisitorReviews(user.getId()));
     }
 
     @GetMapping("/pavilion/{pavilionId}/latest")

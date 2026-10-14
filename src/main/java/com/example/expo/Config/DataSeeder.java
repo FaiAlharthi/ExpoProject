@@ -1,6 +1,7 @@
 package com.example.expo.Config;
 
 import com.example.expo.Model.Entrance;
+import com.example.expo.Model.Interest;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Passport;
 import com.example.expo.Model.Path;
@@ -8,6 +9,7 @@ import com.example.expo.Model.Pavilion;
 import com.example.expo.Model.Visitor;
 import com.example.expo.Model.Zone;
 import com.example.expo.Repository.EntranceRepository;
+import com.example.expo.Repository.InterestRepository;
 import com.example.expo.Repository.LocationRepository;
 import com.example.expo.Repository.PassportRepository;
 import com.example.expo.Repository.PathRepository;
@@ -40,6 +42,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PathRepository pathRepository;
     private final VisitorRepository visitorRepository;
     private final PassportRepository passportRepository;
+    private final InterestRepository interestRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -52,7 +55,25 @@ public class DataSeeder implements CommandLineRunner {
         if(pathRepository.count() == 0 && data.getPaths() != null){
             seedPaths(data);
         }
+        if(data.getInterests() != null){
+            seedInterests(data);
+        }
         addMissingPassports();
+    }
+
+    // adds the fixed interests that are missing, and fills the arabic name of old ones
+    private void seedInterests(SeedData data){
+        for(SeedInterest seedInterest : data.getInterests()){
+            Interest interest = interestRepository.findInterestByName(seedInterest.getName());
+            if(interest == null){
+                interest = new Interest();
+                interest.setName(seedInterest.getName());
+            }else if(interest.getNameAr() != null && !interest.getNameAr().isBlank()){
+                continue;
+            }
+            interest.setNameAr(seedInterest.getNameAr());
+            interestRepository.save(interest);
+        }
     }
 
     // visitors registered before passports were automatic
@@ -61,7 +82,6 @@ public class DataSeeder implements CommandLineRunner {
             if(visitor.getPassport() == null){
                 Passport passport = new Passport();
                 passport.setPassportNumber(String.format("EXPO30-%06d", visitor.getId()));
-                passport.setExplorerLevel("BRONZE");
                 passport.setVisitor(visitor);
                 passportRepository.save(passport);
             }
@@ -142,6 +162,15 @@ public class DataSeeder implements CommandLineRunner {
         private List<SeedEntrance> entrances;
         private List<SeedPavilion> pavilions;
         private List<SeedPath> paths;
+        private List<SeedInterest> interests;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SeedInterest {
+        private String name;
+        private String nameAr;
     }
 
     @Data
