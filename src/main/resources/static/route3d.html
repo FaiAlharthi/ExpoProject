@@ -90,6 +90,10 @@
     .zone-label { font-family: var(--font-display); font-size: 15px; fill: var(--accent); }
     .pav { cursor: pointer; }
     .pav:focus-visible circle.ring { stroke: var(--accent); stroke-width: 3; }
+    /* ---------- أزرار شكل الخريطة ---------- */
+    .view-row { display: inline-flex; align-items: center; gap: 6px; margin-inline-start: auto; font-size: 13px; color: var(--muted); }
+    .map-wrap { position: relative; }
+
     @media (prefers-reduced-motion: no-preference) {
       .draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw 1.1s ease-out forwards; }
       @keyframes draw { to { stroke-dashoffset: 0; } }
@@ -113,8 +117,14 @@
         <button class="mode-btn" data-mode="dijkstra" aria-pressed="true">Dijkstra على الممرات</button>
         <button class="mode-btn" data-mode="straight" aria-pressed="false">خط مستقيم</button>
         <button class="mode-btn" data-mode="both" aria-pressed="false">قارني الاثنين</button>
+        <div class="view-row">شكل الخريطة
+          <button class="mode-btn view-btn" data-view="diagram" aria-pressed="true">مخطط</button>
+          <button class="mode-btn view-btn" data-view="art" aria-pressed="false">مرسومة 🎨</button>
+        </div>
       </div>
-      <svg id="map" viewBox="0 0 1000 770" role="img"></svg>
+      <div class="map-wrap">
+        <svg id="map" viewBox="0 0 1000 770" role="img"></svg>
+      </div>
       <div class="legend">
         <span><i class="sw" style="border-color:var(--route)"></i>مسار المشي (Dijkstra)</span>
         <span><i class="sw" style="border-color:var(--straight);border-top-style:dashed"></i>خط مستقيم</span>
@@ -161,6 +171,9 @@
   let picked = new Set(), mode = "dijkstra";
   let fixedOrder = null; // ترتيب الرحلة من الباك إند (stopOrder)، null = نرتب هنا
   let aiSummary = "";    // ملخص الـ AI للرحلة
+  let view = "diagram";  // "diagram" مخطط ، "art" مرسومة
+  let bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 770 }; // حدود الخريطة
+  let viewBox2d = "0 0 1000 770"; // نرجع له في المخطط بعد التقريب في المرسومة
   const cache = {}; // نخزن نتائج Dijkstra عشان ما نكرر الطلب
 
   async function api(url) {
@@ -256,8 +269,10 @@
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
     center = plaza || { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
     big = pavilions.length > 20;
+    bounds = plaza ? { minX: 0, maxX: 1000, minY: 0, maxY: 770 } : { minX: minX - 90, maxX: maxX + 90, minY: minY - 60, maxY: maxY + 60 };
     if (plaza) svg.setAttribute("viewBox", "0 0 1000 770");
     else svg.setAttribute("viewBox", `${minX - 90} ${minY - 60} ${maxX - minX + 180} ${maxY - minY + 120}`);
+    viewBox2d = svg.getAttribute("viewBox");
 
     // نقطة البداية: البوابات أول
     const startSel = document.getElementById("start");
@@ -323,6 +338,17 @@
   }
   function syncChips() { pavilions.forEach(p => { const c = document.getElementById("chk-" + p.location.id); if (c) c.checked = picked.has(p.location.id); }); }
 
+  // ---------- أدوات تحتاجها الخريطة المرسومة ----------
+  // نص قطر الزون: يكفي لكل أجنحته
+  function zoneRadius(z) {
+    let r = 60;
+    pavilions.forEach(p => { if (zoneOf(p) === z) r = Math.max(r, Math.hypot(p.location.x - z.location.x, p.location.y - z.location.y) + 30); });
+    return r;
+  }
+  // علم كل دولة
+  const FLAGS = { "Japan":"JP","United States":"US","China":"CN","South Korea":"KR","Singapore":"SG","United Arab Emirates":"AE","United Kingdom":"GB","Luxembourg":"LU","Czech Republic":"CZ","India":"IN","Kuwait":"KW","Switzerland":"CH","Germany":"DE","Netherlands":"NL","Australia":"AU","Canada":"CA","Portugal":"PT","Spain":"ES","Indonesia":"ID","Malaysia":"MY","Brazil":"BR","Colombia":"CO","Oman":"OM","Chile":"CL","Thailand":"TH","Belgium":"BE","Philippines":"PH","Bangladesh":"BD","Angola":"AO","Senegal":"SN","Nepal":"NP","Cambodia":"KH","Peru":"PE","Poland":"PL","Ireland":"IE","Italy":"IT","France":"FR","Austria":"AT","Hungary":"HU","Egypt":"EG","Jordan":"JO","Uzbekistan":"UZ","Turkiye":"TR","Turkmenistan":"TM","Tunisia":"TN","Algeria":"DZ","Vietnam":"VN","Saudi Arabia":"SA","Qatar":"QA","Bahrain":"BH","Azerbaijan":"AZ","Serbia":"RS","Romania":"RO","Bulgaria":"BG","Malta":"MT","Monaco":"MC" };
+  const flagOf = c => FLAGS[c] ? String.fromCodePoint(...[...FLAGS[c]].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65)) : "";
+
   // ---------- الرسم ----------
   const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).appendChild(e); return e; };
 
@@ -338,6 +364,7 @@
     if (myId !== renderId) return; // فيه رسم أحدث
 
     svg.innerHTML = "";
+    svg.setAttribute("viewBox", viewBox2d);
     const P = center;
 
     // الوادي (زينة) مع خريطة البتلات بس
@@ -415,6 +442,9 @@
     const exitLeg = shown.find(s => s.exit);
     if (exitLeg) el("circle", { cx: locations[exitLeg.to].x, cy: locations[exitLeg.to].y, r: 22, fill: "none", stroke: "var(--route)", "stroke-width": 3, "stroke-dasharray": "5 4" });
 
+    // مرسومة: ملف mapart.js يرسم الصورة والمسار فوقها
+    if (view === "art" && window.drawArt) window.drawArt(start, walk, line, shown);
+
     // النتيجة
     const sum = (legs, k) => legs.reduce((a, l) => a + (l[k] || 0), 0);
     document.getElementById("t-walk").textContent = m(sum(shown, "walk")) + " م";
@@ -466,11 +496,19 @@
   });
 
   // ---------- الأزرار ----------
-  document.querySelectorAll(".mode-btn").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".mode-btn[data-mode]").forEach(b => b.addEventListener("click", () => {
     mode = b.dataset.mode;
-    document.querySelectorAll(".mode-btn").forEach(x => x.setAttribute("aria-pressed", x === b));
+    document.querySelectorAll(".mode-btn[data-mode]").forEach(x => x.setAttribute("aria-pressed", x === b));
     render();
   }));
+  // مخطط / مرسومة
+  function setView(v) {
+    view = v;
+    document.querySelectorAll(".view-btn").forEach(x => x.setAttribute("aria-pressed", x.dataset.view === v));
+    try { localStorage.setItem("expoView", v); } catch (e) {}
+  }
+  document.querySelectorAll(".view-btn").forEach(b => b.addEventListener("click", () => { setView(b.dataset.view); render(); }));
+  try { const v = localStorage.getItem("expoView"); if (v === "art") setView(v); } catch (e) {}
   document.getElementById("theme").addEventListener("click", e => {
     const root = document.documentElement;
     const dark = root.getAttribute("data-theme") === "dark";
@@ -480,5 +518,6 @@
 
   load();
 </script>
+<script src="mapart.js"></script>
 </body>
 </html>
