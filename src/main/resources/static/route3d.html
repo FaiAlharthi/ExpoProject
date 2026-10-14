@@ -177,9 +177,11 @@
   const cache = {}; // نخزن نتائج Dijkstra عشان ما نكرر الطلب
 
   async function api(url) {
-    const res = await fetch(API + url);
+    const res = await fetch(API + url, { credentials: "same-origin" }); // يرسل تسجيل الدخول مع الطلب
     const text = await res.text();
     let data; try { data = JSON.parse(text); } catch (e) { data = text; }
+    if (res.status === 401) throw new Error("لازم تسجلين دخول كزائر عشان تشوفين الرحلة");
+    if (res.status === 403) throw new Error("هذي الرحلة مو لك، سجلي دخول بحساب صاحبها");
     if (!res.ok) throw new Error((data && data.message) || ("خطأ " + res.status));
     return data;
   }
@@ -485,12 +487,13 @@
       picked = new Set(order);
 
       // نقطة البداية = بوابة الرحلة
-      const all = await api("/roadmap/getAll");
-      const rm = all.find(r => r.id == id);
-      const sel = document.getElementById("start");
-      if (rm && rm.entrance && rm.entrance.location && sel.querySelector(`option[value="${rm.entrance.location.id}"]`)) {
-        sel.value = rm.entrance.location.id;
-      }
+      // نقطة البداية = بوابة الرحلة (أول نقطة في مسار الرحلة من الباك إند)
+      try {
+        const routeData = await api(`/path/roadmap/${id}`);
+        const first = routeData.route && routeData.route[0];
+        const sel = document.getElementById("start");
+        if (first && sel.querySelector(`option[value="${first.id}"]`)) sel.value = first.id;
+      } catch (e) { /* لو ما قدرنا نجيبها نخلي البداية زي ما هي */ }
       syncChips(); render();
     } catch (e) { err(e.message); }
   });
