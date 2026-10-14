@@ -20,6 +20,7 @@ public class PavilionService {
     private final LocationRepository locationRepository;
     private final VisitorRepository visitorRepository;
     private final ReviewRepository reviewRepository;
+    private final StampRepository stampRepository;
 
     // pavilion page with the reviews of the visitors
     public PavilionDetailsResponse getPavilionDetails(Integer pavilionId){
@@ -61,7 +62,13 @@ public class PavilionService {
         }
         pavilion.setZone(zone);
         pavilion.setLocation(location);
-        pavilionRepository.save(pavilion);
+        Pavilion savedPavilion = pavilionRepository.save(pavilion);
+
+        // every pavilion gets its own stamp, the design (imageUrl) can be added later
+        Stamp stamp = new Stamp();
+        stamp.setTitle(savedPavilion.getName() + " Stamp");
+        stamp.setPavilion(savedPavilion);
+        stampRepository.save(stamp);
     }
 
     public void updatePavilion(Integer id, Pavilion pavilion){

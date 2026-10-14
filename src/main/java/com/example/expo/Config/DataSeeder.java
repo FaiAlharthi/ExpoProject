@@ -1,21 +1,7 @@
 package com.example.expo.Config;
 
-import com.example.expo.Model.Entrance;
-import com.example.expo.Model.Interest;
-import com.example.expo.Model.Location;
-import com.example.expo.Model.Passport;
-import com.example.expo.Model.Path;
-import com.example.expo.Model.Pavilion;
-import com.example.expo.Model.Visitor;
-import com.example.expo.Model.Zone;
-import com.example.expo.Repository.EntranceRepository;
-import com.example.expo.Repository.InterestRepository;
-import com.example.expo.Repository.LocationRepository;
-import com.example.expo.Repository.PassportRepository;
-import com.example.expo.Repository.PathRepository;
-import com.example.expo.Repository.PavilionRepository;
-import com.example.expo.Repository.VisitorRepository;
-import com.example.expo.Repository.ZoneRepository;
+import com.example.expo.Model.*;
+import com.example.expo.Repository.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,6 +29,7 @@ public class DataSeeder implements CommandLineRunner {
     private final VisitorRepository visitorRepository;
     private final PassportRepository passportRepository;
     private final InterestRepository interestRepository;
+    private final StampRepository stampRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -59,6 +46,19 @@ public class DataSeeder implements CommandLineRunner {
             seedInterests(data);
         }
         addMissingPassports();
+        addMissingStamps();
+    }
+
+    // every pavilion has one stamp, covers seeded pavilions and ones created before stamps existed
+    private void addMissingStamps() {
+        for (Pavilion pavilion : pavilionRepository.findAll()) {
+            if (stampRepository.findStampByPavilion(pavilion) == null) {
+                Stamp stamp = new Stamp();
+                stamp.setTitle(pavilion.getName() + " Stamp");
+                stamp.setPavilion(pavilion);
+                stampRepository.save(stamp);
+            }
+        }
     }
 
     // adds the fixed interests that are missing, and fills the arabic name of old ones
