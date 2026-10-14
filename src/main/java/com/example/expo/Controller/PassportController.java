@@ -22,4 +22,10 @@ public class PassportController {
     public ResponseEntity<?> getMyPassport(@AuthenticationPrincipal User user){
         return ResponseEntity.status(200).body(passportService.getVisitorPassport(user.getId()));
     }
+
+    // all stamps with earned true/false, so the app shows collected ones in color and the rest faded
+    @GetMapping("/getStamps/{passportId}")
+    public ResponseEntity<?> getPassportStamps(@PathVariable Integer passportId){
+        return ResponseEntity.status(200).body(passportService.getPassportStamps(passportId));
+    }
 }

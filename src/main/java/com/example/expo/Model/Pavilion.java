@@ -51,5 +51,9 @@ public class Pavilion {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "pavilion")
     @JsonIgnore
     private Set<Visit> visits;
+    
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "pavilion")
+    @JsonIgnore
+    private Stamp stamp; // the stamp a passport earns by visiting this pavilion
 
 }
