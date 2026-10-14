@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import com.example.expo.Model.Entrance;
 import com.example.expo.Repository.EntranceRepository;
+import com.example.expo.Model.Zone;
+import com.example.expo.Repository.PavilionRepository;
+import com.example.expo.Repository.ZoneRepository;
 
 
 @Service
@@ -30,6 +33,8 @@ public class PathService {
     private final LocationRepository locationRepository;
     private final RoadmapRepository roadmapRepository;
     private final EntranceRepository entranceRepository;
+    private final ZoneRepository zoneRepository;
+    private final PavilionRepository pavilionRepository;
 
     public List<Path> getAllPaths(){
         return pathRepository.findAll();
@@ -147,7 +152,141 @@ public class PathService {
         }
         return buildRoute(roadmap, start);
     }
+    // ===== يولّد الممرات تلقائي من أماكن الزونات والأجنحة والبوابات =====
+    public Integer generatePaths(){
+        int added = 0;
+        List<Zone> zones = zoneRepository.findAll();
 
+        // وسط كل زون
+        List<Location> hubs = new ArrayList<>();
+        for(Zone zone : zones){
+            if(zone.getLocation() != null){
+                hubs.add(zone.getLocation());
+            }
+        }
+
+        // 1) داخل كل زون
+        for(Zone zone : zones){
+            Location hub = zone.getLocation();
+            if(hub == null){
+                continue;
+            }
+            List<Pavilion> pavilions = pavilionRepository.findPavilionByZone(zone);
+            for(Pavilion pavilion : pavilions){
+                Location here = pavilion.getLocation();
+                if(here == null){
+                    continue;
+                }
+                // ممر للداخل: لأقرب نقطة أقرب منه لوسط الزون (الوسط نفسه أو جناح ثاني)
+                Location inner = hub;
+                double bestInner = distance(here, hub);
+                // ممر جانبي: لأقرب جناح جنبه
+                Location side = null;
+                double bestSide = Double.MAX_VALUE;
+
+                for(Pavilion other : pavilions){
+                    Location there = other.getLocation();
+                    if(there == null || other.getId().equals(pavilion.getId())){
+                        continue;
+                    }
+                    double d = distance(here, there);
+                    if(distance(there, hub) < distance(here, hub) && d < bestInner){
+                        bestInner = d;
+                        inner = there;
+                    }
+                    if(d < bestSide){
+                        bestSide = d;
+                        side = there;
+                    }
+                }
+                added = added + connect(here, inner);
+                if(side != null){
+                    added = added + connect(here, side);
+                }
+            }
+        }
+
+        // 2) كل زون توصل بأقرب زونين
+        for(Location hub : hubs){
+            for(Location near : twoNearest(hub, hubs)){
+                added = added + connect(hub, near);
+            }
+        }
+
+        // 3) كل بوابة توصل بأقرب زونين
+        for(Entrance entrance : entranceRepository.findAll()){
+            if(entrance.getLocation() == null){
+                continue;
+            }
+            for(Location near : twoNearest(entrance.getLocation(), hubs)){
+                added = added + connect(entrance.getLocation(), near);
+            }
+        }
+        return added;
+    }
+
+    // أقرب نقطتين من القائمة
+    private List<Location> twoNearest(Location from, List<Location> options){
+        Location first = null;
+        Location second = null;
+        double firstDistance = Double.MAX_VALUE;
+        double secondDistance = Double.MAX_VALUE;
+        for(Location option : options){
+            if(option.getId().equals(from.getId())){
+                continue;
+            }
+            double d = distance(from, option);
+            if(d < firstDistance){
+                second = first;
+                secondDistance = firstDistance;
+                first = option;
+                firstDistance = d;
+            } else if(d < secondDistance){
+                second = option;
+                secondDistance = d;
+            }
+        }
+        List<Location> result = new ArrayList<>();
+        if(first != null){
+            result.add(first);
+        }
+        if(second != null){
+            result.add(second);
+        }
+        return result;
+    }
+
+    // يضيف ممر إذا مو موجود، ويرجع 1 إذا انضاف
+    private int connect(Location a, Location b){
+        if(a.getId().equals(b.getId())){
+            return 0;
+        }
+        if(pathRepository.findPathByFromLocationAndToLocation(a, b) != null
+                || pathRepository.findPathByFromLocationAndToLocation(b, a) != null){
+            return 0;
+        }
+        Path path = new Path();
+        path.setFromLocation(a);
+        path.setToLocation(b);
+        path.setDistance(distance(a, b));
+        pathRepository.save(path);
+        return 1;
+    }
+
+    private double distance(Location a, Location b){
+        double dx = a.getX() - b.getX();
+        double dy = a.getY() - b.getY();
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // مسافة المشي بين نقطتين على الممرات (Dijkstra)، وإذا ما فيه ممر نرجع للخط المستقيم
+    public Double getWalkingDistance(Location from, Location to){
+        try {
+            return getShortestPath(from.getId(), to.getId()).getTotalDistance();
+        } catch (ApiException e) {
+            return distance(from, to);
+        }
+    }
     // ===== مسار الرحلة من بوابة الدخول اللي اختارها الزائر =====
     public RoadmapRouteDTO getRoadmapRouteFromEntrance(Integer roadmapId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
@@ -229,4 +368,5 @@ public class PathService {
 
         return new RoadmapRouteDTO(visitOrder, totalDistance, fullRoute, exitEntrance);
     }
+
 }

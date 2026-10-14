@@ -2,6 +2,7 @@ package com.example.expo.Service;
 
 import com.example.expo.Api.ApiException;
 import com.example.expo.Dto.In.GenerateRoadmapDTO;
+import com.example.expo.Dto.In.ReorderStopsDTO;
 import com.example.expo.Dto.Out.RoadmapBreakDTO;
 import com.example.expo.Dto.Out.RoadmapDTO;
 import com.example.expo.Dto.Out.RoadmapStopDTO;
@@ -202,7 +203,8 @@ public class RoadmapService {
 
     private Roadmap toRoadmap(GenerateRoadmapDTO dto){
         Roadmap roadmap = new Roadmap();
-        roadmap.setPlanType(dto.getPlanType());
+        // a new or regenerated roadmap is always static
+        roadmap.setPlanType("STATIC");
         roadmap.setVisitDate(dto.getVisitDate());
         roadmap.setPartyType(dto.getPartyType());
         roadmap.setPartySize(dto.getPartySize());
@@ -311,6 +313,304 @@ public class RoadmapService {
             }
         }
         return selected;
+    }
+
+    // all roadmaps of the visitor, newest day first
+    public List<RoadmapDTO> getVisitorRoadmaps(Integer visitorId){
+        Visitor visitor = visitorRepository.findVisitorById(visitorId);
+        if(visitor == null){
+            throw new ApiException("visitor not found");
+        }
+        List<RoadmapDTO> roadmaps = new ArrayList<>();
+        for(Roadmap roadmap : roadmapRepository.findRoadmapsByVisitorOrderByVisitDateDesc(visitor)){
+            roadmaps.add(toRoadmapDTO(roadmap));
+        }
+        return roadmaps;
+    }
+
+    // adds a pavilion in the chosen position, only after the visited stops
+    public RoadmapDTO addStop(Integer roadmapId, Integer pavilionId, Integer position){
+        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
+        if(roadmap == null){
+            throw new ApiException("roadmap not found");
+        }
+        checkNotPast(roadmap);
+        Pavilion pavilion = pavilionRepository.findPavilionById(pavilionId);
+        if(pavilion == null){
+            throw new ApiException("pavilion not found");
+        }
+        List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
+        int lastVisitedIndex = -1;
+        for(int i = 0; i < stops.size(); i++){
+            if(stops.get(i).getPavilion().getId().equals(pavilionId)){
+                throw new ApiException("pavilion is already in this roadmap");
+            }
+            if(stops.get(i).getIsVisited()){
+                lastVisitedIndex = i;
+            }
+        }
+        int minPosition = lastVisitedIndex + 2;
+        int maxPosition = stops.size() + 1;
+        if(position == null || position < minPosition || position > maxPosition){
+            throw new ApiException("position must be between " + minPosition + " and " + maxPosition);
+        }
+        Visit stop = new Visit();
+        stop.setRoadmap(roadmap);
+        stop.setPavilion(pavilion);
+        stop.setIsVisited(false);
+        stops.add(position - 1, stop);
+        renumberStops(stops);
+        return toRoadmapDTO(roadmap);
+    }
+
+    // only unvisited stops can be removed
+    public RoadmapDTO removeStop(Integer roadmapId, Integer visitId){
+        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
+        if(roadmap == null){
+            throw new ApiException("roadmap not found");
+        }
+        checkNotPast(roadmap);
+        Visit stop = visitRepository.findVisitById(visitId);
+        if(stop == null || stop.getRoadmap() == null || !stop.getRoadmap().getId().equals(roadmapId)){
+            throw new ApiException("stop not found in this roadmap");
+        }
+        if(stop.getIsVisited()){
+            throw new ApiException("you cannot remove a visited pavilion");
+        }
+        visitRepository.delete(stop);
+        renumberStops(visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap));
+        return toRoadmapDTO(roadmap);
+    }
+
+    // visited stops keep their place, unvisited stops take the new order
+    public RoadmapDTO reorderStops(Integer roadmapId, ReorderStopsDTO dto){
+        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
+        if(roadmap == null){
+            throw new ApiException("roadmap not found");
+        }
+        checkNotPast(roadmap);
+        List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
+        Map<Integer, Visit> unvisited = new HashMap<>();
+        for(Visit stop : stops){
+            if(!stop.getIsVisited()){
+                unvisited.put(stop.getId(), stop);
+            }
+        }
+        if(dto.getVisitIds().size() != unvisited.size() || !unvisited.keySet().containsAll(dto.getVisitIds())
+                || new HashSet<>(dto.getVisitIds()).size() != dto.getVisitIds().size()){
+            throw new ApiException("send every unvisited stop of this roadmap once");
+        }
+        List<Visit> reordered = new ArrayList<>();
+        int next = 0;
+        for(Visit stop : stops){
+            if(stop.getIsVisited()){
+                reordered.add(stop);
+            }else{
+                reordered.add(unvisited.get(dto.getVisitIds().get(next++)));
+            }
+        }
+        renumberStops(reordered);
+        return toRoadmapDTO(roadmap);
+    }
+
+    // only changes the type, the stops stay the same
+    public void makeStatic(Integer roadmapId){
+        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
+        if(roadmap == null){
+            throw new ApiException("roadmap not found");
+        }
+        checkNotPast(roadmap);
+        if(roadmap.getPlanType().equals("STATIC")){
+            throw new ApiException("roadmap is already static");
+        }
+        roadmap.setPlanType("STATIC");
+        roadmapRepository.save(roadmap);
+    }
+
+    // keeps the visited stops, regenerates the rest based on the reviews of the visited ones
+    public RoadmapDTO makeDynamic(Integer roadmapId){
+        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
+        if(roadmap == null){
+            throw new ApiException("roadmap not found");
+        }
+        checkNotPast(roadmap);
+        Visitor visitor = roadmap.getVisitor();
+        List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
+        List<Visit> visitedStops = new ArrayList<>();
+        List<Visit> plannedStops = new ArrayList<>();
+        for(Visit stop : stops){
+            if(stop.getIsVisited()){
+                visitedStops.add(stop);
+            }else{
+                plannedStops.add(stop);
+            }
+        }
+        if(plannedStops.isEmpty()){
+            throw new ApiException("there are no remaining stops to change");
+        }
+        List<Review> todayReviews = new ArrayList<>();
+        for(Visit stop : visitedStops){
+            Review review = reviewRepository.findReviewByVisitorAndPavilion(visitor, stop.getPavilion());
+            if(review != null){
+                todayReviews.add(review);
+            }
+        }
+        if(todayReviews.isEmpty()){
+            throw new ApiException("you have not visited and reviewed any of today's suggested pavilions yet!");
+        }
+
+        int stopsCount = plannedStops.size();
+        Set<Integer> visitedToday = new HashSet<>();
+        List<Pavilion> candidates = selectPavilions(visitor, roadmap, visitedToday);
+        Set<Integer> visitedIds = new HashSet<>();
+        for(Visit stop : visitedStops){
+            visitedIds.add(stop.getPavilion().getId());
+        }
+        candidates.removeIf(pavilion -> visitedIds.contains(pavilion.getId()));
+        if(candidates.isEmpty()){
+            throw new ApiException("no other pavilions are available today");
+        }
+        // start from the last visited pavilion
+        Location start = visitedStops.get(visitedStops.size() - 1).getPavilion().getLocation();
+        if(start == null){
+            start = roadmap.getEntrance().getLocation();
+        }
+
+        List<Pavilion> selected;
+        boolean aiUsed = false;
+        try{
+            Map<?, ?> aiAnswer = objectMapper.readValue(geminiService.ask(buildDynamicPrompt(visitor, roadmap, todayReviews, candidates, stopsCount)), Map.class);
+            selected = readSelectedPavilions(aiAnswer, candidates);
+            if(selected.isEmpty()){
+                throw new ApiException("AI selected no pavilions");
+            }
+            if(aiAnswer.get("summary") != null){
+                roadmap.setAiSummary(aiAnswer.get("summary").toString());
+            }
+            aiUsed = true;
+        }catch(Exception e){
+            // AI failed, use the zones the visitor liked
+            System.out.println("AI dynamic roadmap failed: " + e.getMessage());
+            selected = new ArrayList<>();
+        }
+        if(selected.size() > stopsCount){
+            selected = new ArrayList<>(selected.subList(0, stopsCount));
+        }
+        if(selected.size() < stopsCount){
+            Set<Integer> selectedIds = new HashSet<>();
+            for(Pavilion pavilion : selected){
+                selectedIds.add(pavilion.getId());
+            }
+            for(Pavilion pavilion : rankByReviews(start, candidates, todayReviews)){
+                if(selected.size() == stopsCount){
+                    break;
+                }
+                if(selectedIds.add(pavilion.getId())){
+                    selected.add(pavilion);
+                }
+            }
+        }
+        List<Pavilion> ordered = orderPavilions(start, selected, selected.size());
+
+        visitRepository.deleteAll(plannedStops);
+        renumberStops(visitedStops);
+        saveStops(roadmap, ordered, visitedStops.size());
+        roadmap.setPlanType("DYNAMIC");
+        roadmapRepository.save(roadmap);
+
+        RoadmapDTO result = toRoadmapDTO(roadmap);
+        result.setAiUsed(aiUsed);
+        return result;
+    }
+
+    // zones with high ratings first, low ratings last, then the nearest
+    private List<Pavilion> rankByReviews(Location start, List<Pavilion> candidates, List<Review> reviews){
+        Map<Integer, Double> ratingSum = new HashMap<>();
+        Map<Integer, Integer> ratingCount = new HashMap<>();
+        for(Review review : reviews){
+            Integer zoneId = review.getPavilion().getZone().getId();
+            ratingSum.put(zoneId, ratingSum.getOrDefault(zoneId, 0.0) + review.getRating());
+            ratingCount.put(zoneId, ratingCount.getOrDefault(zoneId, 0) + 1);
+        }
+        Map<Integer, Double> score = new HashMap<>();
+        Map<Integer, Double> distance = new HashMap<>();
+        for(Pavilion pavilion : candidates){
+            Integer zoneId = pavilion.getZone().getId();
+            // a zone without reviews counts as neutral (3)
+            score.put(pavilion.getId(), ratingCount.containsKey(zoneId) ? ratingSum.get(zoneId) / ratingCount.get(zoneId) : 3.0);
+            distance.put(pavilion.getId(), getDistance(start, pavilion.getLocation()));
+        }
+        List<Pavilion> ranked = new ArrayList<>(candidates);
+        ranked.sort((a, b) -> {
+            int byScore = Double.compare(score.get(b.getId()), score.get(a.getId()));
+            return byScore != 0 ? byScore : Double.compare(distance.get(a.getId()), distance.get(b.getId()));
+        });
+        return ranked;
+    }
+
+    // what the AI needs to replace the remaining stops
+    private String buildDynamicPrompt(Visitor visitor, Roadmap roadmap, List<Review> reviews, List<Pavilion> candidates, int stopsCount){
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("You are the visit planner of Expo 2030 Riyadh. The visitor is at the expo now and reviewed the pavilions visited today. ");
+        prompt.append("Choose exactly ").append(stopsCount).append(" pavilions for the rest of the day.\n\n");
+
+        prompt.append("VISITOR\n");
+        prompt.append("age: ").append(visitor.getAge()).append(", gender: ").append(visitor.getGender())
+                .append(", language: ").append(visitor.getPreferredLanguage()).append("\n");
+        List<String> interests = new ArrayList<>();
+        if(visitor.getInterests() != null){
+            for(Interest interest : visitor.getInterests()){
+                interests.add(interest.getName());
+            }
+        }
+        if(roadmap.getExtraInterests() != null){
+            for(Interest interest : roadmap.getExtraInterests()){
+                interests.add(interest.getName());
+            }
+        }
+        prompt.append("interests: ").append(interests).append("\n");
+        prompt.append("party: ").append(roadmap.getPartyType()).append(", size: ").append(roadmap.getPartySize())
+                .append(", mood: ").append(roadmap.getExperienceTypes()).append(", pace: ").append(roadmap.getVisitPace()).append("\n\n");
+
+        prompt.append("TODAY REVIEWS (rating 1-5)\n");
+        for(Review review : reviews){
+            prompt.append("- ").append(review.getPavilion().getName()).append(" (").append(review.getPavilion().getZone().getName())
+                    .append("): ").append(review.getRating());
+            if(review.getComment() != null){
+                prompt.append(" \"").append(review.getComment()).append("\"");
+            }
+            prompt.append("\n");
+        }
+
+        prompt.append("\nAVAILABLE PAVILIONS (id | name | country | zone | description)\n");
+        for(Pavilion pavilion : candidates){
+            String description = pavilion.getDescription() == null ? "" : pavilion.getDescription();
+            if(description.length() > 200){
+                description = description.substring(0, 200);
+            }
+            prompt.append(pavilion.getId()).append(" | ").append(pavilion.getName()).append(" | ")
+                    .append(pavilion.getCountry()).append(" | ").append(pavilion.getZone().getName())
+                    .append(" | ").append(description).append("\n");
+        }
+
+        prompt.append("\nRULES\n");
+        prompt.append("- Choose only ids from the list above.\n");
+        prompt.append("- Choose more of what was rated high today and avoid what is similar to what was rated low.\n");
+        prompt.append("- Do not order the pavilions by distance, the system does that.\n");
+        prompt.append("- Write the summary in Arabic if language is AR, otherwise in English, and mention why the plan changed.\n\n");
+
+        prompt.append("Answer with JSON only in this shape:\n");
+        prompt.append("{\"pavilionIds\": [1, 2], \"summary\": \"one or two sentences about the new plan\"}");
+        return prompt.toString();
+    }
+
+    // saves the stops with order 1, 2, 3...
+    private void renumberStops(List<Visit> stops){
+        int order = 0;
+        for(Visit stop : stops){
+            stop.setStopOrder(++order);
+            visitRepository.save(stop);
+        }
     }
 
     /*
@@ -469,6 +769,13 @@ public class RoadmapService {
         to.setIncludeMealBreaks(from.getIncludeMealBreaks());
         to.setIncludeChildRestBreaks(from.getIncludeChildRestBreaks());
         to.setAllowRevisits(from.getAllowRevisits());
+    }
+
+    // a roadmap of a past day cannot be edited
+    private void checkNotPast(Roadmap roadmap){
+        if(roadmap.getVisitDate().isBefore(LocalDate.now())){
+            throw new ApiException("you cannot edit a roadmap of a past day");
+        }
     }
 
     // date must be in expo period, departure after arrival

@@ -7,9 +7,20 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
   <style>
     :root {
-      --bg: #eef2ef; --surface: #ffffff; --ink: #14242b; --muted: #5d6d6a; --line: #d3ddd8;
-      --path: #b9c7c1; --accent: #0e6f63; --route: #c27c0e; --straight: #7a5cc4; --start: #b3261e;
-      --zone-a: #0e6f6314; --zone-b: #0e6f6326; --node: #8a9a95;
+      --bg: #eef2ef;
+      --surface: #ffffff;
+      --ink: #14242b;
+      --muted: #5d6d6a;
+      --line: #d3ddd8;
+      --path: #b9c7c1;
+      --accent: #0e6f63;
+      --route: #c27c0e;
+      --straight: #7a5cc4;
+      --start: #b3261e;
+      --zone-a: #0e6f6314;
+      --zone-b: #0e6f6326;
+      --node: #8a9a95;
+      --len: 3000;
       --font-display: "Reem Kufi", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
       --font-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
       --font-data: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -20,20 +31,25 @@
       --zone-a: #3fb8a614; --zone-b: #3fb8a628; --node: #6f8580; color-scheme: dark;
     }
     * { box-sizing: border-box; }
-    body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; padding-inline: 16px; padding-block: 24px 40px; }
+    body {
+      background: var(--bg); color: var(--ink); font-family: var(--font-body);
+      font-size: 15px; line-height: 1.6; padding-inline: 16px; padding-block: 24px 40px;
+    }
     .page { max-width: 1180px; margin-inline: auto; display: grid; gap: 20px; }
+    header { display: grid; gap: 6px; }
     .eyebrow { font-size: 12px; letter-spacing: .04em; color: var(--accent); font-weight: 600; }
     h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); margin: 0; line-height: 1.2; text-wrap: balance; }
     .lede { margin: 0; color: var(--muted); max-width: 70ch; }
-    .top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
-    .theme-btn { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
 
     .board { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
     @media (max-width: 900px) { .board { grid-template-columns: minmax(0, 1fr); } }
 
     .map-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }
     .modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-    .mode-btn { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+    .mode-btn {
+      font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+      padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    }
     .mode-btn[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
     .mode-btn:focus-visible, .chip:focus-within, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     svg { width: 100%; height: auto; display: block; }
@@ -45,10 +61,7 @@
     .ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
     .ticket h2 { font-family: var(--font-display); font-weight: 500; font-size: 18px; margin: 0; }
     label.field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
-    select, input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; width: 100%; }
-    .row { display: flex; gap: 8px; align-items: end; }
-    .row .field { flex: 1; }
-    .btn { font: inherit; font-size: 14px; background: var(--accent); color: var(--surface); border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+    select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
     .chips { display: flex; flex-wrap: wrap; gap: 6px; }
     .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer; background: var(--bg); }
     .chip input { accent-color: var(--accent); margin: 0; }
@@ -66,6 +79,12 @@
     .note { font-size: 13px; color: var(--muted); margin: 0; }
     .err { color: var(--start); font-size: 13px; margin: 0; }
     .err:empty { display: none; }
+    .row { display: flex; gap: 8px; align-items: end; }
+    .row .field { flex: 1; }
+    input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; width: 100%; }
+    .btn { font: inherit; font-size: 14px; background: var(--accent); color: var(--surface); border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+    .top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+    .theme-btn { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
 
     .node-label { font-family: var(--font-body); font-size: 12px; fill: var(--ink); }
     .zone-label { font-family: var(--font-display); font-size: 15px; fill: var(--accent); }
@@ -83,7 +102,7 @@
     <div style="display:grid;gap:6px">
       <div class="eyebrow">متصل بالباك إند · Location · Zone · Pavilion · Path</div>
       <h1>مسار المشي في إكسبو 2030 الرياض</h1>
-      <p class="lede">اختاري أجنحة الرحلة ونقطة البداية، وقارني بين الترتيب بالخط المستقيم والترتيب بالمشي الحقيقي على الممرات باستخدام Dijkstra. الخمس مناطق مرتبة حول الساحة المركزية، ويربطها طريق دائري.</p>
+      <p class="lede">اختاري أجنحة الرحلة ونقطة البداية، وقارني بين الترتيب بالخط المستقيم والترتيب بالمشي الحقيقي على الممرات باستخدام Dijkstra.</p>
     </div>
     <button class="theme-btn" id="theme">☀️ فاتح</button>
   </header>
@@ -138,8 +157,10 @@
   const NS = "http://www.w3.org/2000/svg";
 
   let locations = {}, zones = [], pavilions = [], paths = [], entrances = [];
-  let plaza = null;
+  let plaza = null, center = { x: 500, y: 400 }, big = false;
   let picked = new Set(), mode = "dijkstra";
+  let fixedOrder = null; // ترتيب الرحلة من الباك إند (stopOrder)، null = نرتب هنا
+  let aiSummary = "";    // ملخص الـ AI للرحلة
   const cache = {}; // نخزن نتائج Dijkstra عشان ما نكرر الطلب
 
   async function api(url) {
@@ -184,6 +205,19 @@
     return { legs, unreachable };
   }
 
+  // يمشي على الأجنحة بنفس الترتيب اللي جاء من generate (بدون إعادة ترتيب)
+  async function follow(start, order) {
+    const legs = []; let cur = start, unreachable = [];
+    for (const p of order) {
+      if (p === cur) continue;
+      const r = await shortest(cur, p);
+      if (!r) { unreachable.push(p); continue; }
+      legs.push({ to: p, line: straight(cur, p), walk: r.total, route: r.route });
+      cur = p;
+    }
+    return { legs, unreachable };
+  }
+
   // بعد آخر جناح: نطلع من أقرب بوابة
   async function addExit(result, metric) {
     if (!result.legs.length || result.unreachable.length || !entrances.length) return;
@@ -207,19 +241,29 @@
       zones = zs.filter(z => z.location); pavilions = pavs.filter(p => p.location); paths = ps;
     } catch (e) { err("ما قدرت أجيب البيانات: " + e.message + ". تأكدي إن المشروع شغال وإن ما فيه JSON Loop."); return; }
     try { entrances = (await api("/entrance/getAll")).filter(e => e.location && locations[e.location.id]); } catch (e) { entrances = []; }
-    if (!Object.keys(locations).length) { err("قاعدة البيانات فاضية. افتحي seed.html أول."); return; }
+    if (!Object.keys(locations).length) { err("قاعدة البيانات فاضية. شغّلي المشروع على داتا بيس فاضية عشان تتعبى."); return; }
 
     // الساحة = أقرب تقاطع لمنتصف الزونات
     const junctions = Object.values(locations).filter(l => !isZone(l.id) && !pavOf(l.id) && !entOf(l.id));
     let cx = 500, cy = 400;
     if (zones.length) { cx = avg(zones.map(z => z.location.x)); cy = avg(zones.map(z => z.location.y)); }
     plaza = nearest(junctions, cx, cy);
+    if (plaza && Math.hypot(plaza.x - cx, plaza.y - cy) > 60) plaza = null; // ما فيه ساحة في النص
+
+    // حجم الخريطة يتبع البيانات
+    const all = Object.values(locations);
+    const xs = all.map(l => l.x), ys = all.map(l => l.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    center = plaza || { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+    big = pavilions.length > 20;
+    if (plaza) svg.setAttribute("viewBox", "0 0 1000 770");
+    else svg.setAttribute("viewBox", `${minX - 90} ${minY - 60} ${maxX - minX + 180} ${maxY - minY + 120}`);
 
     // نقطة البداية: البوابات أول
     const startSel = document.getElementById("start");
     entrances.forEach(e => startSel.add(new Option("🚪 " + e.name, e.location.id)));
     if (plaza) startSel.add(new Option("الساحة المركزية", plaza.id));
-    pavilions.forEach(p => startSel.add(new Option(p.name, p.location.id)));
+    pavilions.forEach(p => startSel.add(new Option(shortName(p.name), p.location.id)));
 
     // الأجنحة مقسمة على الزونات
     const chips = document.getElementById("chips");
@@ -227,12 +271,16 @@
     const rest = pavilions.filter(p => !document.getElementById("chk-" + p.location.id));
     if (rest.length) addGroup(chips, "أجنحة ثانية", rest);
 
-    // اختيار مبدئي زي النموذج
-    ["الذكاء الاصطناعي", "المياه", "جناح إيطاليا", "جناح المملكة"].forEach(n => { const p = pavilions.find(x => x.name === n); if (p) picked.add(p.location.id); });
+    // اختيار مبدئي
+    ["الذكاء الاصطناعي", "المياه", "جناح إيطاليا", "جناح المملكة", "Saudi Arabia Pavilion", "Japan Pavilion", "Italy Pavilion", "Brazil Pavilion"].forEach(n => { const p = pavilions.find(x => x.name === n); if (p) picked.add(p.location.id); });
     if (!picked.size) pavilions.slice(0, 3).forEach(p => picked.add(p.location.id));
     syncChips();
-    startSel.addEventListener("change", render);
+    startSel.addEventListener("change", () => { fixedOrder = null; render(); });
     render();
+
+    // لو الرابط فيه ?roadmap=رقم، نحمّل الرحلة على طول
+    const rid = new URLSearchParams(location.search).get("roadmap");
+    if (rid) { document.getElementById("roadmapId").value = rid; document.getElementById("loadRoadmap").click(); }
   }
 
   const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -252,8 +300,9 @@
     zones.forEach(z => { const d = Math.hypot(z.location.x - p.location.x, z.location.y - p.location.y); if (d < bd) { bd = d; best = z; } });
     return best;
   }
+  const shortName = n => n.replace(/ Pavilion$/, "");
   function nameOf(id) {
-    const p = pavOf(id); if (p) return p.name;
+    const p = pavOf(id); if (p) return shortName(p.name);
     const e = entOf(id); if (e) return e.name;
     if (plaza && id === plaza.id) return "الساحة المركزية";
     const z = zones.find(z => z.location.id === id); if (z) return z.name;
@@ -266,8 +315,8 @@
     list.forEach(p => {
       const id = p.location.id;
       const lab = document.createElement("label"); lab.className = "chip";
-      lab.innerHTML = `<input type="checkbox" id="chk-${id}"> ${p.name}`;
-      lab.querySelector("input").addEventListener("change", e => { e.target.checked ? picked.add(id) : picked.delete(id); render(); });
+      lab.innerHTML = `<input type="checkbox" id="chk-${id}"> ${shortName(p.name)}`;
+      lab.querySelector("input").addEventListener("change", e => { fixedOrder = null; e.target.checked ? picked.add(id) : picked.delete(id); render(); });
       g.querySelector(".chips").appendChild(lab);
     });
     parent.appendChild(g);
@@ -279,24 +328,31 @@
 
   let renderId = 0;
   async function render() {
-    const myId = ++renderId; err("");
+    const myId = ++renderId; err(paths.length ? "" : "ما فيه ممرات. افتحي seed.html واضغطي ولّد الممرات.");
     const start = +document.getElementById("start").value;
     const picks = [...picked].filter(p => p !== start);
-    const walk = await plan(start, picks, "walk");
+    const walk = fixedOrder ? await follow(start, fixedOrder) : await plan(start, picks, "walk");
     const line = await plan(start, picks, "line");
     await addExit(walk, "walk");
     await addExit(line, "line");
     if (myId !== renderId) return; // فيه رسم أحدث
 
     svg.innerHTML = "";
-    const P = plaza || { x: 500, y: 400 };
+    const P = center;
 
-    // الوادي (زينة)
-    el("path", { d: "M 40 190 C 220 270, 300 160, 480 230 S 760 330, 980 250", fill: "none", stroke: "var(--zone-b)", "stroke-width": 26, "stroke-linecap": "round", transform: `translate(${P.x - 500} ${P.y - 400})` });
+    // الوادي (زينة) مع خريطة البتلات بس
+    if (plaza) el("path", { d: "M 40 190 C 220 270, 300 160, 480 230 S 760 330, 980 250", fill: "none", stroke: "var(--zone-b)", "stroke-width": 26, "stroke-linecap": "round", transform: `translate(${P.x - 500} ${P.y - 400})` });
 
-    // الزونات: بتلات حول الساحة
+    // الزونات: بتلات حول الساحة، أو دوائر حول أجنحتها
     zones.forEach(z => {
       const c = z.location;
+      if (!plaza) {
+        let r = 60;
+        pavilions.forEach(p => { if (zoneOf(p) === z) r = Math.max(r, Math.hypot(p.location.x - c.x, p.location.y - c.y) + 30); });
+        el("circle", { cx: c.x, cy: c.y, r, fill: "var(--zone-a)", stroke: "var(--zone-b)" });
+        el("text", { x: c.x, y: c.y - r - 10, "text-anchor": "middle", class: "zone-label" }).textContent = z.name;
+        return;
+      }
       const deg = Math.atan2(c.y - P.y, c.x - P.x) * 180 / Math.PI;
       const r = Math.hypot(c.x - P.x, c.y - P.y);
       el("ellipse", { cx: c.x, cy: c.y, rx: 130, ry: 92, transform: `rotate(${deg} ${c.x} ${c.y})`, fill: "var(--zone-a)", stroke: "var(--zone-b)" });
@@ -329,14 +385,15 @@
     // النقاط
     Object.values(locations).forEach(l => {
       const pav = pavOf(l.id), ent = entOf(l.id);
+      const R = big ? 10 : 15;
       if (pav) {
         const g = el("g", { class: "pav", tabindex: 0, role: "button", "aria-label": pav.name });
         const on = picked.has(l.id) && l.id !== start;
         const idx = shown.findIndex(s => s.to === l.id && !s.exit);
-        el("circle", { cx: l.x, cy: l.y, r: 15, fill: on ? "var(--accent)" : "var(--surface)", stroke: on ? "var(--accent)" : "var(--node)", "stroke-width": 2, class: "ring" }, g);
-        if (idx >= 0) el("text", { x: l.x, y: l.y + 5, "text-anchor": "middle", fill: "var(--surface)", "font-size": 13, "font-weight": 700, "font-family": "var(--font-data)" }, g).textContent = idx + 1;
-        el("text", { x: l.x, y: l.y - 22, "text-anchor": "middle", class: "node-label" }, g).textContent = pav.name;
-        const toggle = () => { picked.has(l.id) ? picked.delete(l.id) : picked.add(l.id); syncChips(); render(); };
+        el("circle", { cx: l.x, cy: l.y, r: R, fill: on ? "var(--accent)" : "var(--surface)", stroke: on ? "var(--accent)" : "var(--node)", "stroke-width": 2, class: "ring" }, g);
+        if (idx >= 0) el("text", { x: l.x, y: l.y + (big ? 4 : 5), "text-anchor": "middle", fill: "var(--surface)", "font-size": big ? 11 : 13, "font-weight": 700, "font-family": "var(--font-data)" }, g).textContent = idx + 1;
+        el("text", { x: l.x, y: l.y - R - 6, "text-anchor": "middle", class: "node-label", style: big ? "font-size:10px" : "" }, g).textContent = shortName(pav.name);
+        const toggle = () => { fixedOrder = null; picked.has(l.id) ? picked.delete(l.id) : picked.add(l.id); syncChips(); render(); };
         g.addEventListener("click", toggle);
         g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
       } else if (ent) {
@@ -348,8 +405,8 @@
       } else if (plaza && l.id === plaza.id) {
         el("circle", { cx: l.x, cy: l.y, r: 7, fill: "var(--node)" });
         el("text", { x: l.x, y: l.y + 26, "text-anchor": "middle", class: "node-label" }).textContent = "الساحة المركزية";
-      } else if (!isZone(l.id)) {
-        el("circle", { cx: l.x, cy: l.y, r: 5, fill: "var(--node)" });
+      } else if (!isZone(l.id) || !plaza) {
+        el("circle", { cx: l.x, cy: l.y, r: isZone(l.id) ? 7 : 5, fill: "var(--node)" });
       }
     });
 
@@ -373,24 +430,35 @@
       note.textContent = same ? "الطريقتين طلعوا نفس الترتيب هنا. جربي تغيرين نقطة البداية أو الأجنحة."
               : `الترتيب اختلف. لو مشى الزائر بترتيب الخط المستقيم بيمشي ${diff} م زيادة على الممرات.`;
     } else if (mode === "straight") note.textContent = `الخط المستقيم يقول ${m(sum(line.legs, "line"))} م، بس المشي الفعلي على الممرات بنفس الترتيب ${m(sum(line.legs, "walk"))} م.`;
+    else if (fixedOrder) note.textContent = (aiSummary ? "🤖 " + aiSummary + " — " : "") + "هذا ترتيب الرحلة اللي ولّدها الباك إند (generate)، والطريق بين كل جناحين محسوب بـ Dijkstra.";
     else note.textContent = "الترتيب محسوب بمسافة المشي الحقيقية من الباك إند، وبعد آخر جناح يطلع من أقرب بوابة.";
     if (walk.unreachable.length && mode !== "straight") err("ما فيه ممرات توصل لـ: " + walk.unreachable.map(nameOf).join("، "));
   }
 
-  // ---------- تحميل رحلة محفوظة ----------
+  // ---------- تحميل رحلة محفوظة (من generate) ----------
   document.getElementById("loadRoadmap").addEventListener("click", async () => {
     const id = document.getElementById("roadmapId").value;
     if (!id) return;
     try {
+      // الرحلة: { id, summary, aiUsed, breaks, stops: [...] } والأجنحة مرتبة بـ stopOrder
+      const data = await api(`/roadmap/getStops/${id}`);
+      const stops = Array.isArray(data) ? data : (data.stops || []);
+      aiSummary = data.summary || "";
+      const order = [];
+      stops.forEach(v => {
+        if (v.isVisited || v.visited) return; // اللي زارها خلاص
+        const p = pavilions.find(x => x.id === v.pavilionId || x.name === v.pavilionName);
+        if (p) order.push(p.location.id);
+      });
+      if (!order.length) throw new Error("الرحلة ما فيها أجنحة باقية");
+      fixedOrder = order;
+      picked = new Set(order);
+
+      // نقطة البداية = بوابة الرحلة
       const all = await api("/roadmap/getAll");
       const rm = all.find(r => r.id == id);
-      if (!rm) throw new Error("ما لقيت رحلة رقم " + id);
-      const names = [];
-      (rm.visits || []).forEach(v => { if (!v.isVisited) names.push(v.pavilionName); });
-      if (!names.length) throw new Error("الرحلة ما فيها أجنحة باقية");
-      picked = new Set(pavilions.filter(p => names.includes(p.name)).map(p => p.location.id));
       const sel = document.getElementById("start");
-      if (rm.entrance && rm.entrance.location && sel.querySelector(`option[value="${rm.entrance.location.id}"]`)) {
+      if (rm && rm.entrance && rm.entrance.location && sel.querySelector(`option[value="${rm.entrance.location.id}"]`)) {
         sel.value = rm.entrance.location.id;
       }
       syncChips(); render();
