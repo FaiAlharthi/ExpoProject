@@ -18,6 +18,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final VisitorRepository visitorRepository;
     private final PavilionRepository pavilionRepository;
+    private final ModerationService moderationService;
 
     public List<Review>getAllReviews(){
         return reviewRepository.findAll();
@@ -50,6 +51,8 @@ public class ReviewService {
         if(reviewRepository.findReviewByVisitorAndPavilion(visitor, pavilion) != null){
             throw new ApiException("You already reviewed this pavilion");
         }
+        // AI checks the comment for racism and rude language
+        moderationService.checkComment(review.getComment());
         review.setVisitor(visitor);
         review.setPavilion(pavilion);
         review.setCreatedAt(LocalDateTime.now());
@@ -67,17 +70,19 @@ public class ReviewService {
         if(!oldReview.getVisitor().getId().equals(visitorId)){
             throw new ApiException("You can only update your own review");
         }
+        moderationService.checkComment(review.getComment());
         oldReview.setRating(review.getRating());
         oldReview.setComment(review.getComment());
         reviewRepository.save(oldReview);
     }
 
-    public void deleteReview(Integer visitorId, Integer reviewId){
+    // the visitor deletes his own review, the admin can delete any review
+    public void deleteReview(User user, Integer reviewId){
         Review review = reviewRepository.findReviewById(reviewId);
         if(review == null){
             throw new ApiException("Review not found");
         }
-        if(!review.getVisitor().getId().equals(visitorId)){
+        if(!"ADMIN".equals(user.getRole()) && !review.getVisitor().getId().equals(user.getId())){
             throw new ApiException("You can only delete your own review");
         }
         reviewRepository.delete(review);

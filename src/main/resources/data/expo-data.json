@@ -9,6 +9,64 @@
     ],
     "paths": "Each path links two points by type and name (ZONE, ENTRANCE, PAVILION). Distance is calculated from x and y."
   },
+  "interests": [
+    {
+      "name": "Technology & AI",
+      "nameAr": "التقنية والذكاء الاصطناعي"
+    },
+    {
+      "name": "Space",
+      "nameAr": "الفضاء"
+    },
+    {
+      "name": "Science",
+      "nameAr": "العلوم"
+    },
+    {
+      "name": "Sustainability",
+      "nameAr": "الاستدامة"
+    },
+    {
+      "name": "Nature & Wildlife",
+      "nameAr": "الطبيعة والحياة البرية"
+    },
+    {
+      "name": "Oceans",
+      "nameAr": "البحار والمحيطات"
+    },
+    {
+      "name": "Art & Design",
+      "nameAr": "الفن والتصميم"
+    },
+    {
+      "name": "Architecture",
+      "nameAr": "العمارة"
+    },
+    {
+      "name": "History & Heritage",
+      "nameAr": "التاريخ والتراث"
+    },
+    {
+      "name": "Music & Performance",
+      "nameAr": "الموسيقى والعروض"
+    },
+    {
+      "name": "Food & Cuisine",
+      "nameAr": "الأكل والمطابخ"
+    },
+    {
+      "name": "Health & Wellbeing",
+      "nameAr": "الصحة وجودة الحياة"
+    },
+    {
+      "name": "Crafts",
+      "nameAr": "الحرف اليدوية"
+    },
+    {
+      "name": "Innovation & Business",
+      "nameAr": "الابتكار والأعمال"
+    }
+  ],
   "zones": [
     {
       "name": "Collaboration",

@@ -32,29 +32,6 @@ public class VisitService {
         return visitRepository.findAll();
     }
 
-    public void addVisit(Integer passportId, Integer pavilionId){
-        Passport passport = passportRepository.findPassportById(passportId);
-        if(passport == null){
-            throw new ApiException("passport not found");
-        }
-        Pavilion pavilion = pavilionRepository.findPavilionById(pavilionId);
-        if(pavilion == null){
-            throw new ApiException("pavilion not found");
-        }
-        // one visit per pavilion per day
-        LocalDate today = LocalDate.now();
-        if(visitRepository.existsByPassportAndPavilionAndVisitedAtBetween(passport, pavilion, today.atStartOfDay(), today.atTime(LocalTime.MAX))){
-            throw new ApiException("this pavilion is already visited today");
-        }
-        Visit visit = new Visit();
-        visit.setVisitedAt(LocalDateTime.now());
-        visit.setIsVisited(true);
-        visit.setPassport(passport);
-        visit.setPavilion(pavilion);
-        visitRepository.save(visit);
-        updateExplorerLevel(passport);
-    }
-
     // works on any pavilion, if it is planned in today's roadmap it gets marked as visited
     public void checkIn(Integer visitorId, Integer pavilionId){
         Visitor visitor = visitorRepository.findVisitorById(visitorId);
@@ -86,35 +63,6 @@ public class VisitService {
         visit.setIsVisited(true);
         visit.setVisitedAt(LocalDateTime.now());
         visitRepository.save(visit);
-        updateExplorerLevel(passport);
     }
 
-    public void deleteVisit(Integer id){
-        Visit visit = visitRepository.findVisitById(id);
-        if(visit == null){
-            throw new ApiException("visit not found");
-        }
-        // planned stops have no passport yet
-        Passport passport = visit.getPassport();
-        if(passport != null){
-            passport.getVisits().remove(visit);
-        }
-        visitRepository.delete(visit);
-        if(passport != null){
-            updateExplorerLevel(passport);
-        }
-    }
-
-    // BRONZE 0+, SILVER 10+, GOLD 25+
-    private void updateExplorerLevel(Passport passport){
-        Long visitsCount = visitRepository.countByPassportAndIsVisitedTrue(passport);
-        if(visitsCount >= 25){
-            passport.setExplorerLevel("GOLD");
-        }else if(visitsCount >= 10){
-            passport.setExplorerLevel("SILVER");
-        }else{
-            passport.setExplorerLevel("BRONZE");
-        }
-        passportRepository.save(passport);
-    }
 }

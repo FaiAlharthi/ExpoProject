@@ -4,15 +4,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Profile {
+public class User implements UserDetails {
 
     //Variables
     @Id
@@ -33,7 +38,7 @@ public class Profile {
     @Size(min = 8, message = "Password must be at least 8 characters")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(columnDefinition = "VARCHAR(255) NOT NULL")
-    private String password; // NOT encrypted for now !!!!!!!!!!!
+    private String password; // encrypted with BCrypt in the service
 
     @NotEmpty(message = "Email cannot be empty")
     @Email(message = "Email must be in a valid form")
@@ -47,17 +52,38 @@ public class Profile {
 
     @Pattern(regexp = "^(ADMIN|VISITOR)$", message = "Role must be ADMIN or VISITOR")
     @Column(columnDefinition = "VARCHAR(7)")
-    private String role; // Set when an admin or visitor is added
+    private String role; // VISITOR by default, changed to ADMIN from the database
 
     @Column(columnDefinition = "DATETIME")
     private LocalDateTime createdAt; // Set in service
 
     //Relations
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "profile")
-    @PrimaryKeyJoinColumn
-    private Admin admin;
-
-    @OneToOne(cascade = CascadeType.ALL, mappedBy = "profile")
+    @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
     @PrimaryKeyJoinColumn
     private Visitor visitor;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singleton(new SimpleGrantedAuthority(this.role));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

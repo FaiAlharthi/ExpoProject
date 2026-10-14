@@ -42,6 +42,7 @@ public class InterestService {
             throw new ApiException("Interest already exists");
         }
         oldInterest.setName(interest.getName());
+        oldInterest.setNameAr(interest.getNameAr());
         interestRepository.save(oldInterest);
     }
 

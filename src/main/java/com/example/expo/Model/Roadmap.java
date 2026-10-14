@@ -22,11 +22,6 @@ public class Roadmap {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotEmpty(message = "Plan type cannot be empty!")
-    @Pattern(regexp = "^(STATIC|DYNAMIC)$", message = "Plan type must be STATIC or DYNAMIC")
-    @Column(columnDefinition = "VARCHAR(7) NOT NULL")
-    private String planType;
-
     @NotNull(message = "Visit date cannot be empty!")
     @Column(columnDefinition = "DATE NOT NULL")
     private LocalDate visitDate; // Checked in service
