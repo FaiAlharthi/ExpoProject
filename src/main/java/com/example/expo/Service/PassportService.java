@@ -49,12 +49,4 @@ public class PassportService {
         return new PassportResponse(passport.getId(), passport.getPassportNumber(), stamps.size(), stamps);
     }
 
-    public void deletePassport(Integer id){
-        Passport passport = passportRepository.findPassportById(id);
-        if(passport == null){
-            throw new ApiException("passport not found");
-        }
-        passport.getVisitor().setPassport(null);
-        passportRepository.delete(passport);
-    }
 }

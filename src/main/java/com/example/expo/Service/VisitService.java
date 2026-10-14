@@ -32,18 +32,6 @@ public class VisitService {
         return visitRepository.findAll();
     }
 
-    // same as check-in but by passport, the visit goes to the passport only as checked in
-    public void addVisit(Integer passportId, Integer pavilionId){
-        Passport passport = passportRepository.findPassportById(passportId);
-        if(passport == null){
-            throw new ApiException("passport not found");
-        }
-        if(passport.getVisitor() == null){
-            throw new ApiException("passport has no visitor");
-        }
-        checkIn(passport.getVisitor().getId(), pavilionId);
-    }
-
     // works on any pavilion, if it is planned in today's roadmap it gets marked as visited
     public void checkIn(Integer visitorId, Integer pavilionId){
         Visitor visitor = visitorRepository.findVisitorById(visitorId);
@@ -77,24 +65,4 @@ public class VisitService {
         visitRepository.save(visit);
     }
 
-    // only planned stops can be deleted, a visited pavilion stays in the passport
-    public void deleteVisit(Integer id){
-        Visit visit = visitRepository.findVisitById(id);
-        if(visit == null){
-            throw new ApiException("visit not found");
-        }
-        if(visit.getIsVisited()){
-            throw new ApiException("you cannot delete a visited pavilion");
-        }
-        Roadmap roadmap = visit.getRoadmap();
-        visitRepository.delete(visit);
-        // keep the roadmap order 1, 2, 3...
-        if(roadmap != null){
-            int order = 0;
-            for(Visit stop : visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap)){
-                stop.setStopOrder(++order);
-                visitRepository.save(stop);
-            }
-        }
-    }
 }

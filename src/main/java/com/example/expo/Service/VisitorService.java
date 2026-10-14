@@ -6,16 +6,17 @@ import com.example.expo.Dto.Out.InterestResponse;
 import com.example.expo.Dto.Out.VisitorResponse;
 import com.example.expo.Model.Interest;
 import com.example.expo.Model.Passport;
-import com.example.expo.Model.Profile;
+import com.example.expo.Model.User;
 import com.example.expo.Model.Roadmap;
 import com.example.expo.Model.Visit;
 import com.example.expo.Model.Visitor;
 import com.example.expo.Repository.InterestRepository;
 import com.example.expo.Repository.PassportRepository;
-import com.example.expo.Repository.ProfileRepository;
+import com.example.expo.Repository.UserRepository;
 import com.example.expo.Repository.VisitRepository;
 import com.example.expo.Repository.VisitorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +29,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VisitorService {
     private final VisitorRepository visitorRepository;
-    private final ProfileRepository profileRepository;
+    private final UserRepository userRepository;
     private final InterestRepository interestRepository;
     private final PassportRepository passportRepository;
     private final VisitRepository visitRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public List<VisitorResponse> getAllVisitors(){
         List<VisitorResponse> visitors = new ArrayList<>();
@@ -50,7 +52,7 @@ public class VisitorService {
     }
 
     private VisitorResponse toVisitorResponse(Visitor visitor){
-        Profile profile = visitor.getProfile();
+        User user = visitor.getUser();
         List<InterestResponse> interests = new ArrayList<>();
         if(visitor.getInterests() != null){
             for(Interest interest : visitor.getInterests()){
@@ -59,37 +61,37 @@ public class VisitorService {
             interests.sort(Comparator.comparing(InterestResponse::getId));
         }
         Passport passport = visitor.getPassport();
-        return new VisitorResponse(visitor.getId(), profile.getFullName(), profile.getUsername(), profile.getEmail(),
-                profile.getPhone(), visitor.getAge(), visitor.getGender(), visitor.getPreferredLanguage(), visitor.getNationality(),
+        return new VisitorResponse(visitor.getId(), user.getFullName(), user.getUsername(), user.getEmail(),
+                user.getPhone(), visitor.getAge(), visitor.getGender(), visitor.getPreferredLanguage(), visitor.getNationality(),
                 interests, passport == null ? null : passport.getPassportNumber(),
-                profile.getCreatedAt());
+                user.getCreatedAt());
     }
 
-    // creates the profile (role VISITOR), the visitor and the passport together
+    // creates the user (role VISITOR), the visitor and the passport together
     @Transactional
     public void registerVisitor(VisitorRegisterRequest request){
-        if(profileRepository.findProfileByUsername(request.getUsername()) != null){
+        if(userRepository.findUserByUsername(request.getUsername()) != null){
             throw new ApiException("username already exists");
         }
-        if(profileRepository.findProfileByEmail(request.getEmail()) != null){
+        if(userRepository.findUserByEmail(request.getEmail()) != null){
             throw new ApiException("email already exists");
         }
-        Profile profile = new Profile();
-        profile.setFullName(request.getFullName());
-        profile.setUsername(request.getUsername());
-        profile.setPassword(request.getPassword());
-        profile.setEmail(request.getEmail());
-        profile.setPhone(request.getPhone());
-        profile.setRole("VISITOR");
-        profile.setCreatedAt(LocalDateTime.now());
-        profileRepository.save(profile);
+        User user = new User();
+        user.setFullName(request.getFullName());
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setRole("VISITOR");
+        user.setCreatedAt(LocalDateTime.now());
+        userRepository.save(user);
 
         Visitor visitor = new Visitor();
         visitor.setAge(request.getAge());
         visitor.setGender(request.getGender());
         visitor.setPreferredLanguage(request.getPreferredLanguage());
         visitor.setNationality(request.getNationality());
-        visitor.setProfile(profile);
+        visitor.setUser(user);
         Visitor savedVisitor = visitorRepository.save(visitor);
 
         // every new visitor gets a passport
@@ -117,7 +119,7 @@ public class VisitorService {
             throw new ApiException("visitor not found");
         }
         clearRoadmapStops(visitor);
-        visitor.getProfile().setVisitor(null);
+        visitor.getUser().setVisitor(null);
         visitorRepository.delete(visitor);
     }
 

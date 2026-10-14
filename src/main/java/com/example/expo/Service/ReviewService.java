@@ -76,12 +76,13 @@ public class ReviewService {
         reviewRepository.save(oldReview);
     }
 
-    public void deleteReview(Integer visitorId, Integer reviewId){
+    // the visitor deletes his own review, the admin can delete any review
+    public void deleteReview(User user, Integer reviewId){
         Review review = reviewRepository.findReviewById(reviewId);
         if(review == null){
             throw new ApiException("Review not found");
         }
-        if(!review.getVisitor().getId().equals(visitorId)){
+        if(!"ADMIN".equals(user.getRole()) && !review.getVisitor().getId().equals(user.getId())){
             throw new ApiException("You can only delete your own review");
         }
         reviewRepository.delete(review);

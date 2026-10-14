@@ -167,11 +167,8 @@ public class RoadmapService {
         return result;
     }
 
-    public RoadmapResponse getStops(Integer roadmapId){
-        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
-            throw new ApiException("roadmap not found");
-        }
+    public RoadmapResponse getStops(Integer visitorId, Integer roadmapId){
+        Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         return toRoadmapResponse(roadmap);
     }
 
@@ -329,11 +326,8 @@ public class RoadmapService {
     }
 
     // adds a pavilion in the chosen position, only after the visited stops
-    public RoadmapResponse addStop(Integer roadmapId, Integer pavilionId, Integer position){
-        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
-            throw new ApiException("roadmap not found");
-        }
+    public RoadmapResponse addStop(Integer visitorId, Integer roadmapId, Integer pavilionId, Integer position){
+        Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
         Pavilion pavilion = pavilionRepository.findPavilionById(pavilionId);
         if(pavilion == null){
@@ -373,11 +367,8 @@ public class RoadmapService {
     }
 
     // only unvisited stops can be removed
-    public RoadmapResponse removeStop(Integer roadmapId, Integer visitId){
-        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
-            throw new ApiException("roadmap not found");
-        }
+    public RoadmapResponse removeStop(Integer visitorId, Integer roadmapId, Integer visitId){
+        Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
         Visit stop = visitRepository.findVisitById(visitId);
         if(stop == null || stop.getRoadmap() == null || !stop.getRoadmap().getId().equals(roadmapId)){
@@ -392,11 +383,8 @@ public class RoadmapService {
     }
 
     // visited stops keep their place, unvisited stops take the new order
-    public RoadmapResponse reorderStops(Integer roadmapId, ReorderStopsRequest request){
-        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
-            throw new ApiException("roadmap not found");
-        }
+    public RoadmapResponse reorderStops(Integer visitorId, Integer roadmapId, ReorderStopsRequest request){
+        Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
         List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
         Map<Integer, Visit> unvisited = new HashMap<>();
@@ -423,11 +411,8 @@ public class RoadmapService {
     }
 
     // regenerates the stops not visited yet based on the reviews of the visited ones, can be used again any time
-    public RoadmapResponse makeDynamic(Integer roadmapId){
-        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
-            throw new ApiException("roadmap not found");
-        }
+    public RoadmapResponse makeDynamic(Integer visitorId, Integer roadmapId){
+        Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
         Visitor visitor = roadmap.getVisitor();
         List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
@@ -623,11 +608,8 @@ public class RoadmapService {
     }
     */
 
-    public void deleteRoadmap(Integer id){
-        Roadmap roadmap = roadmapRepository.findRoadmapById(id);
-        if(roadmap == null){
-            throw new ApiException("roadmap not found");
-        }
+    public void deleteRoadmap(Integer visitorId, Integer id){
+        Roadmap roadmap = getVisitorRoadmap(visitorId, id);
         // planned stops are deleted, visited ones stay in the passport without the roadmap
         for(Visit visit : visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap)){
             if(visit.getIsVisited()){
@@ -766,6 +748,15 @@ public class RoadmapService {
         to.setIncludeMealBreaks(from.getIncludeMealBreaks());
         to.setIncludeChildRestBreaks(from.getIncludeChildRestBreaks());
         to.setAllowRevisits(from.getAllowRevisits());
+    }
+
+    // the roadmap must belong to the logged in visitor
+    private Roadmap getVisitorRoadmap(Integer visitorId, Integer roadmapId){
+        Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
+        if(roadmap == null || !roadmap.getVisitor().getId().equals(visitorId)){
+            throw new ApiException("roadmap not found");
+        }
+        return roadmap;
     }
 
     // a roadmap of a past day cannot be edited

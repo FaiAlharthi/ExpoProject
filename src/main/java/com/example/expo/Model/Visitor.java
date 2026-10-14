@@ -43,7 +43,7 @@ public class Visitor {
     @OneToOne
     @MapsId
     @JsonIgnore
-    private Profile profile;
+    private User user;
 
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "visitor")
     private Passport passport;

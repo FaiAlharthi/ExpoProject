@@ -6,11 +6,11 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-// profile without the password
+// user without the password
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProfileResponse {
+public class UserResponse {
     private Integer id;
     private String fullName;
     private String username;

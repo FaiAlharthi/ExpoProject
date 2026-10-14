@@ -1,11 +1,10 @@
 package com.example.expo.Controller;
 
-import com.example.expo.Api.ApiResponse;
-import com.example.expo.Model.Passport;
 import com.example.expo.Service.PassportService;
-import jakarta.validation.Valid;
+import com.example.expo.Model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,14 +18,8 @@ public class PassportController {
         return ResponseEntity.status(200).body(passportService.getAllPassports());
     }
 
-    @GetMapping("/visitor/{visitorId}")
-    public ResponseEntity<?> getVisitorPassport(@PathVariable Integer visitorId){
-        return ResponseEntity.status(200).body(passportService.getVisitorPassport(visitorId));
-    }
-
-    @DeleteMapping("/deletePassport/{id}")
-    public ResponseEntity<?> deletePassport(@PathVariable Integer id){
-        passportService.deletePassport(id);
-        return ResponseEntity.status(200).body(new ApiResponse("passport deleted"));
+    @GetMapping("/getMyPassport")
+    public ResponseEntity<?> getMyPassport(@AuthenticationPrincipal User user){
+        return ResponseEntity.status(200).body(passportService.getVisitorPassport(user.getId()));
     }
 }

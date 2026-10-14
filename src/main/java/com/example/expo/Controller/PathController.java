@@ -1,9 +1,11 @@
 package com.example.expo.Controller;
 
 import com.example.expo.Api.ApiResponse;
+import com.example.expo.Model.User;
 import com.example.expo.Service.PathService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -36,14 +38,14 @@ public class PathController {
 
     // من بوابة الرحلة
     @GetMapping("/roadmap/{roadmapId}")
-    public ResponseEntity<?> getRoadmapRouteFromEntrance(@PathVariable Integer roadmapId){
-        return ResponseEntity.status(200).body(pathService.getRoadmapRouteFromEntrance(roadmapId));
+    public ResponseEntity<?> getRoadmapRouteFromEntrance(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        return ResponseEntity.status(200).body(pathService.getRoadmapRouteFromEntrance(user.getId(), roadmapId));
     }
 
     // من أي نقطة (مكان الزائر الحين)
     @GetMapping("/roadmap/{roadmapId}/{startLocationId}")
-    public ResponseEntity<?> getRoadmapRoute(@PathVariable Integer roadmapId, @PathVariable Integer startLocationId){
-        return ResponseEntity.status(200).body(pathService.getRoadmapRoute(roadmapId, startLocationId));
+    public ResponseEntity<?> getRoadmapRoute(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId, @PathVariable Integer startLocationId){
+        return ResponseEntity.status(200).body(pathService.getRoadmapRoute(user.getId(), roadmapId, startLocationId));
     }
 
     @PostMapping("/generate")

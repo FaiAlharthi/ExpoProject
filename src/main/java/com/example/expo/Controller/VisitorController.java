@@ -5,8 +5,10 @@ import com.example.expo.Dto.In.VisitorRegisterRequest;
 import com.example.expo.Model.Visitor;
 import com.example.expo.Service.VisitorService;
 import jakarta.validation.Valid;
+import com.example.expo.Model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,43 +17,58 @@ import org.springframework.web.bind.annotation.*;
 public class VisitorController {
     private final VisitorService visitorService;
 
-    @GetMapping("/getAll")
-    public ResponseEntity<?> getAllVisitors(){
-        return ResponseEntity.status(200).body(visitorService.getAllVisitors());
-    }
-
-    @GetMapping("/get/{id}")
-    public ResponseEntity<?> getVisitor(@PathVariable Integer id){
-        return ResponseEntity.status(200).body(visitorService.getVisitor(id));
-    }
-
     @PostMapping("/register")
     public ResponseEntity<?> registerVisitor(@RequestBody @Valid VisitorRegisterRequest request){
         visitorService.registerVisitor(request);
         return ResponseEntity.status(200).body(new ApiResponse("visitor registered"));
     }
 
+    @GetMapping("/getAll")
+    public ResponseEntity<?> getAllVisitors(){
+        return ResponseEntity.status(200).body(visitorService.getAllVisitors());
+    }
+
+    // the logged in visitor
+    @GetMapping("/getMyInfo")
+    public ResponseEntity<?> getMyInfo(@AuthenticationPrincipal User user){
+        return ResponseEntity.status(200).body(visitorService.getVisitor(user.getId()));
+    }
+
+    // admin
+    @GetMapping("/get/{id}")
+    public ResponseEntity<?> getVisitor(@PathVariable Integer id){
+        return ResponseEntity.status(200).body(visitorService.getVisitor(id));
+    }
+
+    @PutMapping("/updateVisitor")
+    public ResponseEntity<?> updateVisitor(@AuthenticationPrincipal User user, @RequestBody @Valid Visitor visitor){
+        visitorService.updateVisitor(user.getId(), visitor);
+        return ResponseEntity.status(200).body(new ApiResponse("visitor updated"));
+    }
+
+    @PutMapping("/addInterest/{interestId}")
+    public ResponseEntity<?> addInterestToVisitor(@AuthenticationPrincipal User user, @PathVariable Integer interestId){
+        visitorService.addInterestToVisitor(user.getId(), interestId);
+        return ResponseEntity.status(200).body(new ApiResponse("interest added to visitor"));
+    }
+
+    @DeleteMapping("/removeInterest/{interestId}")
+    public ResponseEntity<?> removeInterestFromVisitor(@AuthenticationPrincipal User user, @PathVariable Integer interestId){
+        visitorService.removeInterestFromVisitor(user.getId(), interestId);
+        return ResponseEntity.status(200).body(new ApiResponse("interest removed from visitor"));
+    }
+
+    // the visitor deletes his own visitor data
+    @DeleteMapping("/deleteVisitor")
+    public ResponseEntity<?> deleteMyVisitor(@AuthenticationPrincipal User user){
+        visitorService.deleteVisitor(user.getId());
+        return ResponseEntity.status(200).body(new ApiResponse("visitor deleted"));
+    }
+
+    // admin
     @DeleteMapping("/deleteVisitor/{id}")
     public ResponseEntity<?> deleteVisitor(@PathVariable Integer id){
         visitorService.deleteVisitor(id);
         return ResponseEntity.status(200).body(new ApiResponse("visitor deleted"));
-    }
-
-    @PutMapping("/{visitorId}/addInterest/{interestId}")
-    public ResponseEntity<?> addInterestToVisitor(@PathVariable Integer visitorId, @PathVariable Integer interestId){
-        visitorService.addInterestToVisitor(visitorId, interestId);
-        return ResponseEntity.status(200).body(new ApiResponse("interest added to visitor"));
-    }
-
-    @DeleteMapping("/{visitorId}/removeInterest/{interestId}")
-    public ResponseEntity<?> removeInterestFromVisitor(@PathVariable Integer visitorId, @PathVariable Integer interestId){
-        visitorService.removeInterestFromVisitor(visitorId, interestId);
-        return ResponseEntity.status(200).body(new ApiResponse("interest removed from visitor"));
-    }
-
-    @PutMapping("/updateVisitor/{id}")
-    public ResponseEntity<?> updateVisitor(@PathVariable Integer id, @RequestBody @Valid Visitor visitor){
-        visitorService.updateVisitor(id, visitor);
-        return ResponseEntity.status(200).body(new ApiResponse("visitor updated"));
     }
 }

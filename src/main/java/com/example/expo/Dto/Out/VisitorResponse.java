@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// visitor with profile info, interests and passport summary
+// visitor with user info, interests and passport summary
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

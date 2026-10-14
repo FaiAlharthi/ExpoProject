@@ -5,11 +5,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.expo.Api.ApiResponse;
+import com.example.expo.Model.User;
 import com.example.expo.Model.Pavilion;
 import com.example.expo.Service.PavilionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -62,8 +64,8 @@ public class PavilionController {
         return ResponseEntity.status(200).body(pavilionService.getTopRatedPavilions());
     }
 
-    @GetMapping("/unvisited/{visitorId}")
-    public ResponseEntity<?> getUnvisitedPavilions(@PathVariable Integer visitorId) {
-        return ResponseEntity.status(200).body(pavilionService.getUnvisitedPavilions(visitorId));
+    @GetMapping("/unvisited")
+    public ResponseEntity<?> getUnvisitedPavilions(@AuthenticationPrincipal User user) {
+        return ResponseEntity.status(200).body(pavilionService.getUnvisitedPavilions(user.getId()));
     }
 }

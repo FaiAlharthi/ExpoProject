@@ -3,8 +3,10 @@ package com.example.expo.Controller;
 import com.example.expo.Dto.In.ChatQuestionRequest;
 import com.example.expo.Service.ChatbotService;
 import jakarta.validation.Valid;
+import com.example.expo.Model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,13 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class ChatbotController {
     private final ChatbotService chatbotService;
 
-    @GetMapping("/suggestions/{visitorId}")
-    public ResponseEntity<?> getSuggestions(@PathVariable Integer visitorId){
-        return ResponseEntity.status(200).body(chatbotService.getSuggestions(visitorId));
+    @GetMapping("/suggestions")
+    public ResponseEntity<?> getSuggestions(@AuthenticationPrincipal User user){
+        return ResponseEntity.status(200).body(chatbotService.getSuggestions(user.getId()));
     }
 
-    @PostMapping("/ask/{visitorId}")
-    public ResponseEntity<?> ask(@PathVariable Integer visitorId, @RequestBody @Valid ChatQuestionRequest request){
-        return ResponseEntity.status(200).body(chatbotService.ask(visitorId, request));
+    @PostMapping("/ask")
+    public ResponseEntity<?> ask(@AuthenticationPrincipal User user, @RequestBody @Valid ChatQuestionRequest request){
+        return ResponseEntity.status(200).body(chatbotService.ask(user.getId(), request));
     }
 }

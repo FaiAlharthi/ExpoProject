@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// one request creates the profile, the visitor and the passport
+// one request creates the user, the visitor and the passport
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

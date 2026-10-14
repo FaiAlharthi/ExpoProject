@@ -142,9 +142,10 @@ public class PathService {
     }
 
     // ===== مسار الرحلة من نقطة يحددها الزائر (مثلاً مكانه الحين) =====
-    public RoadmapRouteResponse getRoadmapRoute(Integer roadmapId, Integer startLocationId){
+    public RoadmapRouteResponse getRoadmapRoute(Integer visitorId, Integer roadmapId, Integer startLocationId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
+        // only the owner of the roadmap can see its route
+        if(roadmap == null || !roadmap.getVisitor().getId().equals(visitorId)){
             throw new ApiException("Roadmap not found");
         }
         Location start = locationRepository.findLocationById(startLocationId);
@@ -290,9 +291,10 @@ public class PathService {
         }
     }
     // ===== مسار الرحلة من بوابة الدخول اللي اختارها الزائر =====
-    public RoadmapRouteResponse getRoadmapRouteFromEntrance(Integer roadmapId){
+    public RoadmapRouteResponse getRoadmapRouteFromEntrance(Integer visitorId, Integer roadmapId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
-        if(roadmap == null){
+        // only the owner of the roadmap can see its route
+        if(roadmap == null || !roadmap.getVisitor().getId().equals(visitorId)){
             throw new ApiException("Roadmap not found");
         }
         if(roadmap.getEntrance() == null || roadmap.getEntrance().getLocation() == null){

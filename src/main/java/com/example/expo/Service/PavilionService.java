@@ -29,8 +29,8 @@ public class PavilionService {
         }
         List<PavilionReviewResponse> reviews = new ArrayList<>();
         for(Review review : reviewRepository.findReviewsByPavilionOrderByCreatedAtDesc(pavilion)){
-            String visitorName = review.getVisitor() == null || review.getVisitor().getProfile() == null
-                    ? null : review.getVisitor().getProfile().getFullName();
+            String visitorName = review.getVisitor() == null || review.getVisitor().getUser() == null
+                    ? null : review.getVisitor().getUser().getFullName();
             reviews.add(new PavilionReviewResponse(review.getId(), visitorName, review.getRating(), review.getComment(), review.getCreatedAt()));
         }
         Zone zone = pavilion.getZone();
