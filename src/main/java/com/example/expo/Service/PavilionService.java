@@ -62,7 +62,6 @@ public class PavilionService {
         }
         pavilion.setZone(zone);
         pavilion.setLocation(location);
-        pavilionRepository.save(pavilion);
         Pavilion savedPavilion = pavilionRepository.save(pavilion);
 
         // every pavilion gets its own stamp, the design (imageUrl) can be added later

@@ -49,9 +49,14 @@ public class PassportService {
     }
 
 
-    // Every stamp in the expo, earned ones carry the first check-in time, the rest are faded in the app
-    public List<PassportStampDTO> getPassportStamps(Integer passportId){
-        Passport passport = passportRepository.findPassportById(passportId);
+    // Every stamp in the expo for this visitor, earned ones carry the first check-in time, the rest are faded in the app
+    // the passport comes from the logged-in visitor, so nobody can read another visitor's stamps
+    public List<PassportStampDTO> getVisitorStamps(Integer visitorId){
+        Visitor visitor = visitorRepository.findVisitorById(visitorId);
+        if(visitor == null){
+            throw new ApiException("Visitor not found");
+        }
+        Passport passport = visitor.getPassport();
         if(passport == null){
             throw new ApiException("Passport not found");
         }

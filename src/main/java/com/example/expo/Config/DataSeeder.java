@@ -48,6 +48,7 @@ public class DataSeeder implements CommandLineRunner {
         addMissingPassports();
         addMissingStamps();
     }
+
     // every pavilion has one stamp, covers seeded pavilions and ones created before stamps existed
     private void addMissingStamps() {
         for (Pavilion pavilion : pavilionRepository.findAll()) {
