@@ -13,19 +13,21 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 public class Location {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotNull(message = "x should not be empty")
+    @NotNull(message = "X cannot be empty!")
     @Column(nullable = false)
     private Double x;
 
-    @NotNull(message = "y should not be empty")
+    @NotNull(message = "Y cannot be empty!")
     @Column(nullable = false)
     private Double y;
 
-
+    //Relations
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "location")
     @JsonIgnore
     private Zone zone;

@@ -16,87 +16,85 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 public class Roadmap {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotEmpty(message = "plan type cannot be empty")
-    @Pattern(regexp = "^(STATIC|DYNAMIC)$", message = "plan type must be STATIC or DYNAMIC")
-    @Column(columnDefinition = "VARCHAR(7) not null")
+    @NotEmpty(message = "Plan type cannot be empty!")
+    @Pattern(regexp = "^(STATIC|DYNAMIC)$", message = "Plan type must be STATIC or DYNAMIC")
+    @Column(columnDefinition = "VARCHAR(7) NOT NULL")
     private String planType;
 
-    // checked in service
-    @NotNull(message = "visit date cannot be empty")
-    @Column(columnDefinition = "DATE not null")
-    private LocalDate visitDate;
+    @NotNull(message = "Visit date cannot be empty!")
+    @Column(columnDefinition = "DATE NOT NULL")
+    private LocalDate visitDate; // Checked in service
 
-    @NotEmpty(message = "party type cannot be empty")
-    @Pattern(regexp = "^(SOLO|COUPLE|FAMILY_WITH_CHILDREN|FRIENDS|GROUP)$", message = "party type must be SOLO, COUPLE, FAMILY_WITH_CHILDREN, FRIENDS or GROUP")
-    @Column(columnDefinition = "VARCHAR(20) not null")
+    @NotEmpty(message = "Party type cannot be empty!")
+    @Pattern(regexp = "^(SOLO|COUPLE|FAMILY_WITH_CHILDREN|FRIENDS|GROUP)$", message = "Party type must be SOLO, COUPLE, FAMILY_WITH_CHILDREN, FRIENDS, or GROUP.")
+    @Column(columnDefinition = "VARCHAR(20) NOT NULL")
     private String partyType;
 
-    @NotNull(message = "party size cannot be empty")
-    @Min(value = 1, message = "party size must be at least 1")
-    @Column(columnDefinition = "INTEGER not null")
+    @NotNull(message = "Party size cannot be empty!")
+    @Min(value = 1, message = "Party size must be at least 1")
+    @Column(columnDefinition = "INTEGER NOT NULL")
     private Integer partySize;
 
-    @NotNull(message = "arrival time cannot be empty")
-    @Column(columnDefinition = "TIME not null")
+    @NotNull(message = "Arrival time cannot be empty!")
+    @Column(columnDefinition = "TIME NOT NULL")
     private LocalTime arrivalTime;
 
     // checked in service
-    @NotNull(message = "departure time cannot be empty")
-    @Column(columnDefinition = "TIME not null")
+    @NotNull(message = "Departure time cannot be empty!")
+    @Column(columnDefinition = "TIME NOT NULL")
     private LocalTime departureTime;
 
-    @NotEmpty(message = "experience types cannot be empty")
+    @NotEmpty(message = "Experience types cannot be empty!")
     @ElementCollection
-    private Set<@Pattern(regexp = "^(ENTERTAINMENT|CULTURAL|EDUCATIONAL|RELAXATION|CULINARY)$", message = "experience type must be ENTERTAINMENT, CULTURAL, EDUCATIONAL, RELAXATION or CULINARY") String> experienceTypes;
+    private Set<@Pattern(regexp = "^(ENTERTAINMENT|CULTURAL|EDUCATIONAL|RELAXATION|CULINARY)$",
+            message = "Experience type must be ENTERTAINMENT, CULTURAL, EDUCATIONAL, RELAXATION, or CULINARY.")
+            String> experienceTypes;
 
-    @NotEmpty(message = "visit pace cannot be empty")
-    @Pattern(regexp = "^(RELAXED|INTENSIVE)$", message = "visit pace must be RELAXED or INTENSIVE")
-    @Column(columnDefinition = "VARCHAR(9) not null")
+    @NotEmpty(message = "Visit pace cannot be empty!")
+    @Pattern(regexp = "^(RELAXED|INTENSIVE)$", message = "Visit pace must be RELAXED or INTENSIVE.")
+    @Column(columnDefinition = "VARCHAR(9) NOT NULL")
     private String visitPace;
 
-    @Column(columnDefinition = "BOOLEAN default false")
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean includePrayerBreaks = false;
 
-    @Column(columnDefinition = "BOOLEAN default false")
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean includeMealBreaks = false;
 
-    @Column(columnDefinition = "BOOLEAN default false")
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean includeChildRestBreaks = false;
 
-    // true = can include visited pavilions
-    @NotNull(message = "allow revisits cannot be empty")
-    @Column(columnDefinition = "BOOLEAN not null")
-    private Boolean allowRevisits;
+    @NotNull(message = "Allow revisits cannot be empty!")
+    @Column(columnDefinition = "BOOLEAN NOT NULL")
+    private Boolean allowRevisits; // True == can include visited pavilions
 
-    // set in service
     @Column(columnDefinition = "DATETIME")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // Set in service
 
-    // set by the AI, breaks are saved as json text
     @Column(columnDefinition = "TEXT")
-    private String aiBreaks;
+    private String aiBreaks; // Set by AI, breaks are saved as json text.
 
     @Column(columnDefinition = "TEXT")
     private String aiSummary;
 
+    //Relations
     @ManyToOne
     @JoinColumn
     @JsonIgnore
     private Visitor visitor;
 
-    // the entrance the visitor starts from
     @ManyToOne
     @JoinColumn
-    private Entrance entrance;
+    private Entrance entrance; // The entrance the visitor starts from
 
-    // roadmap stops
-    // optional interests added for this day only
     @ManyToMany
-    private Set<Interest> extraInterests;
+    private Set<Interest> extraInterests; // Roadmap stops, optional interests added for this day ONLY.
 
     @OneToMany(mappedBy = "roadmap")
     private Set<Visit> visits;

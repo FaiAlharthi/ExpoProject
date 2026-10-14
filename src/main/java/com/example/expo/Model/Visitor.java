@@ -13,30 +13,33 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 public class Visitor {
+
+    // ==== Variables ====
     @Id
     private Integer id;
 
-    @NotNull(message = "age cannot be empty")
-    @Min(value = 1, message = "age must be at least 1")
-    @Max(value = 120, message = "age must be at most 120")
-    @Column(columnDefinition = "INTEGER not null")
+    @NotNull(message = "Age cannot be empty!")
+    @Min(value = 1, message = "Age must be at least 1")
+    @Max(value = 120, message = "Age must be at most 120")
+    @Column(columnDefinition = "INTEGER NOT NULL")
     private Integer age;
 
-    @NotEmpty(message = "gender cannot be empty")
-    @Pattern(regexp = "^(MALE|FEMALE)$", message = "gender must be MALE or FEMALE")
-    @Column(columnDefinition = "VARCHAR(6) not null")
+    @NotEmpty(message = "Gender cannot be empty!")
+    @Pattern(regexp = "^(MALE|FEMALE)$", message = "Gender must be MALE or FEMALE.")
+    @Column(columnDefinition = "VARCHAR(6) NOT NULL")
     private String gender;
 
-    @NotEmpty(message = "preferred language cannot be empty")
-    @Pattern(regexp = "^(AR|EN)$", message = "preferred language must be AR or EN")
-    @Column(columnDefinition = "VARCHAR(2) not null")
+    @NotEmpty(message = "Preferred language cannot be empty!")
+    @Pattern(regexp = "^(AR|EN)$", message = "Preferred language must be AR or EN.")
+    @Column(columnDefinition = "VARCHAR(2) NOT NULL")
     private String preferredLanguage;
 
-    @NotEmpty(message = "nationality cannot be empty")
-    @Size(max = 50, message = "nationality should be 50 letters max")
-    @Column(columnDefinition = "VARCHAR(50) not null")
+    @NotEmpty(message = "Nationality cannot be empty!")
+    @Size(max = 50, message = "Nationality cannot be longer that 50 letters.")
+    @Column(columnDefinition = "VARCHAR(50) NOT NULL")
     private String nationality;
 
+    // ===== Relations =====
     @OneToOne
     @MapsId
     @JsonIgnore

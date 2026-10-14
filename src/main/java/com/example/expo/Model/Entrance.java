@@ -13,15 +13,18 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 public class Entrance {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotEmpty(message = "name cannot be empty")
-    @Size(max = 50, message = "name should be 50 letters max")
-    @Column(columnDefinition = "VARCHAR(50) not null unique")
+    @NotEmpty(message = "Name cannot be empty.")
+    @Size(max = 50, message = "Name cannot be longer than 50 letters.")
+    @Column(columnDefinition = "VARCHAR(50) NOT NULL UNIQUE")
     private String name;
 
+    //Relations
     @OneToOne
     @JoinColumn
     private Location location;

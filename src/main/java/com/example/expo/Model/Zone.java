@@ -14,23 +14,22 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 public class Zone {
+
+    // ==== Variables ====
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotEmpty(message = "name should not be empty")
-    @Size(min = 2, max = 50, message = "name must be between 2 and 50 characters")
+    @NotEmpty(message = "Name cannot be empty!")
+    @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters.")
     @Column(nullable = false, unique = true)
     private String name;
 
-
-    @Size(max = 500, message = "description must be less than 500 characters")
+    @Size(max = 500, message = "Description must be less than 500 characters.")
     @Column(length = 500)
     private String description;
 
-
-
-
+    // ==== Relations ====
     @OneToOne
     @JoinColumn
     private Location location;

@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 public class AiChatbot {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -22,14 +24,13 @@ public class AiChatbot {
     @Column(columnDefinition = "TEXT")
     private String lastAnswer;
 
-    // set in service
     @Column(columnDefinition = "DATETIME")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // set in service
 
-    // updated with every question
     @Column(columnDefinition = "DATETIME")
-    private LocalDateTime lastInteractionAt;
+    private LocalDateTime lastInteractionAt; // updated with every question
 
+    //Relations
     @OneToOne
     @JoinColumn
     @JsonIgnore

@@ -13,40 +13,29 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 public class Pavilion {
+
+    //Variables
     @Id
-   @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
- @NotEmpty(message = "name should not be empty")
- @Size(min = 2, max = 100, message = "name must be between 2 and 100 characters")
- @Column(nullable = false, unique = true)
- private String name;//unique
+    @NotEmpty(message = "Name cannot be empty")
+    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
+    @Column(nullable = false, unique = true)
+    private String name;//unique
 
- @NotEmpty(message = "country should not be empty")
- @Size(max = 100, message = "country must be less than 100 characters")
- @Column(nullable = false)
- private String country;
+    @NotEmpty(message = "Country cannot be empty")
+    @Size(max = 100, message = "Country must be less than 100 characters")
+    @Column(nullable = false)
+    private String country;
 
-    @NotEmpty(message = "description should not be empty")
- @Size(max = 1000, message = "description must be less than 1000 characters")
- @Column(length = 1000,nullable = false)
- private String description;
+    @NotEmpty(message = "Description cannot be empty")
+    @Size(max = 1000, message = "Description must be less than 1000 characters")
+    @Column(length = 1000,nullable = false)
+    private String description;
+    private String imageUrl;
 
-// @NotNull(message = "indoor should not be empty")
-// @Column(nullable = false)
-// private Boolean indoor; //for weather api  //مفتوح مغلق
-
-
-// @NotNull(message = "visit duration should not be empty")
-// @Min(value = 5, message = "visit duration must be at least 5 minutes")
-// @Max(value = 180, message = "visit duration must be at most 180 minutes")
-// @Column(nullable = false)
-// private Integer visitDuration;
-
-
- private String imageUrl;
-
-
+    //Relations
     @ManyToOne
     @JoinColumn
     @JsonIgnore
@@ -54,12 +43,13 @@ public class Pavilion {
 
     @OneToOne
     @JoinColumn
-    private Location location;//ماعليها جاسون اقنور معناته اتاكد في الكرد مافي تكرار
+    private Location location; //ماعليها جاسون اقنور معناته اتاكد في الكرد مافي تكرار
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "pavilion")
-    private Set<Review> reviews;//نفس الشي من ناحية
+    private Set<Review> reviews; //نفس الشي من ناحية
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "pavilion")
     @JsonIgnore
     private Set<Visit> visits;
+
 }

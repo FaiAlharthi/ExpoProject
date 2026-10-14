@@ -9,14 +9,16 @@ import lombok.*;
 @NoArgsConstructor
 @Entity
 public class Path {
+
+    //Variables
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // تنحسب تلقائي في السيرفس من x و y
     @Column(nullable = false)
-    private Double distance;
+    private Double distance;  // Automatically counted in path service from X to Y
 
+    //Relations
     @ManyToOne
     @JoinColumn
     private Location fromLocation;
