@@ -30,6 +30,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PassportRepository passportRepository;
     private final InterestRepository interestRepository;
     private final StampRepository stampRepository;
+    private final PavilionAccessibilityRepository pavilionAccessibilityRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -47,6 +48,69 @@ public class DataSeeder implements CommandLineRunner {
         }
         addMissingPassports();
         addMissingStamps();
+        addMissingAccessibility(data);
+    }
+
+    // fills the accessibility of the pavilions (by name) and of the paths that have none yet
+    private void addMissingAccessibility(SeedData data){
+        if(data.getPavilions() != null){
+            for(SeedPavilion seedPavilion : data.getPavilions()){
+                if(seedPavilion.getAccessibility() == null){
+                    continue;
+                }
+                Pavilion pavilion = pavilionRepository.findPavilionByName(seedPavilion.getName());
+                if(pavilion == null){
+                    continue;
+                }
+                for(Map.Entry<String, SeedAccessibility> entry : seedPavilion.getAccessibility().entrySet()){
+                    if(pavilionAccessibilityRepository.findPavilionAccessibilityByPavilionAndNeedType(pavilion, entry.getKey()) != null){
+                        continue;
+                    }
+                    PavilionAccessibility row = new PavilionAccessibility();
+                    row.setPavilion(pavilion);
+                    row.setNeedType(entry.getKey());
+                    row.setStatus(entry.getValue().getStatus());
+                    row.setNote(entry.getValue().getNote());
+                    row.setNoteAr(entry.getValue().getNoteAr());
+                    pavilionAccessibilityRepository.save(row);
+                }
+            }
+        }
+        if(data.getPaths() == null){
+            return;
+        }
+        Map<String, Location> points = pointsByName();
+        for(SeedPath seedPath : data.getPaths()){
+            Location from = points.get(seedPath.getFrom());
+            Location to = points.get(seedPath.getTo());
+            if(from == null || to == null){
+                continue;
+            }
+            Path path = pathRepository.findPathByFromLocationAndToLocation(from, to);
+            if(path == null){
+                path = pathRepository.findPathByFromLocationAndToLocation(to, from);
+            }
+            if(path == null || (path.getStepFree() != null && path.getShaded() != null)){
+                continue;
+            }
+            path.setStepFree(seedPath.getStepFree() == null || seedPath.getStepFree());
+            path.setShaded(seedPath.getShaded() != null && seedPath.getShaded());
+            pathRepository.save(path);
+        }
+    }
+
+    private Map<String, Location> pointsByName(){
+        Map<String, Location> points = new HashMap<>();
+        for(Zone zone : zoneRepository.findAll()){
+            points.put("ZONE:" + zone.getName(), zone.getLocation());
+        }
+        for(Entrance entrance : entranceRepository.findAll()){
+            points.put("ENTRANCE:" + entrance.getName(), entrance.getLocation());
+        }
+        for(Pavilion pavilion : pavilionRepository.findAll()){
+            points.put("PAVILION:" + pavilion.getName(), pavilion.getLocation());
+        }
+        return points;
     }
 
     // every pavilion has one stamp, covers seeded pavilions and ones created before stamps existed
@@ -147,6 +211,8 @@ public class DataSeeder implements CommandLineRunner {
             path.setFromLocation(from);
             path.setToLocation(to);
             path.setDistance(Math.sqrt(Math.pow(to.getX() - from.getX(), 2) + Math.pow(to.getY() - from.getY(), 2)));
+            path.setStepFree(seedPath.getStepFree() == null || seedPath.getStepFree());
+            path.setShaded(seedPath.getShaded() != null && seedPath.getShaded());
             pathRepository.save(path);
         }
     }
@@ -184,6 +250,17 @@ public class DataSeeder implements CommandLineRunner {
     public static class SeedPath {
         private String from;
         private String to;
+        private Boolean stepFree;
+        private Boolean shaded;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class SeedAccessibility {
+        private String status;
+        private String note;
+        private String noteAr;
     }
 
     @Data
@@ -221,5 +298,6 @@ public class DataSeeder implements CommandLineRunner {
         private String imageUrl;
         private String zone;
         private SeedLocation location;
+        private Map<String, SeedAccessibility> accessibility;
     }
 }

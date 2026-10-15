@@ -1,5 +1,6 @@
 package com.example.expo.Service;
 
+import com.example.expo.Dto.Out.AccessibilityConflictResponse;
 import com.example.expo.Dto.Out.AdminDashboardResponse;
 import com.example.expo.Dto.Out.CountResponse;
 import com.example.expo.Dto.Out.PavilionStatResponse;
@@ -33,6 +34,10 @@ public class DashboardService {
     private final RoadmapRepository roadmapRepository;
     private final ReviewRepository reviewRepository;
     private final PavilionRepository pavilionRepository;
+    private final AccessibilityService accessibilityService;
+
+    // visitors must agree before a conflict is shown: at least 3 verdicts and more than half say not suitable
+    private static final int MIN_VERDICTS = 3;
 
     // how many items in each top list
     private static final int TOP_LIMIT = 5;
@@ -96,9 +101,17 @@ public class DashboardService {
         }
 
         Map<String, Long> entrances = new HashMap<>();
+        Map<String, Long> needs = new HashMap<>();
+        long roadmapsWithNeeds = 0;
         for(Roadmap roadmap : roadmaps){
             if(roadmap.getEntrance() != null){
                 entrances.merge(roadmap.getEntrance().getName(), 1L, Long::sum);
+            }
+            if(roadmap.getAccessibilityNeeds() != null && !roadmap.getAccessibilityNeeds().isEmpty()){
+                roadmapsWithNeeds++;
+                for(String need : roadmap.getAccessibilityNeeds()){
+                    needs.merge(need, 1L, Long::sum);
+                }
             }
         }
 
@@ -112,7 +125,43 @@ public class DashboardService {
                 top(toCounts(interests, true)),
                 toCounts(visitsPerDay, false),
                 toCounts(visitsPerZone, true),
-                toCounts(entrances, true));
+                toCounts(entrances, true),
+                roadmapsWithNeeds,
+                toCounts(needs, true),
+                accessibilityConflicts());
+    }
+
+    // official status says accessible (or partly), but most visitors with that need said not suitable
+    private List<AccessibilityConflictResponse> accessibilityConflicts(){
+        Map<String, Long> total = new HashMap<>();
+        Map<String, Long> notSuitable = new HashMap<>();
+        for(Review review : reviewRepository.findAll()){
+            if(review.getAccessibilityVerdict() == null || review.getAccessibilityNeeds() == null){
+                continue;
+            }
+            for(String need : review.getAccessibilityNeeds()){
+                String key = review.getPavilion().getId() + ":" + need;
+                total.merge(key, 1L, Long::sum);
+                if(review.getAccessibilityVerdict().equals("NOT_SUITABLE")){
+                    notSuitable.merge(key, 1L, Long::sum);
+                }
+            }
+        }
+        List<AccessibilityConflictResponse> conflicts = new ArrayList<>();
+        for(Pavilion pavilion : pavilionRepository.findAll()){
+            for(String need : AccessibilityService.NEEDS){
+                String key = pavilion.getId() + ":" + need;
+                long count = total.getOrDefault(key, 0L);
+                long bad = notSuitable.getOrDefault(key, 0L);
+                String status = accessibilityService.statusFor(pavilion, need);
+                boolean official = status.equals("ACCESSIBLE") || status.equals("PARTIAL");
+                if(official && count >= MIN_VERDICTS && bad * 2 > count){
+                    conflicts.add(new AccessibilityConflictResponse(pavilion.getId(), pavilion.getName(), need, status, bad, count));
+                }
+            }
+        }
+        conflicts.sort(Comparator.comparing(AccessibilityConflictResponse::getNotSuitableCount).reversed());
+        return conflicts;
     }
 
     private <T> List<T> top(List<T> items){
