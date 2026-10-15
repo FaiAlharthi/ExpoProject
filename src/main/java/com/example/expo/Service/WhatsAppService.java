@@ -57,9 +57,23 @@ public class WhatsAppService {
                     ? "رحلتكم في إكسبو الرياض جاهزة! شاركوا الملف مع أحبابكم."
                     : "رحلتك في إكسبو الرياض جاهزة! تقدر تشاركها مع أحبابك.";
             sendDocument(phone, "wijha-roadmap.pdf", pdf, caption);
+            sendRoadmapPdfNow(phone, visitorId, roadmapId, group);
         }catch(Exception e){
             System.out.println("WhatsApp roadmap PDF failed: " + e.getMessage());
         }
+    }
+
+    // same as above but the caller waits and learns if it was sent (used by the "send to my WhatsApp" button)
+    public boolean sendRoadmapPdfNow(String phone, Integer visitorId, Integer roadmapId, boolean group){
+        if(!isConfigured()){
+            System.out.println("WhatsApp is not set (ULTRAMSG_INSTANCE_ID / ULTRAMSG_TOKEN), roadmap PDF not sent");
+            return false;
+        }
+        byte[] pdf = journeyPdfService.getRoadmapPdf(visitorId, roadmapId);
+        String caption = group
+                ? "رحلتكم في إكسبو الرياض جاهزة! شاركوا الملف مع أحبابكم."
+                : "رحلتك في إكسبو الرياض جاهزة! تقدر تشاركها مع أحبابك.";
+        return sendDocument(phone, "wijha-roadmap.pdf", pdf, caption);
     }
 
     // POST {api-url}/{instance}/messages/document, the file is sent as base64
