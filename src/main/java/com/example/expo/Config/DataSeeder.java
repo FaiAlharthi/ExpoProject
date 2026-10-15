@@ -52,10 +52,15 @@ public class DataSeeder implements CommandLineRunner {
     // every pavilion has one stamp, covers seeded pavilions and ones created before stamps existed
     private void addMissingStamps() {
         for (Pavilion pavilion : pavilionRepository.findAll()) {
-            if (stampRepository.findStampByPavilion(pavilion) == null) {
-                Stamp stamp = new Stamp();
+            Stamp stamp = stampRepository.findStampByPavilion(pavilion);
+            if (stamp == null) {
+                stamp = new Stamp();
                 stamp.setTitle(pavilion.getName() + " Stamp");
                 stamp.setPavilion(pavilion);
+            }
+            // fills the design for new stamps and for old ones that had none
+            if (stamp.getImageUrl() == null || stamp.getImageUrl().isBlank()) {
+                stamp.setImageUrl(Stamp.imageUrlFor(pavilion));
                 stampRepository.save(stamp);
             }
         }

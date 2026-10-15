@@ -47,4 +47,15 @@ public class Stamp {
         }
         return pavilion.getName();
     }
+
+    //Temporary
+    // stamp design file in static/stamps, named after the country: /stamps/Japan@1x.png
+    // joint pavilions (country has commas, e.g. "Latvia, Lithuania") use the pavilion name: "The Baltics@1x.png"
+    public static String imageUrlFor(Pavilion pavilion) {
+        String fileName = pavilion.getCountry().trim();
+        if (fileName.contains(",")) {
+            fileName = pavilion.getName().replace(" Pavilion", "").trim();
+        }
+        return "/stamps/" + fileName.replace(" ", "%20") + "@1x.png";
+    }
 }
