@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expo 2030 Visitor</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&display=swap">
+  <style>
+    :root {
+      --bg: #0f1719; --surface: #172226; --surface2: #1d2b30; --ink: #e5eeeb; --muted: #93a6a1; --line: #2a3a3e;
+      --accent: #3fb8a6; --blue: #4fd8ff; --gold: #f0a93a; --warn: #f2665c; --ok: #6fd28a;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans Arabic", Tahoma, sans-serif; font-size: 15px; line-height: 1.6; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+    h1, h2, h3 { font-family: "Reem Kufi", sans-serif; margin: 0; font-weight: 500; }
+    h1 { font-size: clamp(22px, 3.5vw, 30px); font-weight: 700; }
+    h2 { font-size: 19px; } h3 { font-size: 16px; }
+    a { color: var(--blue); }
+    .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+    input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; width: 100%; }
+    .btn { font: inherit; font-size: 14px; background: var(--accent); color: #08201c; font-weight: 600; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+    .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+    .btn.red { background: transparent; color: var(--warn); border: 1px solid #f2665c66; }
+    .btn.sm { padding: 3px 9px; font-size: 13px; }
+    .btn:disabled { opacity: .5; cursor: wait; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { font: inherit; font-size: 13px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; cursor: pointer; background: var(--bg); color: var(--ink); }
+    .chip.on { background: var(--accent); color: #08201c; border-color: var(--accent); }
+    .hidden { display: none !important; }
+
+    /* التبويبات */
+    nav { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+    nav button { font: inherit; font-size: 14px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; white-space: nowrap; }
+    nav button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+    nav button.lock { opacity: .4; }
+
+    /* بطاقات الأجنحة */
+    .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+    .pcard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; cursor: pointer; display: grid; transition: transform .15s; }
+    .pcard:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .pcard img, .noimg { width: 100%; height: 130px; object-fit: cover; display: block; background: var(--surface2); }
+    .noimg { display: grid; place-items: center; font-size: 40px; }
+    .pcard .t { padding: 10px; display: grid; gap: 2px; }
+    .pcard b { font-size: 14px; }
+
+    /* الجواز والأختام */
+    .passport { background: linear-gradient(135deg, #0e4f47, #123a40); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .pnum { font-family: ui-monospace, Menlo, monospace; font-size: 18px; letter-spacing: .08em; }
+    .bar { height: 8px; background: #ffffff22; border-radius: 99px; overflow: hidden; min-width: 180px; }
+    .bar i { display: block; height: 100%; background: var(--gold); }
+    .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 14px; }
+    .stamp { display: grid; justify-items: center; gap: 6px; text-align: center; }
+    .seal { width: 104px; height: 104px; border-radius: 50%; border: 3px dashed var(--gold); padding: 5px; position: relative; transform: rotate(-8deg); }
+    .seal .in { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 2px solid var(--gold); display: grid; place-items: center; background: var(--surface2); font-size: 34px; position: relative; }
+    .seal img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+    .seal .flag { position: absolute; bottom: -4px; left: -4px; font-size: 26px; transform: rotate(8deg); }
+    .stamp.off .seal { border-color: var(--line); filter: grayscale(1); opacity: .35; transform: none; }
+    .stamp.off .seal .in { border-color: var(--line); }
+    .stamp small { font-size: 12px; line-height: 1.3; }
+
+    /* المودال */
+    .modal { position: fixed; inset: 0; background: #000a; display: grid; place-items: center; padding: 16px; z-index: 10; }
+    .modal .box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal .box img { width: 100%; max-height: 280px; object-fit: cover; display: block; border-radius: 16px 16px 0 0; }
+    .modal .body { padding: 16px; display: grid; gap: 10px; }
+
+    /* الرحلات */
+    .stop { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 6px; }
+    .stop img, .stop .noimg { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; font-size: 22px; }
+    .stop.done { border-color: #6fd28a66; }
+    .summary { background: #3fb8a614; border: 1px solid #3fb8a640; border-radius: 10px; padding: 10px; font-size: 14px; }
+    .stars { color: var(--gold); letter-spacing: 1px; }
+
+    /* الشات */
+    .chat { display: grid; grid-template-rows: 1fr auto auto; height: 70vh; }
+    .bubbles { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px; }
+    .b { max-width: 85%; padding: 8px 12px; border-radius: 14px; white-space: pre-wrap; font-size: 14px; }
+    .b.user { align-self: flex-start; background: var(--accent); color: #08201c; }
+    .b.bot { align-self: flex-end; background: var(--bg); border: 1px solid var(--line); }
+    .send { display: flex; gap: 8px; }
+
+    /* الأدمن */
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .kpi { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+    .kpi .v { font-size: 26px; font-weight: 700; color: var(--accent); }
+    .hbar { display: grid; grid-template-columns: 140px 1fr 50px; gap: 8px; align-items: center; font-size: 13px; }
+    .hbar i { display: block; height: 10px; border-radius: 4px; background: var(--accent); }
+    .tbl { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 6px; text-align: start; white-space: nowrap; }
+    th { color: var(--muted); font-weight: 500; }
+
+    #toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; z-index: 20; max-width: 90vw; }
+    #toast.err { border-color: var(--warn); color: var(--warn); }
+    #toast.ok { border-color: var(--ok); color: var(--ok); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>إكسبو 2030 الرياض 🇸🇦</h1>
+      <div class="muted">محاكي تطبيق الزائر — كل خصائص الباك إند</div>
+    </div>
+    <div id="who" class="muted">ما سجلتي دخول</div>
+  </div>
+
+  <nav id="nav">
+    <button data-tab="login" class="on">🔑 الدخول</button>
+    <button data-tab="explore">🏛️ الأجنحة</button>
+    <button data-tab="trips" data-need="VISITOR">🗓️ رحلاتي</button>
+    <button data-tab="passport" data-need="VISITOR">🛂 جوازي</button>
+    <button data-tab="reviews" data-need="VISITOR">⭐ تقييماتي</button>
+    <button data-tab="chat" data-need="VISITOR">💬 المساعد</button>
+    <button data-tab="account" data-need="VISITOR">👤 حسابي</button>
+    <button data-tab="admin" data-need="ADMIN">🛠️ الأدمن</button>
+    <a href="route3d.html" target="_blank" style="align-self:center;white-space:nowrap;font-size:14px">🗺️ الخريطة</a>
+  </nav>
+
+  <!-- ===================== الدخول ===================== -->
+  <section id="tab-login" class="tab">
+    <div class="row" style="align-items:start">
+      <div class="card">
+        <h2>تسجيل دخول</h2>
+        <label>اسم المستخدم <input id="lu" autocomplete="username"></label>
+        <label>كلمة المرور <input id="lp" type="password" autocomplete="current-password"></label>
+        <button class="btn" id="loginBtn">دخول</button>
+        <p class="muted">الأدمن يسجل دخول من هنا بعد، وتطلع له لوحة الأدمن.</p>
+      </div>
+      <div class="card">
+        <h2>زائر جديد</h2>
+        <div class="row">
+          <label>الاسم الكامل <input id="rName" value="Deema Test"></label>
+          <label>اسم المستخدم <input id="rUser"></label>
+          <label>كلمة المرور <input id="rPass" value="Test12345"></label>
+          <label>الإيميل <input id="rEmail"></label>
+          <label>الجوال <input id="rPhone"></label>
+          <label>العمر <input id="rAge" type="number" value="25"></label>
+          <label>الجنس <select id="rGender"><option>FEMALE</option><option>MALE</option></select></label>
+          <label>اللغة <select id="rLang"><option>AR</option><option>EN</option></select></label>
+          <label>الجنسية <input id="rNat" value="Saudi"></label>
+        </div>
+        <button class="btn" id="regBtn">سجلي وادخلي</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== الأجنحة ===================== -->
+  <section id="tab-explore" class="tab hidden">
+    <div class="card">
+      <div class="send">
+        <input id="search" placeholder="ابحثي باسم الجناح... (مثلاً Japan)">
+        <button class="btn" id="searchBtn">بحث</button>
+      </div>
+      <div class="chips" id="zoneChips"></div>
+    </div>
+    <p class="muted" id="exploreInfo"></p>
+    <div class="pgrid" id="pgrid"></div>
+  </section>
+
+  <!-- ===================== رحلاتي ===================== -->
+  <section id="tab-trips" class="tab hidden">
+    <div class="card">
+      <h2>🤖 ولّدي رحلة بالـ AI</h2>
+      <p class="muted">لازم يكون عندك 3 اهتمامات على الأقل (من «حسابي»). التاريخ لازم يكون بين 2026-10-01 و 2027-03-31.</p>
+      <div class="row">
+        <label>تاريخ الزيارة <input id="gDate" type="date" min="2026-10-01" max="2027-03-31"></label>
+        <label>البوابة <select id="gGate"></select></label>
+        <label>نوع المجموعة
+          <select id="gParty">
+            <option value="SOLO">لحالي</option><option value="COUPLE">زوجين</option>
+            <option value="FAMILY_WITH_CHILDREN">عائلة مع أطفال</option>
+            <option value="FRIENDS" selected>أصدقاء</option><option value="GROUP">مجموعة</option>
+          </select>
+        </label>
+        <label>العدد <input id="gSize" type="number" min="1" value="3"></label>
+        <label>وقت الوصول <input id="gFrom" type="time" value="10:00"></label>
+        <label>وقت المغادرة <input id="gTo" type="time" value="13:00"></label>
+        <label>الوتيرة <select id="gPace"><option value="RELAXED">هادية</option><option value="INTENSIVE">مكثفة</option></select></label>
+        <label>اهتمامات إضافية لهذا اليوم <select id="gExtra" multiple size="3"></select></label>
+      </div>
+      <div class="chips" id="gExp"></div>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" id="gPray" checked> استراحة صلاة</label>
+        <label class="chip"><input type="checkbox" id="gMeal"> استراحة أكل</label>
+        <label class="chip"><input type="checkbox" id="gKids"> راحة أطفال</label>
+        <label class="chip"><input type="checkbox" id="gRev"> أسمح بتكرار الأجنحة</label>
+      </div>
+      <div class="chips">
+        <button class="btn" id="genBtn">ولّدي الرحلة 🤖</button>
+        <button class="btn ghost" id="manualBtn">رحلة يدوية فاضية (بدون AI)</button>
+      </div>
+      <div id="genResult"></div>
+    </div>
+    <div class="top"><h2>رحلاتي</h2><button class="btn ghost" id="tripsReload">تحديث</button></div>
+    <div id="tripsList" style="display:grid;gap:14px"></div>
+  </section>
+
+  <!-- ===================== جوازي ===================== -->
+  <section id="tab-passport" class="tab hidden">
+    <div class="passport">
+      <div>
+        <div class="muted" style="color:#cfe">جواز إكسبو 2030</div>
+        <div class="pnum" id="pNum">—</div>
+        <div id="pName"></div>
+      </div>
+      <div style="display:grid;gap:6px">
+        <div><b id="pCount">0</b> ختم من <b id="pTotal">0</b></div>
+        <div class="bar"><i id="pBar" style="width:0"></i></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="top"><h2>أختامي 🛂</h2>
+        <div class="chips">
+          <button class="chip on" data-sf="all">الكل</button>
+          <button class="chip" data-sf="earned">اللي أخذتها</button>
+          <button class="chip" data-sf="missing">الباقية</button>
+        </div>
+      </div>
+      <div class="sgrid" id="stamps"></div>
+    </div>
+    <div class="card">
+      <h2>سجل زياراتي</h2>
+      <div id="visits" style="display:grid;gap:8px"></div>
+    </div>
+  </section>
+
+  <!-- ===================== تقييماتي ===================== -->
+  <section id="tab-reviews" class="tab hidden">
+    <div class="card">
+      <h2>أجنحة زرتيها وما قيّمتيها</h2>
+      <div id="pending" style="display:grid;gap:10px"></div>
+    </div>
+    <div class="card">
+      <h2>تقييماتي</h2>
+      <div id="myReviews" style="display:grid;gap:8px"></div>
+    </div>
+  </section>
+
+  <!-- ===================== المساعد ===================== -->
+  <section id="tab-chat" class="tab hidden">
+    <div class="card chat">
+      <div class="bubbles" id="bubbles"></div>
+      <div class="chips" id="sugg"></div>
+      <div class="send">
+        <input id="q" placeholder="اسألي عن إكسبو..." maxlength="500">
+        <button class="btn" id="askBtn">إرسال</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== حسابي ===================== -->
+  <section id="tab-account" class="tab hidden">
+    <div class="card">
+      <h2>اهتماماتي <span class="muted">(اضغطي للإضافة أو الحذف، تنحفظ على طول)</span></h2>
+      <div class="chips" id="interests"></div>
+    </div>
+    <div class="row" style="align-items:start">
+      <div class="card">
+        <h2>بياناتي كزائر</h2>
+        <div class="row">
+          <label>العمر <input id="vAge" type="number"></label>
+          <label>الجنس <select id="vGender"><option>FEMALE</option><option>MALE</option></select></label>
+          <label>اللغة <select id="vLang"><option>AR</option><option>EN</option></select></label>
+          <label>الجنسية <input id="vNat"></label>
+        </div>
+        <button class="btn" id="saveVisitor">حفظ</button>
+      </div>
+      <div class="card">
+        <h2>بيانات الحساب</h2>
+        <div class="row">
+          <label>الاسم الكامل <input id="uName"></label>
+          <label>اسم المستخدم <input id="uUser"></label>
+          <label>الإيميل <input id="uEmail"></label>
+          <label>الجوال <input id="uPhone"></label>
+          <label>كلمة المرور (جديدة أو نفسها) <input id="uPass" type="password"></label>
+        </div>
+        <button class="btn" id="saveUser">حفظ</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>حذف الحساب</h2>
+      <p class="muted">يحذف الزائر وكل رحلاته وتقييماته.</p>
+      <button class="btn red" id="deleteMe">احذفي حسابي</button>
+    </div>
+  </section>
+
+  <!-- ===================== الأدمن ===================== -->
+  <section id="tab-admin" class="tab hidden">
+    <div class="card">
+      <div class="top"><h2>لوحة الأدمن 📊</h2><button class="btn ghost" id="dashReload">تحديث</button></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="row" id="dashLists" style="align-items:start"></div>
+    </div>
+    <div class="card">
+      <h2>البيانات</h2>
+      <div class="chips" id="adminTables"></div>
+      <div class="tbl" id="adminTable"></div>
+    </div>
+    <div class="card">
+      <h2>إضافة</h2>
+      <div class="row">
+        <label>النوع
+          <select id="addType">
+            <option value="interest">اهتمام</option>
+            <option value="location">نقطة (Location)</option>
+            <option value="zone">زون</option>
+            <option value="entrance">بوابة</option>
+            <option value="pavilion">جناح</option>
+            <option value="path">ممر</option>
+          </select>
+        </label>
+      </div>
+      <div class="row" id="addFields"></div>
+      <button class="btn" id="addBtn">أضيفي</button>
+    </div>
+    <div class="card">
+      <h2>حذف</h2>
+      <div class="row">
+        <label>النوع
+          <select id="delType">
+            <option value="/interest/delete/">اهتمام</option>
+            <option value="/location/delete/">نقطة</option>
+            <option value="/zone/delete/">زون</option>
+            <option value="/entrance/deleteEntrance/">بوابة</option>
+            <option value="/pavilion/delete/">جناح</option>
+            <option value="/path/delete/">ممر</option>
+            <option value="/review/delete/">تقييم</option>
+            <option value="/visitor/deleteVisitor/">زائر</option>
+            <option value="/user/deleteUser/">مستخدم</option>
+          </select>
+        </label>
+        <label>الرقم (id) <input id="delId" type="number"></label>
+      </div>
+      <button class="btn red" id="delBtn">احذفي</button>
+    </div>
+  </section>
+</div>
+
+<!-- نافذة تفاصيل الجناح -->
+<div class="modal hidden" id="modal"><div class="box" id="modalBox"></div></div>
+<div id="toast" class="hidden"></div>
+
+<script>
+  const API = "/api/v1";
+  const $ = id => document.getElementById(id);
+  let auth = null, role = null, me = null;
+  let pavilions = [], zones = [], entrances = [], interests = [], myInterests = new Set(), myRoadmaps = [];
+  let history = [], stampsData = [], stampFilter = "all";
+
+  // ===================== أدوات =====================
+  async function api(url, method, body) {
+    const headers = {};
+    if (auth) headers["Authorization"] = auth;
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    const res = await fetch(API + url, { method: method || "GET", headers, credentials: "same-origin", body: body !== undefined ? JSON.stringify(body) : undefined });
+    const text = await res.text();
+    let data; try { data = JSON.parse(text); } catch (e) { data = text; }
+    if (res.status === 401) throw new Error("لازم تسجلين دخول (أو اسم المستخدم/كلمة المرور غلط)");
+    if (res.status === 403) throw new Error("ما عندك صلاحية لهذا الطلب");
+    if (!res.ok) throw new Error((data && (data.message || data.error)) || ("خطأ " + res.status));
+    return data;
+  }
+  let toastTimer;
+  function toast(text, ok) {
+    const t = $("toast"); t.textContent = text; t.className = ok ? "ok" : "err";
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = "hidden", 4000);
+  }
+  async function busy(btn, fn) { if (btn) btn.disabled = true; try { await fn(); } catch (e) { toast(e.message); } finally { if (btn) btn.disabled = false; } }
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const stars = n => "★".repeat(Math.round(n || 0)) + "☆".repeat(5 - Math.round(n || 0));
+  const fmtDate = d => d ? String(d).replace("T", " ").slice(0, 16) : "";
+  const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+
+  // أعلام الدول
+  const FLAGS = { "Japan":"JP","United States":"US","China":"CN","South Korea":"KR","Singapore":"SG","United Arab Emirates":"AE","United Kingdom":"GB","Luxembourg":"LU","Czech Republic":"CZ","India":"IN","Kuwait":"KW","Switzerland":"CH","Germany":"DE","Netherlands":"NL","Australia":"AU","Canada":"CA","Portugal":"PT","Spain":"ES","Indonesia":"ID","Malaysia":"MY","Brazil":"BR","Colombia":"CO","Oman":"OM","Chile":"CL","Thailand":"TH","Belgium":"BE","Philippines":"PH","Bangladesh":"BD","Angola":"AO","Senegal":"SN","Nepal":"NP","Cambodia":"KH","Peru":"PE","Poland":"PL","Ireland":"IE","Italy":"IT","France":"FR","Austria":"AT","Hungary":"HU","Egypt":"EG","Jordan":"JO","Uzbekistan":"UZ","Turkiye":"TR","Turkmenistan":"TM","Tunisia":"TN","Algeria":"DZ","Vietnam":"VN","Saudi Arabia":"SA","Qatar":"QA","Bahrain":"BH","Azerbaijan":"AZ","Serbia":"RS","Romania":"RO","Bulgaria":"BG","Malta":"MT","Monaco":"MC" };
+  const flag = c => FLAGS[c] ? String.fromCodePoint(...[...FLAGS[c]].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65)) : "🏛️";
+  const pavById = id => pavilions.find(p => p.id === id);
+  const zoneOfPav = p => zones.find(z => (z.pavilions || []).some(x => x.id === p.id));
+  // صورة مع بديل لو ما حملت
+  const img = (url, cls) => url ? `<img src="${esc(url)}" loading="lazy" class="${cls || ""}" alt="" onerror="this.outerHTML='<div class=&quot;noimg ${cls || ""}&quot;>🏛️</div>'">` : `<div class="noimg ${cls || ""}">🏛️</div>`;
+
+  // ===================== التبويبات =====================
+  function openTab(name) {
+    const b = document.querySelector(`nav button[data-tab="${name}"]`);
+    if (b.dataset.need && b.dataset.need !== role) { toast(b.dataset.need === "ADMIN" ? "هذي للأدمن بس" : "سجلي دخول كزائر أول"); return; }
+    document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".tab").forEach(t => t.classList.toggle("hidden", t.id !== "tab-" + name));
+    const load = { explore: loadExplore, trips: loadTrips, passport: loadPassport, reviews: loadReviews, chat: loadChat, account: loadAccount, admin: loadAdmin }[name];
+    if (load) busy(null, load);
+  }
+  document.querySelectorAll("nav button").forEach(b => b.onclick = () => openTab(b.dataset.tab));
+  function refreshNav() { document.querySelectorAll("nav button[data-need]").forEach(b => b.classList.toggle("lock", b.dataset.need !== role)); }
+
+  // ===================== الدخول =====================
+  async function login(username, password) {
+    auth = "Basic " + btoa(unescape(encodeURIComponent(username + ":" + password)));
+    try {
+      me = await api("/visitor/getMyInfo");
+      role = "VISITOR";
+      myInterests = new Set((me.interests || []).map(i => i.id));
+      myRoadmaps = await api("/roadmap/getMyRoadmaps").catch(() => []);
+    } catch (e) {
+      // مو زائر؟ نجرب أدمن
+      try { await api("/admin/dashboard"); role = "ADMIN"; me = { fullName: username, username }; }
+      catch (e2) { auth = null; role = null; throw new Error("اسم المستخدم أو كلمة المرور غلط"); }
+    }
+    $("who").innerHTML = `👋 ${esc(me.fullName)} <span class="muted">(${role === "ADMIN" ? "أدمن" : "زائر"})</span> <button class="btn ghost sm" id="logout">خروج</button>`;
+    $("logout").onclick = async () => { try { await api("/user/auth/logout", "POST"); } catch (e) {} location.reload(); };
+    refreshNav();
+    openTab(role === "ADMIN" ? "admin" : "explore");
+  }
+  $("loginBtn").onclick = () => busy($("loginBtn"), () => login($("lu").value.trim(), $("lp").value));
+  function newTestUser() {
+    const n = Math.floor(1000000 + Math.random() * 9000000);
+    $("rUser").value = "v" + n; $("rEmail").value = "v" + n + "@test.com"; $("rPhone").value = "+9665" + String(n).padStart(8, "0");
+  }
+  $("regBtn").onclick = () => busy($("regBtn"), async () => {
+    const body = { fullName: $("rName").value, username: $("rUser").value, password: $("rPass").value, email: $("rEmail").value,
+      phone: $("rPhone").value, age: +$("rAge").value, gender: $("rGender").value, preferredLanguage: $("rLang").value, nationality: $("rNat").value };
+    await api("/visitor/register", "POST", body);
+    await login(body.username, body.password);
+    toast(`انسجلتي ✅ احفظي: ${body.username} / ${body.password}`, true);
+  });
+
+  // ===================== الأجنحة =====================
+  let zoneFilter = "all";
+  async function loadExplore() {
+    const chips = $("zoneChips");
+    chips.innerHTML = "";
+    const opts = [["all", "الكل"], ...zones.map(z => [z.id, z.name]), ["top", "⭐ الأعلى تقييماً"]];
+    if (role === "VISITOR") opts.push(["unvisited", "👣 ما زرتها"]);
+    opts.forEach(([v, t]) => {
+      const b = document.createElement("button");
+      b.className = "chip" + (String(zoneFilter) === String(v) ? " on" : ""); b.textContent = t;
+      b.onclick = () => { zoneFilter = v; loadExplore(); };
+      chips.appendChild(b);
+    });
+    let list;
+    if (zoneFilter === "all") list = pavilions;
+    else if (zoneFilter === "top") list = await api("/pavilion/top-rated");
+    else if (zoneFilter === "unvisited") list = await api("/pavilion/unvisited");
+    else list = await api("/pavilion/zone/" + zoneFilter);
+    showPavilions(list);
+  }
+  function showPavilions(list) {
+    $("exploreInfo").textContent = list.length + " جناح";
+    $("pgrid").innerHTML = list.map(p => {
+      const z = zoneOfPav(p);
+      return `<div class="pcard" data-id="${p.id}">${img(p.imageUrl)}
+        <div class="t"><b>${flag(p.country)} ${esc(p.name)}</b><span class="muted">${esc(p.country)}${z ? " · " + esc(z.name) : ""}</span></div></div>`;
+    }).join("") || '<p class="muted">ما فيه نتائج</p>';
+    document.querySelectorAll(".pcard").forEach(c => c.onclick = () => busy(null, () => openPavilion(+c.dataset.id)));
+  }
+  $("searchBtn").onclick = () => busy($("searchBtn"), async () => {
+    const q = $("search").value.trim();
+    if (!q) { zoneFilter = "all"; return loadExplore(); }
+    showPavilions(await api("/pavilion/search/" + encodeURIComponent(q)));
+  });
+  $("search").addEventListener("keydown", e => { if (e.key === "Enter") $("searchBtn").click(); });
+
+  // نافذة الجناح
+  async function openPavilion(id) {
+    const d = await api("/pavilion/details/" + id);
+    const avg = await api(`/review/pavilion/${id}/average`).catch(() => 0);
+    const p = pavById(id) || {};
+    const visitor = role === "VISITOR";
+    const tripOpts = myRoadmaps.map(r => `<option value="${r.roadmapId}">رحلة ${r.roadmapId} · ${r.visitDate}</option>`).join("");
+    $("modalBox").innerHTML = `
+      ${d.imageUrl ? `<img src="${esc(d.imageUrl)}" alt="" onerror="this.remove()">` : ""}
+      <div class="body">
+        <div class="top"><h2>${flag(d.country)} ${esc(d.name)}</h2><button class="btn ghost sm" id="mClose">✕</button></div>
+        <div class="muted">${esc(d.country)} · ${esc(d.zoneName || "")}</div>
+        <div><span class="stars">${stars(avg)}</span> <b>${(+avg || 0).toFixed(1)}</b> <span class="muted">(${(d.reviews || []).length} تقييم)</span></div>
+        <p style="margin:0">${esc(d.description)}</p>
+        <div class="send">
+          <select id="mGate">${entrances.map(e => `<option value="${e.location.id}">من ${esc(e.name)}</option>`).join("")}</select>
+          <button class="btn ghost" id="mPath">📏 أقصر طريق</button>
+        </div>
+        <div id="mPathRes" class="muted"></div>
+        ${visitor ? `<div class="chips"><button class="btn" id="mCheck">✅ سجلي زيارة (وخذي الختم)</button></div>
+          ${tripOpts ? `<div class="send"><select id="mTrip">${tripOpts}</select><input id="mPos" type="number" min="1" placeholder="الترتيب" style="max-width:90px"><button class="btn ghost" id="mAdd">➕ أضيفيه للرحلة</button></div>` : ""}` : ""}
+        <h3>التقييمات</h3>
+        ${(d.reviews || []).map(r => `<div class="summary"><span class="stars">${stars(r.rating)}</span> <b>${esc(r.visitorName)}</b> <span class="muted">${fmtDate(r.createdAt)}</span><div>${esc(r.comment)}</div></div>`).join("") || '<p class="muted">ما فيه تقييمات للحين</p>'}
+      </div>`;
+    $("modal").classList.remove("hidden");
+    $("mClose").onclick = () => $("modal").classList.add("hidden");
+    $("mPath").onclick = () => busy($("mPath"), async () => {
+      const r = await api(`/path/shortest/${$("mGate").value}/${p.location.id}`);
+      $("mPathRes").textContent = `🚶 ${Math.round(r.totalDistance * 2)} م مشي، يمر على ${r.locations.length} نقطة`;
+    });
+    if (visitor) {
+      $("mCheck").onclick = () => busy($("mCheck"), async () => {
+        await api("/visit/checkIn/" + id, "POST");
+        toast("انسجلت الزيارة ✅ وانضاف الختم لجوازك 🛂", true);
+      });
+      if ($("mAdd")) $("mAdd").onclick = () => busy($("mAdd"), async () => {
+        const rid = $("mTrip").value, r = myRoadmaps.find(x => String(x.roadmapId) === rid);
+        const pos = +$("mPos").value || ((r && r.stops ? r.stops.length : 0) + 1);
+        await api(`/roadmap/addStop/${rid}/${id}/${pos}`, "POST");
+        toast("انضاف الجناح للرحلة ✅", true);
+        myRoadmaps = await api("/roadmap/getMyRoadmaps");
+      });
+    }
+  }
+  $("modal").onclick = e => { if (e.target.id === "modal") $("modal").classList.add("hidden"); };
+
+  // ===================== رحلاتي =====================
+  const EXP = { CULTURAL: "ثقافية", EDUCATIONAL: "تعليمية", ENTERTAINMENT: "ترفيه", RELAXATION: "استرخاء", CULINARY: "أكل" };
+  const expOn = new Set(["CULTURAL", "EDUCATIONAL"]);
+  Object.keys(EXP).forEach(k => {
+    const b = document.createElement("button");
+    b.className = "chip" + (expOn.has(k) ? " on" : ""); b.textContent = EXP[k];
+    b.onclick = () => { expOn.has(k) ? expOn.delete(k) : expOn.add(k); b.classList.toggle("on"); };
+    $("gExp").appendChild(b);
+  });
+  $("gDate").value = today();
+
+  function dayForm() {
+    return {
+      visitDate: $("gDate").value, partyType: $("gParty").value, partySize: +$("gSize").value,
+      arrivalTime: $("gFrom").value + ":00", departureTime: $("gTo").value + ":00",
+      experienceTypes: [...expOn], visitPace: $("gPace").value,
+      includePrayerBreaks: $("gPray").checked, includeMealBreaks: $("gMeal").checked, includeChildRestBreaks: $("gKids").checked,
+      allowRevisits: $("gRev").checked
+    };
+  }
+  $("genBtn").onclick = () => busy($("genBtn"), async () => {
+    if (myInterests.size < 3) throw new Error("أضيفي 3 اهتمامات على الأقل من «حسابي»");
+    const body = dayForm(); body.extraInterestIds = [...$("gExtra").selectedOptions].map(o => +o.value);
+    $("genResult").innerHTML = '<p class="muted">جاري التوليد... الـ AI ياخذ وقت</p>';
+    const r = await api("/roadmap/generate/" + $("gGate").value, "POST", body);
+    $("genResult").innerHTML = `<div class="summary"><b>✅ رحلة ${r.roadmapId}</b> ${r.aiUsed ? "🤖 بالـ AI" : "⚙️ بدون AI (احتياطي)"}<div>${esc(r.summary)}</div></div>`;
+    loadTrips();
+  });
+  $("manualBtn").onclick = () => busy($("manualBtn"), async () => {
+    await api("/roadmap/createRoadmap/" + $("gGate").value, "POST", dayForm());
+    toast("انسوت رحلة فاضية ✅ أضيفي لها أجنحة من تحت أو من صفحة الجناح", true);
+    loadTrips();
+  });
+  $("tripsReload").onclick = () => busy($("tripsReload"), loadTrips);
+
+  async function loadTrips() {
+    myRoadmaps = await api("/roadmap/getMyRoadmaps");
+    const box = $("tripsList");
+    box.innerHTML = myRoadmaps.length ? "" : '<p class="muted">ما عندك رحلات للحين</p>';
+    myRoadmaps.forEach(r => box.appendChild(tripCard(r)));
+  }
+
+  function tripCard(r) {
+    const d = document.createElement("div");
+    d.className = "card";
+    const stops = r.stops || [];
+    const planned = stops.filter(s => !s.isVisited);
+    d.innerHTML = `
+      <div class="top"><h3>رحلة ${r.roadmapId} · ${r.visitDate}</h3>
+        <div class="chips"><a class="btn ghost sm" href="route3d.html?roadmap=${r.roadmapId}" target="_blank">🗺️ الخريطة</a>
+        <button class="btn ghost sm" data-a="route">📏 المسافة</button>
+        <button class="btn red sm" data-a="del">🗑️ حذف</button></div></div>
+      ${r.summary ? `<div class="summary">${r.aiUsed ? "🤖 " : ""}${esc(r.summary)}</div>` : ""}
+      ${(r.breaks || []).length ? `<div class="chips">${r.breaks.map(b => `<span class="chip">⏸️ ${esc(b.time)} ${esc(b.type)} · ${b.minutes} د</span>`).join("")}</div>` : ""}
+      <div class="muted" data-r="routeRes"></div>
+      <div style="display:grid;gap:6px">
+        ${stops.map(s => {
+      const p = pavById(s.pavilionId) || {};
+      const pi = planned.findIndex(x => x.visitId === s.visitId);
+      return `<div class="stop ${s.isVisited ? "done" : ""}">${img(s.imageUrl || p.imageUrl)}
+            <div><b>${s.stopOrder || ""}. ${flag(s.country || p.country)} ${esc(s.pavilionName)}</b><div class="muted">${esc(s.zoneName || "")}${s.isVisited ? " · ✅ زرتيه " + fmtDate(s.visitedAt) : ""}</div></div>
+            <div class="chips">${s.isVisited ? "" : `
+              <button class="btn sm" data-a="visit" data-p="${s.pavilionId}">زيارة</button>
+              <button class="btn ghost sm" data-a="up" data-i="${pi}" ${pi === 0 ? "disabled" : ""}>↑</button>
+              <button class="btn ghost sm" data-a="down" data-i="${pi}" ${pi === planned.length - 1 ? "disabled" : ""}>↓</button>
+              <button class="btn red sm" data-a="rm" data-v="${s.visitId}">✕</button>`}</div></div>`;
+    }).join("") || '<p class="muted">الرحلة فاضية</p>'}
+      </div>
+      <div class="send">
+        <select data-r="addPav">${pavilions.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select>
+        <input data-r="addPos" type="number" min="1" placeholder="الترتيب" style="max-width:90px" value="${stops.length + 1}">
+        <button class="btn ghost" data-a="add">➕ أضيفي</button>
+      </div>
+      <button class="btn" data-a="dyn">🔄 حدّثي الأجنحة الباقية حسب تقييماتي</button>
+      <div data-r="dynRes"></div>`;
+
+    const q = s => d.querySelector(`[data-r="${s}"]`);
+    d.querySelectorAll("[data-a]").forEach(b => b.onclick = () => busy(b, async () => {
+      const a = b.dataset.a;
+      if (a === "visit") { await api("/visit/checkIn/" + b.dataset.p, "POST"); toast("انسجلت الزيارة ✅ وأخذتي الختم 🛂 قيّميه من «تقييماتي»", true); return loadTrips(); }
+      if (a === "rm") { await api(`/roadmap/removeStop/${r.roadmapId}/${b.dataset.v}`, "DELETE"); return loadTrips(); }
+      if (a === "up" || a === "down") {
+        const ids = planned.map(s => s.visitId), i = +b.dataset.i, j = a === "up" ? i - 1 : i + 1;
+        [ids[i], ids[j]] = [ids[j], ids[i]];
+        await api("/roadmap/reorder/" + r.roadmapId, "PUT", { visitIds: ids });
+        return loadTrips();
+      }
+      if (a === "add") { await api(`/roadmap/addStop/${r.roadmapId}/${q("addPav").value}/${q("addPos").value}`, "POST"); toast("انضاف ✅", true); return loadTrips(); }
+      if (a === "del") { if (!confirm("تحذفين الرحلة؟")) return; await api("/roadmap/deleteRoadmap/" + r.roadmapId, "DELETE"); return loadTrips(); }
+      if (a === "route") {
+        const rt = await api("/path/roadmap/" + r.roadmapId);
+        q("routeRes").textContent = `🚶 المشي الكامل ${Math.round(rt.totalDistance * 2)} م · يمر على ${rt.route.length} نقطة · الخروج من ${rt.exitEntrance || "—"}`;
+        return;
+      }
+      if (a === "dyn") {
+        const before = planned.map(s => s.pavilionName);
+        q("dynRes").innerHTML = '<p class="muted">جاري التحديث...</p>';
+        const nr = await api("/roadmap/makeDynamic/" + r.roadmapId, "PUT");
+        const after = (nr.stops || []).filter(s => !s.isVisited).map(s => s.pavilionName);
+        const card = tripCard(nr); d.replaceWith(card);
+        card.querySelector('[data-r="dynRes"]').innerHTML = `<div class="summary" style="display:grid;gap:4px">
+          <b>🔄 تحدّثت ${nr.aiUsed ? "بالـ AI 🤖" : "بدون AI (حسب معدل تقييم الزونات)"}</b>
+          <div><span class="muted">قبل:</span> ${esc(before.join("، ")) || "—"}</div>
+          <div><span class="muted">بعد:</span> ${esc(after.join("، ")) || "—"}</div></div>`;
+      }
+    }));
+    return d;
+  }
+
+  // ===================== جوازي =====================
+  async function loadPassport() {
+    const [pass, st] = await Promise.all([api("/passport/getMyPassport"), api("/passport/getMyStamps")]);
+    stampsData = st;
+    const earned = st.filter(s => s.earned).length;
+    $("pNum").textContent = pass.passportNumber || "—";
+    $("pName").textContent = me ? me.fullName : "";
+    $("pCount").textContent = earned; $("pTotal").textContent = st.length;
+    $("pBar").style.width = (st.length ? earned / st.length * 100 : 0) + "%";
+    drawStamps();
+    $("visits").innerHTML = (pass.visits || []).map(v => `<div class="stop done">${img(v.imageUrl)}
+      <div><b>${flag(v.country)} ${esc(v.pavilionName)}</b><div class="muted">${esc(v.zoneName || "")} · ${fmtDate(v.visitedAt)}</div></div><span></span></div>`).join("")
+            || '<p class="muted">ما زرتي أي جناح للحين. سجلي زيارة من صفحة الجناح أو من رحلتك.</p>';
+  }
+  function drawStamps() {
+    const list = stampsData.filter(s => stampFilter === "all" || (stampFilter === "earned" ? s.earned : !s.earned));
+    // الأختام اللي أخذتها أول
+    list.sort((a, b) => (b.earned ? 1 : 0) - (a.earned ? 1 : 0));
+    $("stamps").innerHTML = list.map(s => {
+      const p = pavById(s.pavilionId) || {};
+      const picture = s.imageUrl || p.imageUrl; // لو الختم ما له تصميم، نستخدم صورة الجناح
+      return `<div class="stamp ${s.earned ? "" : "off"}" title="${esc(s.title)}">
+        <div class="seal"><div class="in">${picture ? `<img src="${esc(picture)}" loading="lazy" alt="" onerror="this.remove()">` : ""}🏛️</div><span class="flag">${flag(p.country)}</span></div>
+        <small><b>${esc((s.pavilionName || "").replace(/ Pavilion$/, ""))}</b><br><span class="muted">${s.earned ? "✅ " + fmtDate(s.earnedAt).slice(0, 10) : "ما زرتيه"}</span></small></div>`;
+    }).join("") || '<p class="muted">ما فيه أختام هنا</p>';
+  }
+  document.querySelectorAll("[data-sf]").forEach(b => b.onclick = () => {
+    stampFilter = b.dataset.sf;
+    document.querySelectorAll("[data-sf]").forEach(x => x.classList.toggle("on", x === b));
+    drawStamps();
+  });
+
+  // ===================== تقييماتي =====================
+  async function loadReviews() {
+    const pend = await api("/review/getPending").catch(e => { if (/did not visit/i.test(e.message)) return []; throw e; });
+    $("pending").innerHTML = pend.length ? "" : '<p class="muted">ما فيه أجنحة تنتظر تقييم. زوري جناح أول.</p>';
+    pend.forEach(p => {
+      const d = document.createElement("div");
+      d.className = "stop"; d.style.gridTemplateColumns = "52px 1fr";
+      d.innerHTML = `${img(p.imageUrl)}<div style="display:grid;gap:6px"><b>${flag(p.country)} ${esc(p.name)}</b>
+        <div class="chips">${[1, 2, 3, 4, 5].map(n => `<button class="chip star" data-n="${n}">${n} ★</button>`).join("")}</div>
+        <div class="send"><input placeholder="تعليقك (اختياري)" maxlength="500"><button class="btn">أرسلي</button></div></div>`;
+      let rating = 0;
+      d.querySelectorAll(".star").forEach(b => b.onclick = () => { rating = +b.dataset.n; d.querySelectorAll(".star").forEach(x => x.classList.toggle("on", +x.dataset.n <= rating)); });
+      const send = d.querySelector(".btn");
+      send.onclick = () => busy(send, async () => {
+        if (!rating) throw new Error("اختاري عدد النجوم");
+        await api("/review/add/" + p.id, "POST", { rating, comment: d.querySelector("input").value });
+        toast("انضاف التقييم ✅ الحين تقدرين تحدّثين رحلتك", true);
+        loadReviews();
+      });
+      $("pending").appendChild(d);
+    });
+
+    const mine = await api("/review/getMyReviews");
+    $("myReviews").innerHTML = mine.length ? "" : '<p class="muted">ما عندك تقييمات للحين</p>';
+    mine.forEach(r => {
+      const d = document.createElement("div");
+      d.className = "summary"; d.style.display = "grid"; d.style.gap = "6px";
+      d.innerHTML = `<div class="top"><span><span class="stars">${stars(r.rating)}</span> <span class="muted">${fmtDate(r.createdAt)}</span></span>
+        <span class="chips"><button class="btn ghost sm" data-a="edit">تعديل</button><button class="btn red sm" data-a="del">حذف</button></span></div>
+        <div>${esc(r.comment)}</div>
+        <div class="send hidden" data-r="ed"><select>${[1, 2, 3, 4, 5].map(n => `<option ${n === r.rating ? "selected" : ""}>${n}</option>`).join("")}</select>
+          <input value="${esc(r.comment || "")}"><button class="btn" data-a="save">حفظ</button></div>`;
+      d.querySelectorAll("[data-a]").forEach(b => b.onclick = () => busy(b, async () => {
+        if (b.dataset.a === "edit") return d.querySelector('[data-r="ed"]').classList.toggle("hidden");
+        if (b.dataset.a === "del") { await api("/review/delete/" + r.id, "DELETE"); return loadReviews(); }
+        const ed = d.querySelector('[data-r="ed"]');
+        await api("/review/update/" + r.id, "PUT", { rating: +ed.querySelector("select").value, comment: ed.querySelector("input").value });
+        toast("انحفظ ✅", true); loadReviews();
+      }));
+      $("myReviews").appendChild(d);
+    });
+  }
+
+  // ===================== المساعد =====================
+  let chatLoaded = false;
+  function bubble(text, who) {
+    const d = document.createElement("div"); d.className = "b " + who; d.textContent = text;
+    $("bubbles").appendChild(d); $("bubbles").scrollTop = 1e9; return d;
+  }
+  async function loadChat() {
+    if (chatLoaded) return; chatLoaded = true;
+    bubble("هلا! أنا مساعد إكسبو 2030. اسأليني عن الأجنحة والزونات والبوابات 👋", "bot");
+    const r = await api("/chatbot/suggestions");
+    (r.questions || []).slice(0, 6).forEach(q => {
+      const b = document.createElement("button"); b.className = "chip"; b.textContent = q;
+      b.onclick = () => ask(q); $("sugg").appendChild(b);
+    });
+  }
+  async function ask(question) {
+    question = question.trim(); if (!question) return;
+    $("q").value = ""; bubble(question, "user");
+    const wait = bubble("يكتب...", "bot"); $("askBtn").disabled = true;
+    try {
+      const r = await api("/chatbot/ask", "POST", { question, history: history.slice(-6) });
+      wait.textContent = r.answer;
+      history.push({ role: "USER", text: question }, { role: "BOT", text: r.answer });
+    } catch (e) { wait.textContent = "⚠️ " + e.message; }
+    $("askBtn").disabled = false;
+  }
+  $("askBtn").onclick = () => ask($("q").value);
+  $("q").addEventListener("keydown", e => { if (e.key === "Enter") ask($("q").value); });
+
+  // ===================== حسابي =====================
+  async function loadAccount() {
+    me = await api("/visitor/getMyInfo");
+    myInterests = new Set((me.interests || []).map(i => i.id));
+    $("vAge").value = me.age; $("vGender").value = me.gender; $("vLang").value = me.preferredLanguage; $("vNat").value = me.nationality;
+    $("uName").value = me.fullName; $("uUser").value = me.username; $("uEmail").value = me.email; $("uPhone").value = me.phone;
+    drawInterests();
+  }
+  function drawInterests() {
+    $("interests").innerHTML = "";
+    interests.forEach(i => {
+      const b = document.createElement("button");
+      b.className = "chip" + (myInterests.has(i.id) ? " on" : ""); b.textContent = i.nameAr || i.name;
+      b.onclick = () => busy(b, async () => {
+        if (myInterests.has(i.id)) { await api("/visitor/removeInterest/" + i.id, "DELETE"); myInterests.delete(i.id); }
+        else { await api("/visitor/addInterest/" + i.id, "PUT"); myInterests.add(i.id); }
+        drawInterests();
+      });
+      $("interests").appendChild(b);
+    });
+  }
+  $("saveVisitor").onclick = () => busy($("saveVisitor"), async () => {
+    await api("/visitor/updateVisitor", "PUT", { age: +$("vAge").value, gender: $("vGender").value, preferredLanguage: $("vLang").value, nationality: $("vNat").value });
+    toast("انحفظ ✅", true);
+  });
+  $("saveUser").onclick = () => busy($("saveUser"), async () => {
+    if (!$("uPass").value) throw new Error("اكتبي كلمة المرور (الجديدة أو نفسها)");
+    const body = { fullName: $("uName").value, username: $("uUser").value, email: $("uEmail").value, phone: $("uPhone").value, password: $("uPass").value };
+    await api("/user/updateUser", "PUT", body);
+    auth = "Basic " + btoa(unescape(encodeURIComponent(body.username + ":" + body.password))); // الدخول بالبيانات الجديدة
+    $("uPass").value = "";
+    toast("انحفظ ✅", true);
+  });
+  $("deleteMe").onclick = () => busy($("deleteMe"), async () => {
+    if (!confirm("متأكدة؟ ما ترجع البيانات")) return;
+    await api("/user/deleteUser", "DELETE");
+    location.reload();
+  });
+
+  // ===================== الأدمن =====================
+  async function loadAdmin() {
+    const d = await api("/admin/dashboard");
+    $("kpis").innerHTML = [["الزوار", d.totalVisitors], ["الزيارات", d.totalCheckIns], ["الرحلات", d.totalRoadmaps]]
+            .map(([k, v]) => `<div class="kpi"><div class="muted">${k}</div><div class="v">${v ?? 0}</div></div>`).join("");
+    const bars = (title, list, val, lab) => {
+      if (!list || !list.length) return `<div><h3>${title}</h3><p class="muted">ما فيه بيانات</p></div>`;
+      const max = Math.max(...list.map(val), 1);
+      return `<div style="display:grid;gap:6px"><h3>${title}</h3>${list.slice(0, 6).map(x =>
+              `<div class="hbar"><span>${esc(lab(x))}</span><i style="width:${val(x) / max * 100}%"></i><b>${(+val(x)).toFixed(val(x) % 1 ? 1 : 0)}</b></div>`).join("")}</div>`;
+    };
+    $("dashLists").innerHTML =
+            bars("الأكثر زيارة", d.mostVisitedPavilions, x => x.visits || 0, x => x.name) +
+            bars("الأعلى تقييماً", d.topRatedPavilions, x => x.averageRating || 0, x => x.name) +
+            bars("الأقل تقييماً", d.lowestRatedPavilions, x => x.averageRating || 0, x => x.name) +
+            bars("أكثر الاهتمامات", d.topInterests, x => x.count, x => x.name) +
+            bars("الزيارات حسب الزون", d.visitsPerZone, x => x.count, x => x.name) +
+            bars("البوابات", d.entrances, x => x.count, x => x.name) +
+            bars("الزيارات حسب اليوم", d.visitsPerDay, x => x.count, x => x.name);
+  }
+  $("dashReload").onclick = () => busy($("dashReload"), loadAdmin);
+
+  // جداول البيانات: نعرض الحقول البسيطة بس
+  const TABLES = { "الزوار": "/visitor/getAll", "الرحلات": "/roadmap/getAll", "الزيارات": "/visit/getAll", "الجوازات": "/passport/getAll",
+    "التقييمات": "/review/get", "الأجنحة": "/pavilion/get", "الزونات": "/zone/get", "البوابات": "/entrance/getAll",
+    "النقاط": "/location/get", "الممرات": "/path/get", "الاهتمامات": "/interest/get" };
+  Object.entries(TABLES).forEach(([name, url]) => {
+    const b = document.createElement("button"); b.className = "chip"; b.textContent = name;
+    b.onclick = () => busy(b, async () => {
+      document.querySelectorAll("#adminTables .chip").forEach(x => x.classList.toggle("on", x === b));
+      const rows = await api(url);
+      const cell = v => v === null || v === undefined ? "" : typeof v === "object" ? (Array.isArray(v) ? `[${v.length}]` : (v.id !== undefined ? "#" + v.id : "{…}")) : esc(String(v).slice(0, 60));
+      const cols = [...new Set(rows.slice(0, 20).flatMap(r => Object.keys(r)))];
+      $("adminTable").innerHTML = `<p class="muted">${rows.length} صف</p><table><tr>${cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr>${rows.slice(0, 100).map(r => `<tr>${cols.map(c => `<td>${cell(r[c])}</td>`).join("")}</tr>`).join("")}</table>`;
+    });
+    $("adminTables").appendChild(b);
+  });
+
+  // إضافة: الحقول تتغير حسب النوع
+  const ADD = {
+    interest: { f: ["name", "nameAr"], url: () => "/interest/add", body: v => ({ name: v.name, nameAr: v.nameAr }) },
+    location: { f: ["x", "y"], url: () => "/location/add", body: v => ({ x: +v.x, y: +v.y }) },
+    zone: { f: ["locationId", "name", "description"], url: v => "/zone/add/" + v.locationId, body: v => ({ name: v.name, description: v.description }) },
+    entrance: { f: ["locationId", "name"], url: v => "/entrance/createEntrance/" + v.locationId, body: v => ({ name: v.name }) },
+    pavilion: { f: ["zoneId", "locationId", "name", "country", "description", "imageUrl"], url: v => `/pavilion/add/${v.zoneId}/${v.locationId}`, body: v => ({ name: v.name, country: v.country, description: v.description, imageUrl: v.imageUrl }) },
+    path: { f: ["fromId", "toId"], url: v => `/path/add/${v.fromId}/${v.toId}`, body: () => undefined }
+  };
+  function drawAddFields() {
+    $("addFields").innerHTML = ADD[$("addType").value].f.map(f => `<label>${f} <input data-f="${f}"></label>`).join("");
+  }
+  $("addType").onchange = drawAddFields; drawAddFields();
+  $("addBtn").onclick = () => busy($("addBtn"), async () => {
+    const t = ADD[$("addType").value], v = {};
+    document.querySelectorAll("#addFields [data-f]").forEach(i => v[i.dataset.f] = i.value);
+    await api(t.url(v), "POST", t.body(v));
+    toast("انضاف ✅", true);
+    await loadBase();
+  });
+  $("delBtn").onclick = () => busy($("delBtn"), async () => {
+    if (!$("delId").value || !confirm("متأكدة من الحذف؟")) return;
+    await api($("delType").value + $("delId").value, "DELETE");
+    toast("انحذف ✅", true);
+    await loadBase();
+  });
+
+  // ===================== البداية =====================
+  async function loadBase() {
+    [pavilions, zones, entrances, interests] = await Promise.all([api("/pavilion/get"), api("/zone/get"), api("/entrance/getAll"), api("/interest/get")]);
+    $("gGate").innerHTML = entrances.map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join("");
+    $("gExtra").innerHTML = interests.map(i => `<option value="${i.id}">${esc(i.nameAr || i.name)}</option>`).join("");
+  }
+  newTestUser(); refreshNav();
+  busy(null, async () => { await loadBase(); });
+</script>
+</body>
+</html>
