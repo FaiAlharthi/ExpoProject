@@ -48,7 +48,7 @@ public class Configuration {
                                 "/api/v1/user/updateUser", "/api/v1/user/deleteUser",
                                 "/api/v1/roadmap/getMyRoadmaps", "/api/v1/roadmap/generate", "/api/v1/roadmap/changeEntrance/*/*",
                                 "/api/v1/roadmap/getStops/*", "/api/v1/roadmap/addStop/*/*/*", "/api/v1/roadmap/removeStop/*/*",
-                                "/api/v1/roadmap/reorder/*", "/api/v1/roadmap/makeDynamic/*", "/api/v1/roadmap/deleteRoadmap/*",
+                                "/api/v1/roadmap/reorder/*", "/api/v1/roadmap/makeDynamic/*", "/api/v1/roadmap/deleteRoadmap/*", "/api/v1/roadmap/pdf/*",
                                 "/api/v1/path/roadmap/*", "/api/v1/path/roadmap/*/*",
                                 "/api/v1/visit/checkIn/*", "/api/v1/passport/getMyPassport", "/api/v1/passport/getMyStamps", "/api/v1/pavilion/unvisited",
                                 "/api/v1/review/add/*", "/api/v1/review/update/*", "/api/v1/review/getPending", "/api/v1/review/getMyReviews",
