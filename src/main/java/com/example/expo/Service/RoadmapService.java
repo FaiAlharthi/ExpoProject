@@ -105,6 +105,7 @@ public class RoadmapService {
             roadmap.setVisitor(visitor);
             roadmap.setCreatedAt(LocalDateTime.now());
         }else{
+            checkNotLocked(roadmap);
             copyAnswers(answers, roadmap);
             // only the latest version counts, visited stops stay
             visitRepository.deleteAll(visitRepository.findVisitsByRoadmapAndIsVisitedFalse(roadmap));
@@ -355,6 +356,7 @@ public class RoadmapService {
     public RoadmapResponse addStop(Integer visitorId, Integer roadmapId, Integer pavilionId, Integer position){
         Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
+        checkNotLocked(roadmap);
         Pavilion pavilion = pavilionRepository.findPavilionById(pavilionId);
         if(pavilion == null){
             throw new ApiException("pavilion not found");
@@ -396,6 +398,7 @@ public class RoadmapService {
     public RoadmapResponse removeStop(Integer visitorId, Integer roadmapId, Integer visitId){
         Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
+        checkNotLocked(roadmap);
         Visit stop = visitRepository.findVisitById(visitId);
         if(stop == null || stop.getRoadmap() == null || !stop.getRoadmap().getId().equals(roadmapId)){
             throw new ApiException("stop not found in this roadmap");
@@ -412,6 +415,7 @@ public class RoadmapService {
     public RoadmapResponse reorderStops(Integer visitorId, Integer roadmapId, ReorderStopsRequest request){
         Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
+        checkNotLocked(roadmap);
         List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
         Map<Integer, Visit> unvisited = new HashMap<>();
         for(Visit stop : stops){
@@ -441,6 +445,7 @@ public class RoadmapService {
     public RoadmapResponse makeDynamic(Integer visitorId, Integer roadmapId){
         Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
+        checkNotLocked(roadmap);
         Visitor visitor = roadmap.getVisitor();
         List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
         List<Visit> visitedStops = new ArrayList<>();
@@ -846,6 +851,7 @@ public class RoadmapService {
     public RoadmapResponse changeEntrance(Integer visitorId, Integer roadmapId, Integer entranceId){
         Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         checkNotPast(roadmap);
+        checkNotLocked(roadmap);
         Entrance entrance = entranceRepository.findEntranceById(entranceId);
         if(entrance == null || entrance.getLocation() == null){
             throw new ApiException("entrance not found");
@@ -951,6 +957,7 @@ public class RoadmapService {
             throw new ApiException("this alert is already accepted");
         }
         Roadmap roadmap = getVisitorRoadmap(visitorId, alert.getRoadmapId());
+        checkNotLocked(roadmap);
         if(!roadmap.getVisitDate().equals(LocalDate.now())){
             throw new ApiException("this alert is not for today");
         }
@@ -997,6 +1004,13 @@ public class RoadmapService {
     private void checkNotPast(Roadmap roadmap){
         if(roadmap.getVisitDate().isBefore(LocalDate.now())){
             throw new ApiException("you cannot edit a roadmap of a past day");
+        }
+    }
+
+    // a confirmed roadmap is fixed, its stops and entrance cannot change (sharing, deleting and check-in still work)
+    private void checkNotLocked(Roadmap roadmap){
+        if(roadmap.getLockedAt() != null){
+            throw new ApiException("this roadmap is confirmed and cannot be edited");
         }
     }
 

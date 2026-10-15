@@ -88,6 +88,38 @@ public class Roadmap {
     @Column(columnDefinition = "TEXT")
     private String aiSummary;
 
+    // ===== Group sharing ("Find a group") =====
+    // the owner published this roadmap, others can see it and copy it into their own journey
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isShared = false;
+
+    @Size(max = 140, message = "Share note must be 140 letters max")
+    @Column(columnDefinition = "VARCHAR(140)")
+    private String shareNote;
+
+    // the owner agreed to show his WhatsApp number to the people who see this roadmap
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean showContact = false;
+
+    @Pattern(regexp = "^(ALL|SAME_GENDER)$", message = "Share audience must be ALL or SAME_GENDER.")
+    @Column(columnDefinition = "VARCHAR(11) DEFAULT 'ALL'")
+    private String shareAudience = "ALL";
+
+    @Column(columnDefinition = "DATETIME")
+    private LocalDateTime sharedAt;
+
+    // how many visitors copied this roadmap, increased in the database
+    @Column(columnDefinition = "INTEGER DEFAULT 0")
+    private Integer copyCount = 0;
+
+    // the id of the roadmap this one was copied from, null for roadmaps made by the visitor himself
+    @Column(columnDefinition = "INTEGER")
+    private Integer copiedFromId;
+
+    // once the owner confirms the roadmap it is fixed and cannot be edited, null = still editable
+    @Column(columnDefinition = "DATETIME")
+    private LocalDateTime lockedAt;
+
     //Relations
     @ManyToOne
     @JoinColumn

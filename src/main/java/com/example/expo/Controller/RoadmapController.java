@@ -3,17 +3,22 @@ package com.example.expo.Controller;
 import com.example.expo.Api.ApiResponse;
 import com.example.expo.Dto.In.GenerateRoadmapRequest;
 import com.example.expo.Dto.In.ReorderStopsRequest;
+import com.example.expo.Dto.In.ShareRoadmapRequest;
 import com.example.expo.Service.JourneyPdfService;
 import com.example.expo.Service.RoadmapService;
+import com.example.expo.Service.SharedRoadmapService;
 import jakarta.validation.Valid;
 import com.example.expo.Model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/roadmap")
@@ -21,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class RoadmapController {
     private final RoadmapService roadmapService;
     private final JourneyPdfService journeyPdfService;
+    private final SharedRoadmapService sharedRoadmapService;
 
     @GetMapping("/getAll")
     public ResponseEntity<?> getAllRoadmaps(){
@@ -83,6 +89,38 @@ public class RoadmapController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     } // the roadmap as a PDF the visitor can share (map with the route, stops and stamps status)
+
+    // ===== Find a group =====
+    // publishes the roadmap, or changes the share settings of a published one
+    @PutMapping("/share/{roadmapId}")
+    public ResponseEntity<?> shareRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId, @RequestBody @Valid ShareRoadmapRequest request){
+        sharedRoadmapService.shareRoadmap(user.getId(), roadmapId, request);
+        return ResponseEntity.status(200).body(new ApiResponse("roadmap shared"));
+    }
+
+    @PutMapping("/unshare/{roadmapId}")
+    public ResponseEntity<?> unshareRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        sharedRoadmapService.unshareRoadmap(user.getId(), roadmapId);
+        return ResponseEntity.status(200).body(new ApiResponse("roadmap is not shared anymore"));
+    }
+
+    // after this the stops of the roadmap are fixed
+    @PutMapping("/confirm/{roadmapId}")
+    public ResponseEntity<?> confirmRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        sharedRoadmapService.confirmRoadmap(user.getId(), roadmapId);
+        return ResponseEntity.status(200).body(new ApiResponse("roadmap confirmed"));
+    }
+
+    @GetMapping("/shared")
+    public ResponseEntity<?> getShared(@AuthenticationPrincipal User user, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size){
+        return ResponseEntity.status(200).body(sharedRoadmapService.getShared(user.getId(), date, page, size));
+    }
+
+    @PostMapping("/copy/{roadmapId}")
+    public ResponseEntity<?> copyRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        return ResponseEntity.status(200).body(sharedRoadmapService.copyRoadmap(user.getId(), roadmapId));
+    }
 
     @PostMapping("/sendPdf/{roadmapId}")
     public ResponseEntity<?> sendPdfToWhatsApp(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
