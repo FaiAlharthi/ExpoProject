@@ -21,7 +21,6 @@ public class Configuration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         return http
                 .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin())) // نسمح للخريطة تنفتح داخل expo.html
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
                 .authorizeHttpRequests(auth -> auth
@@ -58,7 +57,7 @@ public class Configuration {
                         //visitor his own review or account, admin any review or visitor account (checked in the service)
                         .requestMatchers("/api/v1/review/delete/*", "/api/v1/user/get/*").hasAnyAuthority("ADMIN", "VISITOR")
                         // صفحات الخريطة (ملفات static)
-                        .requestMatchers("/", "/route3d.html", "/mapart.js","/expo.html", "/expo-map.png", "/seed.html", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers("/", "/route3d.html", "/mapart.js", "/expo-map.png", "/seed.html", "/favicon.ico", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout(logout -> logout
