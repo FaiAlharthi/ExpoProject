@@ -21,4 +21,6 @@ public class RoadmapStopResponse {
     private Boolean isVisited;
     private LocalDateTime visitedAt;
     private List<AccessibilityWarningResponse> accessibilityWarnings;
+    private String plannedTime;      // when the visitor is expected at this stop (HH:mm)
+    private Integer expectedWait;    // expected queue minutes at that time
 }

@@ -8,7 +8,8 @@
       "imageSource"
     ],
     "paths": "Each path links two points by type and name (ZONE, ENTRANCE, PAVILION). Distance is calculated from x and y.",
-    "accessibility": "Demo accessibility data for testing (Expo 2030 is not open yet). Each pavilion has a status per need: ACCESSIBLE, PARTIAL or NOT_ACCESSIBLE. Paths have stepFree (no stairs) and shaded."
+    "accessibility": "Demo accessibility data for testing (Expo 2030 is not open yet). Each pavilion has a status per need: ACCESSIBLE, PARTIAL or NOT_ACCESSIBLE. Paths have stepFree (no stairs) and shaded.",
+    "crowd": "Demo crowd data: capacity is how many people the pavilion holds at once, avgVisitMinutes is the usual time inside. Used to estimate the queue from the roadmaps."
   },
   "interests": [
     {
@@ -184,7 +185,9 @@
           "note": "Narrow stairs only, no lift",
           "noteAr": "درج ضيق فقط وبدون مصعد"
         }
-      }
+      },
+      "capacity": 360,
+      "avgVisitMinutes": 30
     },
     {
       "name": "United States Pavilion",
@@ -229,7 +232,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 340,
+      "avgVisitMinutes": 30
     },
     {
       "name": "China Pavilion",
@@ -274,7 +279,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 360,
+      "avgVisitMinutes": 30
     },
     {
       "name": "South Korea Pavilion",
@@ -319,7 +326,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 260,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Singapore Pavilion",
@@ -364,7 +373,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 60,
+      "avgVisitMinutes": 15
     },
     {
       "name": "United Arab Emirates Pavilion",
@@ -409,7 +420,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 300,
+      "avgVisitMinutes": 30
     },
     {
       "name": "United Kingdom Pavilion",
@@ -454,7 +467,9 @@
           "note": "Narrow stairs only, no lift",
           "noteAr": "درج ضيق فقط وبدون مصعد"
         }
-      }
+      },
+      "capacity": 240,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Luxembourg Pavilion",
@@ -499,7 +514,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 220,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Czech Republic Pavilion",
@@ -544,7 +561,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 160,
+      "avgVisitMinutes": 20
     },
     {
       "name": "India Pavilion",
@@ -589,7 +608,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 110,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Kuwait Pavilion",
@@ -634,7 +655,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 150,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Switzerland Pavilion",
@@ -679,7 +702,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 70,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Germany Pavilion",
@@ -724,7 +749,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 260,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Netherlands Pavilion",
@@ -769,7 +796,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 90,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Australia Pavilion",
@@ -814,7 +843,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 100,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Canada Pavilion",
@@ -859,7 +890,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 130,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Portugal Pavilion",
@@ -904,7 +937,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 120,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Spain Pavilion",
@@ -949,7 +984,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 160,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Indonesia Pavilion",
@@ -994,7 +1031,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 120,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Malaysia Pavilion",
@@ -1039,7 +1078,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 60,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Brazil Pavilion",
@@ -1084,7 +1125,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 130,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Colombia Pavilion",
@@ -1129,7 +1172,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 90,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Oman Pavilion",
@@ -1174,7 +1219,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 90,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Chile Pavilion",
@@ -1219,7 +1266,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 60,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Thailand Pavilion",
@@ -1264,7 +1313,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 90,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Belgium Pavilion",
@@ -1309,7 +1360,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 70,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Philippines Pavilion",
@@ -1354,7 +1407,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 90,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Bangladesh Pavilion",
@@ -1399,7 +1454,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 90,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Angola Pavilion",
@@ -1444,7 +1501,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 140,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Senegal Pavilion",
@@ -1489,7 +1548,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 70,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Nepal Pavilion",
@@ -1534,7 +1595,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 120,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Cambodia Pavilion",
@@ -1579,7 +1642,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 60,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Peru Pavilion",
@@ -1624,7 +1689,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 80,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Poland Pavilion",
@@ -1669,7 +1736,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 180,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Ireland Pavilion",
@@ -1714,7 +1783,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 210,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Italy Pavilion",
@@ -1759,7 +1830,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 240,
+      "avgVisitMinutes": 25
     },
     {
       "name": "France Pavilion",
@@ -1804,7 +1877,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 240,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Austria Pavilion",
@@ -1849,7 +1924,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 150,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Hungary Pavilion",
@@ -1894,7 +1971,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 60,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Egypt Pavilion",
@@ -1939,7 +2018,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 190,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Jordan Pavilion",
@@ -1984,7 +2065,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 120,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Uzbekistan Pavilion",
@@ -2029,7 +2112,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 110,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Turkiye Pavilion",
@@ -2074,7 +2159,9 @@
           "note": "Narrow stairs only, no lift",
           "noteAr": "درج ضيق فقط وبدون مصعد"
         }
-      }
+      },
+      "capacity": 150,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Turkmenistan Pavilion",
@@ -2119,7 +2206,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 80,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Tunisia Pavilion",
@@ -2164,7 +2253,9 @@
           "note": "Strollers must be left at the entrance",
           "noteAr": "لازم تترك عربة الأطفال عند المدخل"
         }
-      }
+      },
+      "capacity": 220,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Algeria Pavilion",
@@ -2209,7 +2300,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 160,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Vietnam Pavilion",
@@ -2254,7 +2347,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 80,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Saudi Arabia Pavilion",
@@ -2299,7 +2394,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 420,
+      "avgVisitMinutes": 35
     },
     {
       "name": "Qatar Pavilion",
@@ -2344,7 +2441,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 220,
+      "avgVisitMinutes": 25
     },
     {
       "name": "Bahrain Pavilion",
@@ -2389,7 +2488,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 140,
+      "avgVisitMinutes": 20
     },
     {
       "name": "The Baltics Pavilion",
@@ -2434,7 +2535,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 150,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Nordic Circle Pavilion",
@@ -2479,7 +2582,9 @@
           "note": "Narrow stairs only, no lift",
           "noteAr": "درج ضيق فقط وبدون مصعد"
         }
-      }
+      },
+      "capacity": 70,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Azerbaijan Pavilion",
@@ -2524,7 +2629,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 100,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Serbia Pavilion",
@@ -2569,7 +2676,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 150,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Romania Pavilion",
@@ -2614,7 +2723,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 130,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Bulgaria Pavilion",
@@ -2659,7 +2770,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 90,
+      "avgVisitMinutes": 15
     },
     {
       "name": "Malta Pavilion",
@@ -2704,7 +2817,9 @@
           "note": "Narrow stairs only, no lift",
           "noteAr": "درج ضيق فقط وبدون مصعد"
         }
-      }
+      },
+      "capacity": 160,
+      "avgVisitMinutes": 20
     },
     {
       "name": "Monaco Pavilion",
@@ -2749,7 +2864,9 @@
           "note": "Stroller parking, lifts and seating areas",
           "noteAr": "مواقف عربات أطفال ومصاعد وأماكن جلوس"
         }
-      }
+      },
+      "capacity": 170,
+      "avgVisitMinutes": 20
     }
   ],
   "paths": [

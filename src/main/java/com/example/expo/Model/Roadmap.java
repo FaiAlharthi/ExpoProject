@@ -57,6 +57,10 @@ public class Roadmap {
             message = "accessibility need must be WHEELCHAIR, LIMITED_MOBILITY, VISUAL, HEARING, SENSORY or STROLLER_ELDERLY")
             String> accessibilityNeeds;
 
+    // the visitor agreed to get WhatsApp alerts when a crowded pavilion in this roadmap is about to be calm
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean whatsappAlerts = false;
+
     @NotEmpty(message = "Visit pace cannot be empty!")
     @Pattern(regexp = "^(RELAXED|INTENSIVE)$", message = "Visit pace must be RELAXED or INTENSIVE.")
     @Column(columnDefinition = "VARCHAR(9) NOT NULL")
