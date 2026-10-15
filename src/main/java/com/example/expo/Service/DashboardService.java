@@ -2,6 +2,10 @@ package com.example.expo.Service;
 
 import com.example.expo.Dto.Out.AccessibilityConflictResponse;
 import com.example.expo.Dto.Out.AdminDashboardResponse;
+import com.example.expo.Dto.Out.CrowdStatusResponse;
+import com.example.expo.Repository.CrowdAlertRepository;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import com.example.expo.Dto.Out.CountResponse;
 import com.example.expo.Dto.Out.PavilionStatResponse;
 import com.example.expo.Model.Interest;
@@ -35,6 +39,8 @@ public class DashboardService {
     private final ReviewRepository reviewRepository;
     private final PavilionRepository pavilionRepository;
     private final AccessibilityService accessibilityService;
+    private final CrowdService crowdService;
+    private final CrowdAlertRepository crowdAlertRepository;
 
     // visitors must agree before a conflict is shown: at least 3 verdicts and more than half say not suitable
     private static final int MIN_VERDICTS = 3;
@@ -128,7 +134,21 @@ public class DashboardService {
                 toCounts(entrances, true),
                 roadmapsWithNeeds,
                 toCounts(needs, true),
-                accessibilityConflicts());
+                accessibilityConflicts(),
+                crowdedNow(),
+                crowdAlertRepository.countBySentAtBetween(LocalDate.now().atStartOfDay(), LocalDate.now().atTime(LocalTime.MAX)),
+                crowdAlertRepository.countByAcceptedTrueAndSentAtBetween(LocalDate.now().atStartOfDay(), LocalDate.now().atTime(LocalTime.MAX)));
+    }
+
+    // pavilions with a queue now (moderate or crowded), longest first
+    private List<CrowdStatusResponse> crowdedNow(){
+        List<CrowdStatusResponse> crowded = new ArrayList<>();
+        for(CrowdStatusResponse status : crowdService.getCrowdNow()){
+            if(status.getWaitMinutes() > CrowdService.CALM_MAX){
+                crowded.add(status);
+            }
+        }
+        return top(crowded);
     }
 
     // official status says accessible (or partly), but most visitors with that need said not suitable

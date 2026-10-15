@@ -24,4 +24,7 @@ public class AdminDashboardResponse {
     private Long roadmapsWithNeeds;                          // trips with someone who has a need
     private List<CountResponse> accessibilityNeeds;          // how many trips asked for each need
     private List<AccessibilityConflictResponse> accessibilityConflicts; // official data the visitors disagree with
+    private List<CrowdStatusResponse> crowdedNow;            // pavilions with the longest expected queue now
+    private Long alertsSentToday;                            // WhatsApp crowd alerts sent today
+    private Long alertsAcceptedToday;                        // alerts the visitors accepted (pavilion moved in the plan)
 }

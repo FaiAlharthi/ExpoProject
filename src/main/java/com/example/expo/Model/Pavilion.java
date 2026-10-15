@@ -35,6 +35,14 @@ public class Pavilion {
     private String description;
     private String imageUrl;
 
+    @Min(value = 1, message = "capacity must be at least 1")
+    @Column(columnDefinition = "INTEGER")
+    private Integer capacity; // people inside at the same time, used for the queue estimate
+
+    @Min(value = 1, message = "visit minutes must be at least 1")
+    @Column(columnDefinition = "INTEGER")
+    private Integer avgVisitMinutes; // usual time inside the pavilion
+
     //Relations
     @ManyToOne
     @JoinColumn

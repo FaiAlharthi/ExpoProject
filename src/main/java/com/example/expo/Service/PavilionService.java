@@ -88,6 +88,13 @@ public class PavilionService {
         oldPavilion.setDescription(pavilion.getDescription());
 
         oldPavilion.setImageUrl(pavilion.getImageUrl());
+        // crowd data is optional in the request, kept when it is not sent
+        if(pavilion.getCapacity() != null){
+            oldPavilion.setCapacity(pavilion.getCapacity());
+        }
+        if(pavilion.getAvgVisitMinutes() != null){
+            oldPavilion.setAvgVisitMinutes(pavilion.getAvgVisitMinutes());
+        }
         pavilionRepository.save(oldPavilion);
         // the stamp design follows the country
         Stamp stamp = stampRepository.findStampByPavilion(oldPavilion);

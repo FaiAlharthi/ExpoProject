@@ -49,6 +49,27 @@ public class DataSeeder implements CommandLineRunner {
         addMissingPassports();
         addMissingStamps();
         addMissingAccessibility(data);
+        addMissingCrowdData(data);
+    }
+
+    // capacity and visit minutes for pavilions created before the crowd estimate
+    private void addMissingCrowdData(SeedData data){
+        if(data.getPavilions() == null){
+            return;
+        }
+        for(SeedPavilion seedPavilion : data.getPavilions()){
+            Pavilion pavilion = pavilionRepository.findPavilionByName(seedPavilion.getName());
+            if(pavilion == null || (pavilion.getCapacity() != null && pavilion.getAvgVisitMinutes() != null)){
+                continue;
+            }
+            if(pavilion.getCapacity() == null){
+                pavilion.setCapacity(seedPavilion.getCapacity());
+            }
+            if(pavilion.getAvgVisitMinutes() == null){
+                pavilion.setAvgVisitMinutes(seedPavilion.getAvgVisitMinutes());
+            }
+            pavilionRepository.save(pavilion);
+        }
     }
 
     // fills the accessibility of the pavilions (by name) and of the paths that have none yet
@@ -181,6 +202,8 @@ public class DataSeeder implements CommandLineRunner {
             pavilion.setCountry(seedPavilion.getCountry());
             pavilion.setDescription(seedPavilion.getDescription());
             pavilion.setImageUrl(seedPavilion.getImageUrl());
+            pavilion.setCapacity(seedPavilion.getCapacity());
+            pavilion.setAvgVisitMinutes(seedPavilion.getAvgVisitMinutes());
 
             pavilion.setZone(zones.get(seedPavilion.getZone()));
             pavilion.setLocation(saveLocation(seedPavilion.getLocation()));
@@ -299,5 +322,7 @@ public class DataSeeder implements CommandLineRunner {
         private String zone;
         private SeedLocation location;
         private Map<String, SeedAccessibility> accessibility;
+        private Integer capacity;
+        private Integer avgVisitMinutes;
     }
 }

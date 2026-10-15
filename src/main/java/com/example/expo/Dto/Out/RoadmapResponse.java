@@ -21,4 +21,5 @@ public class RoadmapResponse {
     private List<RoadmapBreakResponse> breaks;
     private List<RoadmapStopResponse> stops;
     private Set<String> accessibilityNeeds;
+    private Boolean whatsappAlerts;
 }

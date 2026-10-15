@@ -12,6 +12,9 @@ import java.util.List;
 public interface RoadmapRepository extends JpaRepository<Roadmap, Integer> {
     Roadmap findRoadmapById(Integer id);
 
+    // every roadmap of one day, used to estimate the crowd
+    List<Roadmap> findRoadmapsByVisitDate(LocalDate visitDate);
+
     // one roadmap per visitor per day
     Roadmap findRoadmapByVisitorAndVisitDate(Visitor visitor, LocalDate visitDate);
 

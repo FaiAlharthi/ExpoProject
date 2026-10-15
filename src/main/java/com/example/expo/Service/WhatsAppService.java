@@ -116,6 +116,45 @@ public class WhatsAppService {
         return false;
     }
 
+    // POST {api-url}/{instance}/messages/chat, a plain text message (used for the crowd alerts)
+    public boolean sendText(String phone, String text){
+        if(!isConfigured()){
+            System.out.println("WhatsApp is not set (ULTRAMSG_INSTANCE_ID / ULTRAMSG_TOKEN), text not sent");
+            return false;
+        }
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("token", token);
+        form.add("to", phone);
+        form.add("body", text);
+
+        String answer;
+        try{
+            answer = restClient.post()
+                    .uri(apiUrl + "/" + instanceId + "/messages/chat")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(form)
+                    .retrieve()
+                    .body(String.class);
+        }catch(RestClientResponseException e){
+            System.out.println("UltraMsg error " + e.getStatusCode() + ": " + e.getResponseBodyAsString());
+            return false;
+        }catch(RestClientException e){
+            System.out.println("UltraMsg connection problem: " + e.getMessage());
+            return false;
+        }
+        try{
+            Map<?, ?> result = objectMapper.readValue(answer, Map.class);
+            if("true".equals(String.valueOf(result.get("sent")))){
+                return true;
+            }
+            System.out.println("UltraMsg did not send the text: " + answer);
+        }catch(Exception e){
+            System.out.println("UltraMsg answer not understood: " + answer);
+        }
+        return false;
+    }
+
     private boolean isConfigured(){
         return instanceId != null && !instanceId.isBlank() && token != null && !token.isBlank();
     }

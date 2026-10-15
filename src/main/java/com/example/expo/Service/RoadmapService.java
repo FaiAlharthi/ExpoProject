@@ -6,6 +6,7 @@ import com.example.expo.Dto.In.ReorderStopsRequest;
 import com.example.expo.Dto.Out.RoadmapBreakResponse;
 import com.example.expo.Dto.Out.RoadmapResponse;
 import com.example.expo.Dto.Out.RoadmapStopResponse;
+import com.example.expo.Model.CrowdAlert;
 import com.example.expo.Model.Entrance;
 import com.example.expo.Model.Location;
 import com.example.expo.Model.Interest;
@@ -16,6 +17,7 @@ import com.example.expo.Model.Roadmap;
 import com.example.expo.Model.Visit;
 import com.example.expo.Model.Visitor;
 import com.example.expo.Model.Zone;
+import com.example.expo.Repository.CrowdAlertRepository;
 import com.example.expo.Repository.EntranceRepository;
 import com.example.expo.Repository.InterestRepository;
 import com.example.expo.Repository.PavilionRepository;
@@ -52,6 +54,8 @@ public class RoadmapService {
     private final InterestRepository interestRepository;
     private final WhatsAppService whatsAppService;
     private final AccessibilityService accessibilityService;
+    private final CrowdService crowdService;
+    private final CrowdAlertRepository crowdAlertRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -59,6 +63,11 @@ public class RoadmapService {
     private static final int MINUTES_PER_PAVILION = 30;
     // a trip with a mobility need moves slower
     private static final int MINUTES_PER_PAVILION_MOBILITY = 40;
+    // one minute in a queue counts like one minute of walking (75 m = 37.5 map units)
+    private static final double UNITS_PER_QUEUE_MINUTE = 37.5;
+
+    // day and time used to look at the expected queue while ordering, null = queue is not used
+    private record PlanClock(LocalDate date, LocalTime time){}
 
     public List<Roadmap> getAllRoadmaps(){
         return roadmapRepository.findAll();
@@ -127,7 +136,9 @@ public class RoadmapService {
             throw new ApiException("not enough time for more pavilions today");
         }
 
-        // AI chooses the pavilions, Dijkstra orders them
+        // AI chooses the pavilions, Dijkstra orders them and avoids the expected queues
+        crowdService.invalidate();
+        PlanClock clock = new PlanClock(roadmap.getVisitDate(), roadmap.getArrivalTime());
         List<Pavilion> ordered;
         boolean aiUsed = false;
         roadmap.setAiBreaks(null);
@@ -138,9 +149,9 @@ public class RoadmapService {
             if(selected.isEmpty()){
                 throw new ApiException("AI selected no pavilions");
             }
-            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(selected, selected.size(), needs);
+            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(selected, selected.size(), needs, clock);
             roadmap.setEntrance(entrance);
-            ordered = orderPavilions(entrance.getLocation(), selected, selected.size(), needs);
+            ordered = orderPavilions(entrance.getLocation(), selected, selected.size(), needs, clock);
             roadmap.setAiBreaks(aiAnswer.get("breaks") == null ? null : objectMapper.writeValueAsString(aiAnswer.get("breaks")));
             roadmap.setAiSummary(aiAnswer.get("summary") == null ? null : aiAnswer.get("summary").toString());
             aiUsed = true;
@@ -148,13 +159,14 @@ public class RoadmapService {
             // AI failed, use the nearest pavilions
             System.out.println("AI roadmap failed: " + e.getMessage());
             List<Pavilion> preferred = preferFullyAccessible(candidates, needs, maxStops);
-            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(preferred, maxStops, needs);
+            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(preferred, maxStops, needs, clock);
             roadmap.setEntrance(entrance);
-            ordered = orderPavilions(entrance.getLocation(), preferred, maxStops, needs);
+            ordered = orderPavilions(entrance.getLocation(), preferred, maxStops, needs, clock);
         }
         roadmapRepository.save(roadmap);
 
         saveStops(roadmap, ordered, lastOrder);
+        crowdService.invalidate();
         RoadmapResponse result = toRoadmapResponse(roadmap);
         result.setAiUsed(aiUsed);
         // the visitor gets the roadmap PDF on WhatsApp (background, never fails the roadmap)
@@ -196,19 +208,28 @@ public class RoadmapService {
             }
         }
         List<RoadmapStopResponse> stops = new ArrayList<>();
+        // expected time and queue of every stop
+        Map<Integer, CrowdService.Stay> stays = new HashMap<>();
+        for(CrowdService.Stay stay : crowdService.timeline(roadmap)){
+            stays.put(stay.visitId(), stay);
+        }
         for(Visit visit : visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap)){
             Pavilion pavilion = visit.getPavilion();
+            CrowdService.Stay stay = stays.get(visit.getId());
+            String plannedTime = stay == null ? null : stay.start().toString();
+            Integer expectedWait = stay == null || visit.getIsVisited() ? null : crowdService.waitMinutes(pavilion, roadmap.getVisitDate(), stay.start());
             stops.add(new RoadmapStopResponse(visit.getId(), visit.getStopOrder(), pavilion.getId(), pavilion.getName(),
                     pavilion.getCountry(), pavilion.getZone() == null ? null : pavilion.getZone().getName(),
                     pavilion.getImageUrl(), visit.getIsVisited(), visit.getVisitedAt(),
-                    accessibilityService.warnings(pavilion, roadmap.getAccessibilityNeeds())));
+                    accessibilityService.warnings(pavilion, roadmap.getAccessibilityNeeds()), plannedTime, expectedWait));
         }
         // a summary means the AI made this roadmap
         Entrance entrance = roadmap.getEntrance();
         return new RoadmapResponse(roadmap.getId(), roadmap.getVisitDate(),
                 entrance == null ? null : entrance.getId(), entrance == null ? null : entrance.getName(), roadmap.getAiSummary(),
                 roadmap.getAiSummary() != null, breaks, stops,
-                roadmap.getAccessibilityNeeds() == null ? new HashSet<>() : new HashSet<>(roadmap.getAccessibilityNeeds()));
+                roadmap.getAccessibilityNeeds() == null ? new HashSet<>() : new HashSet<>(roadmap.getAccessibilityNeeds()),
+                Boolean.TRUE.equals(roadmap.getWhatsappAlerts()));
     }
 
     private Roadmap toRoadmap(GenerateRoadmapRequest request){
@@ -225,6 +246,7 @@ public class RoadmapService {
         roadmap.setIncludeChildRestBreaks(request.getIncludeChildRestBreaks() != null && request.getIncludeChildRestBreaks());
         roadmap.setAllowRevisits(request.getAllowRevisits());
         roadmap.setAccessibilityNeeds(request.getAccessibilityNeeds() == null ? new HashSet<>() : new HashSet<>(request.getAccessibilityNeeds()));
+        roadmap.setWhatsappAlerts(Boolean.TRUE.equals(request.getWhatsappAlerts()));
         return roadmap;
     }
 
@@ -411,6 +433,7 @@ public class RoadmapService {
             }
         }
         renumberStops(reordered);
+        crowdService.invalidate();
         return toRoadmapResponse(roadmap);
     }
 
@@ -495,12 +518,16 @@ public class RoadmapService {
                 }
             }
         }
-        List<Pavilion> ordered = orderPavilions(start, selected, selected.size(), needs);
+        // from now on today (or from the arrival for a later day), avoiding the expected queues
+        LocalTime from = roadmap.getVisitDate().equals(LocalDate.now()) && LocalTime.now().isAfter(roadmap.getArrivalTime())
+                ? LocalTime.now() : roadmap.getArrivalTime();
+        List<Pavilion> ordered = orderPavilions(start, selected, selected.size(), needs, new PlanClock(roadmap.getVisitDate(), from));
 
         visitRepository.deleteAll(plannedStops);
         renumberStops(visitedStops);
         saveStops(roadmap, ordered, visitedStops.size());
         roadmapRepository.save(roadmap);
+        crowdService.invalidate();
 
         RoadmapResponse result = toRoadmapResponse(roadmap);
         result.setAiUsed(aiUsed);
@@ -660,11 +687,13 @@ public class RoadmapService {
     }
 
     // starts from the nearest zone, finishes it, then moves to the nearest next zone
-    private List<Pavilion> orderPavilions(Location start, List<Pavilion> candidates, int maxStops, Set<String> needs){
+    // the clock follows the walk and the visits, so each pavilion is checked at the time the visitor gets there
+    private List<Pavilion> orderPavilions(Location start, List<Pavilion> candidates, int maxStops, Set<String> needs, PlanClock clock){
         List<Pavilion> ordered = new ArrayList<>();
         List<Pavilion> remaining = new ArrayList<>(candidates);
         Location current = start;
         Zone currentZone = null;
+        boolean mobility = AccessibilityService.needsStepFree(needs);
 
         while(ordered.size() < maxStops && !remaining.isEmpty()){
             List<Pavilion> options = pavilionsInZone(remaining, currentZone);
@@ -672,12 +701,23 @@ public class RoadmapService {
                 currentZone = nearestZone(current, remaining, needs);
                 options = pavilionsInZone(remaining, currentZone);
             }
-            Pavilion next = nearestPavilion(current, options, needs);
+            Pavilion next = nearestPavilion(current, options, needs, clock);
+            if(clock != null){
+                int walk = CrowdService.walkMinutesFor(getDistance(current, next.getLocation(), needs));
+                int queue = crowdService.waitMinutes(next, clock.date(), addMinutes(clock.time(), walk));
+                clock = new PlanClock(clock.date(), addMinutes(clock.time(), walk + queue + CrowdService.visitMinutes(next, mobility)));
+            }
             ordered.add(next);
             remaining.remove(next);
             current = next.getLocation();
         }
         return ordered;
+    }
+
+    // after midnight stays at 23:59
+    private LocalTime addMinutes(LocalTime time, int minutes){
+        LocalTime result = time.plusMinutes(minutes);
+        return result.isBefore(time) ? LocalTime.of(23, 59) : result;
     }
 
     private List<Pavilion> pavilionsInZone(List<Pavilion> pavilions, Zone zone){
@@ -713,11 +753,16 @@ public class RoadmapService {
         return nearest;
     }
 
-    private Pavilion nearestPavilion(Location from, List<Pavilion> pavilions, Set<String> needs){
+    // walk + expected queue when the visitor gets there (a queue minute counts like a walking minute)
+    private Pavilion nearestPavilion(Location from, List<Pavilion> pavilions, Set<String> needs, PlanClock clock){
         Pavilion nearest = null;
         double best = Double.MAX_VALUE;
         for(Pavilion pavilion : pavilions){
             double distance = getDistance(from, pavilion.getLocation(), needs);
+            if(clock != null){
+                LocalTime arrival = addMinutes(clock.time(), CrowdService.walkMinutesFor(distance));
+                distance = distance + crowdService.waitMinutes(pavilion, clock.date(), arrival) * UNITS_PER_QUEUE_MINUTE;
+            }
             if(distance < best){
                 best = distance;
                 nearest = pavilion;
@@ -768,17 +813,18 @@ public class RoadmapService {
         to.setIncludeChildRestBreaks(from.getIncludeChildRestBreaks());
         to.setAllowRevisits(from.getAllowRevisits());
         to.setAccessibilityNeeds(from.getAccessibilityNeeds());
+        to.setWhatsappAlerts(from.getWhatsappAlerts());
     }
 
     // tries every entrance and keeps the one with the shortest walk through the pavilions
-    private Entrance bestEntrance(List<Pavilion> pavilions, int maxStops, Set<String> needs){
+    private Entrance bestEntrance(List<Pavilion> pavilions, int maxStops, Set<String> needs, PlanClock clock){
         Entrance best = null;
         double bestDistance = Double.MAX_VALUE;
         for(Entrance entrance : entranceRepository.findAll()){
             if(entrance.getLocation() == null){
                 continue;
             }
-            List<Pavilion> ordered = orderPavilions(entrance.getLocation(), pavilions, maxStops, needs);
+            List<Pavilion> ordered = orderPavilions(entrance.getLocation(), pavilions, maxStops, needs, clock);
             double distance = 0;
             Location current = entrance.getLocation();
             for(Pavilion pavilion : ordered){
@@ -828,7 +874,8 @@ public class RoadmapService {
         roadmap.setEntrance(entrance);
         roadmapRepository.save(roadmap);
         List<Visit> reordered = new ArrayList<>();
-        for(Pavilion pavilion : orderPavilions(entrance.getLocation(), pavilions, pavilions.size(), needs)){
+        for(Pavilion pavilion : orderPavilions(entrance.getLocation(), pavilions, pavilions.size(), needs,
+                new PlanClock(roadmap.getVisitDate(), roadmap.getArrivalTime()))){
             reordered.add(stopByPavilion.get(pavilion.getId()));
         }
         renumberStops(reordered);
@@ -892,6 +939,49 @@ public class RoadmapService {
             }
             prompt.append(description).append("\n");
         }
+    }
+
+    // the visitor accepted a crowd alert: the pavilion becomes the next stop, right after the visited ones
+    public RoadmapResponse acceptCrowdAlert(Integer visitorId, Integer alertId){
+        CrowdAlert alert = crowdAlertRepository.findCrowdAlertById(alertId);
+        if(alert == null || !alert.getVisitorId().equals(visitorId)){
+            throw new ApiException("alert not found");
+        }
+        if(Boolean.TRUE.equals(alert.getAccepted())){
+            throw new ApiException("this alert is already accepted");
+        }
+        Roadmap roadmap = getVisitorRoadmap(visitorId, alert.getRoadmapId());
+        if(!roadmap.getVisitDate().equals(LocalDate.now())){
+            throw new ApiException("this alert is not for today");
+        }
+        List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
+        Visit target = null;
+        for(Visit stop : stops){
+            if(stop.getPavilion().getId().equals(alert.getPavilionId())){
+                target = stop;
+            }
+        }
+        if(target == null){
+            throw new ApiException("the pavilion is not in this roadmap anymore");
+        }
+        if(target.getIsVisited()){
+            throw new ApiException("you already visited this pavilion");
+        }
+        stops.remove(target);
+        int lastVisitedIndex = -1;
+        for(int i = 0; i < stops.size(); i++){
+            if(stops.get(i).getIsVisited()){
+                lastVisitedIndex = i;
+            }
+        }
+        stops.add(lastVisitedIndex + 1, target);
+        renumberStops(stops);
+
+        alert.setAccepted(true);
+        alert.setAcceptedAt(LocalDateTime.now());
+        crowdAlertRepository.save(alert);
+        crowdService.invalidate();
+        return toRoadmapResponse(roadmap);
     }
 
     // the roadmap must belong to the logged in visitor
