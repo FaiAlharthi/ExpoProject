@@ -94,7 +94,7 @@ function drawArt(start, walk, line, shown) {
             el("circle", { cx: l.x, cy: l.y, r: on ? 7 : 4.5, fill: on ? "#3fb8a6" : "#ffffff", stroke: on ? "#ffffff" : "#00000066", "stroke-width": 1.5, class: "art-dot", filter: "url(#artShadow)" }, g);
             if (on) labels.push({ x: l.x, y: l.y - 14, text: (flagOf(pv.country) + " " + shortName(pv.name)).trim() });
         }
-        g.addEventListener("click", () => { fixedOrder = null; picked.has(l.id) ? picked.delete(l.id) : picked.add(l.id); syncChips(); render(); });
+        g.addEventListener("click", () => togglePav(l.id));
     });
 
     // 6) البوابات: نقطة واسمها

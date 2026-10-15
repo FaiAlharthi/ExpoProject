@@ -56,6 +56,8 @@ public class Configuration {
 
                         //visitor his own review or account, admin any review or visitor account (checked in the service)
                         .requestMatchers("/api/v1/review/delete/*", "/api/v1/user/get/*").hasAnyAuthority("ADMIN", "VISITOR")
+                        // صفحات الخريطة (ملفات static)
+                        .requestMatchers("/", "/route3d.html", "/mapart.js", "/expo-map.png", "/seed.html", "/favicon.ico", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout(logout -> logout
