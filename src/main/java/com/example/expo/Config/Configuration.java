@@ -29,7 +29,7 @@ public class Configuration {
                                 "/api/v1/zone/get", "/api/v1/entrance/getAll", "/api/v1/location/get", "/api/v1/interest/get",
                                 "/api/v1/pavilion/get", "/api/v1/pavilion/details/*", "/api/v1/pavilion/zone/*", "/api/v1/pavilion/search/*", "/api/v1/pavilion/top-rated",
                                 "/api/v1/path/get", "/api/v1/path/shortest/*/*",
-                                "/api/v1/review/pavilion/*/average", "/api/v1/review/pavilion/*/latest").permitAll()
+                                "/api/v1/review/pavilion/*/average", "/api/v1/review/pavilion/*/latest", "/stamps/**").permitAll()
 
                         // admin
                         .requestMatchers("/api/v1/admin/dashboard",

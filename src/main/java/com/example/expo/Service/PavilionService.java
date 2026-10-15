@@ -68,6 +68,7 @@ public class PavilionService {
         Stamp stamp = new Stamp();
         stamp.setTitle(savedPavilion.getName() + " Stamp");
         stamp.setPavilion(savedPavilion);
+        stamp.setImageUrl(Stamp.imageUrlFor(savedPavilion));
         stampRepository.save(stamp);
     }
 
@@ -86,6 +87,12 @@ public class PavilionService {
 
         oldPavilion.setImageUrl(pavilion.getImageUrl());
         pavilionRepository.save(oldPavilion);
+        // the stamp design follows the country
+        Stamp stamp = stampRepository.findStampByPavilion(oldPavilion);
+        if(stamp!=null){
+            stamp.setImageUrl(Stamp.imageUrlFor(oldPavilion));
+            stampRepository.save(stamp);
+        }
     }
 
     public void deletePavilion(Integer id){
