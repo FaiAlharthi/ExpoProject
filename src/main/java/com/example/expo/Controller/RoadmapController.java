@@ -3,11 +3,14 @@ package com.example.expo.Controller;
 import com.example.expo.Api.ApiResponse;
 import com.example.expo.Dto.In.GenerateRoadmapRequest;
 import com.example.expo.Dto.In.ReorderStopsRequest;
-import com.example.expo.Model.Roadmap;
+import com.example.expo.Service.JourneyPdfService;
 import com.example.expo.Service.RoadmapService;
 import jakarta.validation.Valid;
 import com.example.expo.Model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RoadmapController {
     private final RoadmapService roadmapService;
+    private final JourneyPdfService journeyPdfService;
 
     @GetMapping("/getAll")
     public ResponseEntity<?> getAllRoadmaps(){
@@ -28,16 +32,16 @@ public class RoadmapController {
         return ResponseEntity.status(200).body(roadmapService.getVisitorRoadmaps(user.getId()));
     }
 
-    // manual roadmap without the AI
-    @PostMapping("/createRoadmap/{entranceId}")
-    public ResponseEntity<?> createRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer entranceId, @RequestBody @Valid Roadmap roadmap){
-        roadmapService.addRoadmap(user.getId(), entranceId, roadmap);
-        return ResponseEntity.status(200).body(new ApiResponse("roadmap added"));
+    // the nearest entrance is chosen by the system
+    @PostMapping("/generate")
+    public ResponseEntity<?> generateRoadmap(@AuthenticationPrincipal User user, @RequestBody @Valid GenerateRoadmapRequest request){
+        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(user.getId(), request));
     }
 
-    @PostMapping("/generate/{entranceId}")
-    public ResponseEntity<?> generateRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer entranceId, @RequestBody @Valid GenerateRoadmapRequest request){
-        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(user.getId(), entranceId, request));
+    // only before the first visit
+    @PutMapping("/changeEntrance/{roadmapId}/{entranceId}")
+    public ResponseEntity<?> changeEntrance(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId, @PathVariable Integer entranceId){
+        return ResponseEntity.status(200).body(roadmapService.changeEntrance(user.getId(), roadmapId, entranceId));
     }
 
     @GetMapping("/getStops/{roadmapId}")
@@ -70,4 +74,13 @@ public class RoadmapController {
         roadmapService.deleteRoadmap(user.getId(), id);
         return ResponseEntity.status(200).body(new ApiResponse("roadmap deleted"));
     }
+
+    @GetMapping("/pdf/{roadmapId}")
+    public ResponseEntity<?> getRoadmapPdf(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        byte[] pdf = journeyPdfService.getRoadmapPdf(user.getId(), roadmapId);
+        return ResponseEntity.status(200)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename("wijha-journey.pdf").build().toString())
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    } // the roadmap as a PDF the visitor can share (map with the route, stops and stamps status)
 }

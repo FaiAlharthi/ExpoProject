@@ -60,35 +60,12 @@ public class RoadmapService {
         return roadmapRepository.findAll();
     }
 
-    // manual roadmap without generating stops
-    public void addRoadmap(Integer visitorId, Integer entranceId, Roadmap roadmap){
-        Visitor visitor = visitorRepository.findVisitorById(visitorId);
-        if(visitor == null){
-            throw new ApiException("visitor not found");
-        }
-        Entrance entrance = entranceRepository.findEntranceById(entranceId);
-        if(entrance == null){
-            throw new ApiException("entrance not found");
-        }
-        checkDateAndTime(roadmap);
-        if(roadmapRepository.findRoadmapByVisitorAndVisitDate(visitor, roadmap.getVisitDate()) != null){
-            throw new ApiException("you already have a roadmap for this day");
-        }
-        roadmap.setCreatedAt(LocalDateTime.now());
-        roadmap.setVisitor(visitor);
-        roadmap.setEntrance(entrance);
-        roadmapRepository.save(roadmap);
-    }
-
     // creates the day roadmap, or replaces it if it already exists
-    public RoadmapResponse generateRoadmap(Integer visitorId, Integer entranceId, GenerateRoadmapRequest request){
+    // the entrance is chosen by the system (shortest walk), the visitor can change it later
+    public RoadmapResponse generateRoadmap(Integer visitorId, GenerateRoadmapRequest request){
         Visitor visitor = visitorRepository.findVisitorById(visitorId);
         if(visitor == null){
             throw new ApiException("visitor not found");
-        }
-        Entrance entrance = entranceRepository.findEntranceById(entranceId);
-        if(entrance == null){
-            throw new ApiException("entrance not found");
         }
         if(visitor.getInterests() == null || visitor.getInterests().size() < 3){
             throw new ApiException("add at least 3 interests first");
@@ -119,16 +96,21 @@ public class RoadmapService {
             // only the latest version counts, visited stops stay
             visitRepository.deleteAll(visitRepository.findVisitsByRoadmapAndIsVisitedFalse(roadmap));
         }
-        roadmap.setEntrance(entrance);
         roadmap.setExtraInterests(extraInterests);
         roadmapRepository.save(roadmap);
 
         int lastOrder = 0;
+        boolean started = false;
         for(Visit stop : visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap)){
             if(stop.getStopOrder() != null && stop.getStopOrder() > lastOrder){
                 lastOrder = stop.getStopOrder();
             }
+            if(stop.getIsVisited()){
+                started = true;
+            }
         }
+        // after the first visit the entrance stays the same
+        Entrance lockedEntrance = started ? roadmap.getEntrance() : null;
 
         Set<Integer> visitedToday = new HashSet<>();
         List<Pavilion> candidates = selectPavilions(visitor, roadmap, visitedToday);
@@ -145,11 +127,13 @@ public class RoadmapService {
         roadmap.setAiBreaks(null);
         roadmap.setAiSummary(null);
         try{
-            Map<?, ?> aiAnswer = objectMapper.readValue(geminiService.ask(buildPrompt(visitor, roadmap, entrance, candidates)), Map.class);
+            Map<?, ?> aiAnswer = objectMapper.readValue(geminiService.ask(buildPrompt(visitor, roadmap, candidates)), Map.class);
             List<Pavilion> selected = readSelectedPavilions(aiAnswer, candidates);
             if(selected.isEmpty()){
                 throw new ApiException("AI selected no pavilions");
             }
+            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(selected, selected.size());
+            roadmap.setEntrance(entrance);
             ordered = orderPavilions(entrance.getLocation(), selected, selected.size());
             roadmap.setAiBreaks(aiAnswer.get("breaks") == null ? null : objectMapper.writeValueAsString(aiAnswer.get("breaks")));
             roadmap.setAiSummary(aiAnswer.get("summary") == null ? null : aiAnswer.get("summary").toString());
@@ -157,6 +141,8 @@ public class RoadmapService {
         }catch(Exception e){
             // AI failed, use the nearest pavilions
             System.out.println("AI roadmap failed: " + e.getMessage());
+            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(candidates, maxStops);
+            roadmap.setEntrance(entrance);
             ordered = orderPavilions(entrance.getLocation(), candidates, maxStops);
         }
         roadmapRepository.save(roadmap);
@@ -196,7 +182,9 @@ public class RoadmapService {
                     pavilion.getImageUrl(), visit.getIsVisited(), visit.getVisitedAt()));
         }
         // a summary means the AI made this roadmap
-        return new RoadmapResponse(roadmap.getId(), roadmap.getVisitDate(), roadmap.getAiSummary(),
+        Entrance entrance = roadmap.getEntrance();
+        return new RoadmapResponse(roadmap.getId(), roadmap.getVisitDate(),
+                entrance == null ? null : entrance.getId(), entrance == null ? null : entrance.getName(), roadmap.getAiSummary(),
                 roadmap.getAiSummary() != null, breaks, stops);
     }
 
@@ -217,7 +205,7 @@ public class RoadmapService {
     }
 
     // everything the AI needs to choose the pavilions
-    private String buildPrompt(Visitor visitor, Roadmap roadmap, Entrance entrance, List<Pavilion> candidates){
+    private String buildPrompt(Visitor visitor, Roadmap roadmap, List<Pavilion> candidates){
         StringBuilder prompt = new StringBuilder();
         prompt.append("You are the visit planner of Expo 2030 Riyadh. Choose the best pavilions for this visitor for one day.\n\n");
 
@@ -249,8 +237,7 @@ public class RoadmapService {
         prompt.append("breaks wanted: prayer=").append(roadmap.getIncludePrayerBreaks())
                 .append(", meal=").append(roadmap.getIncludeMealBreaks())
                 .append(", child rest=").append(roadmap.getIncludeChildRestBreaks()).append("\n");
-        prompt.append("entrance: ").append(entrance.getName()).append(" at (")
-                .append(entrance.getLocation().getX()).append(", ").append(entrance.getLocation().getY()).append(")\n\n");
+        prompt.append("\n");
 
         prompt.append("PREVIOUS REVIEWS (rating 1-5)\n");
         boolean hasReviews = false;
@@ -281,7 +268,7 @@ public class RoadmapService {
 
         prompt.append("\nRULES\n");
         prompt.append("- Choose only ids from the list above.\n");
-        prompt.append("- Match the interests, the mood, the party (children, family, solo) and the previous reviews (like what was rated high, avoid what was rated low).\n");
+        prompt.append("- Match the interests, the mood, the party (solo or group) and the previous reviews (like what was rated high, avoid what was rated low).\n");
         prompt.append("- Estimate a realistic time for each pavilion and the walking between them. All chosen pavilions and the breaks must fit between arrival and departure. If time is short, choose the most important ones. RELAXED pace means fewer pavilions.\n");
         prompt.append("- Add only the breaks that are wanted. Prayer breaks use the prayer times in Riyadh for that date.\n");
         prompt.append("- Do not order the pavilions by distance, the system does that.\n");
@@ -748,6 +735,60 @@ public class RoadmapService {
         to.setIncludeMealBreaks(from.getIncludeMealBreaks());
         to.setIncludeChildRestBreaks(from.getIncludeChildRestBreaks());
         to.setAllowRevisits(from.getAllowRevisits());
+    }
+
+    // tries every entrance and keeps the one with the shortest walk through the pavilions
+    private Entrance bestEntrance(List<Pavilion> pavilions, int maxStops){
+        Entrance best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for(Entrance entrance : entranceRepository.findAll()){
+            if(entrance.getLocation() == null){
+                continue;
+            }
+            List<Pavilion> ordered = orderPavilions(entrance.getLocation(), pavilions, maxStops);
+            double distance = 0;
+            Location current = entrance.getLocation();
+            for(Pavilion pavilion : ordered){
+                distance += getDistance(current, pavilion.getLocation());
+                current = pavilion.getLocation();
+            }
+            if(distance < bestDistance){
+                bestDistance = distance;
+                best = entrance;
+            }
+        }
+        if(best == null){
+            throw new ApiException("no entrance found");
+        }
+        return best;
+    }
+
+    // the visitor changes the entrance before starting the roadmap, the stops are ordered again from it
+    public RoadmapResponse changeEntrance(Integer visitorId, Integer roadmapId, Integer entranceId){
+        Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
+        checkNotPast(roadmap);
+        Entrance entrance = entranceRepository.findEntranceById(entranceId);
+        if(entrance == null || entrance.getLocation() == null){
+            throw new ApiException("entrance not found");
+        }
+        List<Visit> stops = visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap);
+        Map<Integer, Visit> stopByPavilion = new HashMap<>();
+        List<Pavilion> pavilions = new ArrayList<>();
+        for(Visit stop : stops){
+            if(stop.getIsVisited()){
+                throw new ApiException("you cannot change the entrance after starting the roadmap");
+            }
+            stopByPavilion.put(stop.getPavilion().getId(), stop);
+            pavilions.add(stop.getPavilion());
+        }
+        roadmap.setEntrance(entrance);
+        roadmapRepository.save(roadmap);
+        List<Visit> reordered = new ArrayList<>();
+        for(Pavilion pavilion : orderPavilions(entrance.getLocation(), pavilions, pavilions.size())){
+            reordered.add(stopByPavilion.get(pavilion.getId()));
+        }
+        renumberStops(reordered);
+        return toRoadmapResponse(roadmap);
     }
 
     // the roadmap must belong to the logged in visitor

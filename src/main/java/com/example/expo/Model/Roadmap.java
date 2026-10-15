@@ -27,8 +27,8 @@ public class Roadmap {
     private LocalDate visitDate; // Checked in service
 
     @NotEmpty(message = "Party type cannot be empty!")
-    @Pattern(regexp = "^(SOLO|COUPLE|FAMILY_WITH_CHILDREN|FRIENDS|GROUP)$", message = "Party type must be SOLO, COUPLE, FAMILY_WITH_CHILDREN, FRIENDS, or GROUP.")
-    @Column(columnDefinition = "VARCHAR(20) NOT NULL")
+    @Pattern(regexp = "^(SOLO|GROUP)$", message = "Party type must be SOLO or GROUP.")
+    @Column(columnDefinition = "VARCHAR(5) NOT NULL")
     private String partyType;
 
     @NotNull(message = "Party size cannot be empty!")
