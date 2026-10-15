@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -66,6 +67,7 @@ public class JourneyPdfService {
 
     // ======================= public =======================
 
+    @Transactional(readOnly = true)
     public byte[] getRoadmapPdf(Integer visitorId, Integer roadmapId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
         // only the owner of the roadmap can download it

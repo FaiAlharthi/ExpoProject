@@ -50,6 +50,7 @@ public class RoadmapService {
     private final GeminiService geminiService;
     private final ReviewRepository reviewRepository;
     private final InterestRepository interestRepository;
+    private final WhatsAppService whatsAppService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -150,6 +151,8 @@ public class RoadmapService {
         saveStops(roadmap, ordered, lastOrder);
         RoadmapResponse result = toRoadmapResponse(roadmap);
         result.setAiUsed(aiUsed);
+        // the visitor gets the roadmap PDF on WhatsApp (background, never fails the roadmap)
+        whatsAppService.sendRoadmapPdf(visitor.getUser().getPhone(), visitorId, roadmap.getId(), "GROUP".equals(roadmap.getPartyType()));
         return result;
     }
 
