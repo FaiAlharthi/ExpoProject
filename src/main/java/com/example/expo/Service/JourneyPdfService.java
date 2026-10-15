@@ -65,8 +65,6 @@ public class JourneyPdfService {
     private final TemplateEngine engine = createEngine();
     private volatile String mapImageDataUri; // the map image shrunk once, a 3 MB png in every PDF would be slow
 
-    // ======================= public =======================
-
     @Transactional(readOnly = true)
     public byte[] getRoadmapPdf(Integer visitorId, Integer roadmapId){
         Roadmap roadmap = roadmapRepository.findRoadmapById(roadmapId);
@@ -86,7 +84,7 @@ public class JourneyPdfService {
         return toPdf(engine.process("journey", context));
     }
 
-    // ======================= model =======================
+    // ===== model =====
 
     private RoadmapPdfModel buildModel(Roadmap roadmap, RoadmapRouteResponse route){
         MapBounds bounds = getMapBounds();
@@ -136,7 +134,7 @@ public class JourneyPdfService {
 
         RoadmapPdfModel model = new RoadmapPdfModel();
         boolean group = "GROUP".equals(roadmap.getPartyType());
-        model.setTitle(group ? "رحلتي في إكسبو الرياض مع الأحباب" : "رحلتي في إكسبو الرياض");
+        model.setTitle(group ? "حيّاكم الله في إكسبو الرياض" : "حيّاك الله في إكسبو الرياض");
         model.setPartyLine(group ? buildPartyLine(roadmap) : null);
         model.setClosingMessage(group ? "نتمنى لكم رحلة سعيدة!" : "نتمنى لك رحلة سعيدة!");
         model.setDateLabel(roadmap.getVisitDate().format(DateTimeFormatter.ofPattern("EEEE d MMMM", AR)));
@@ -225,7 +223,7 @@ public class JourneyPdfService {
         }
     }
 
-    // ======================= pdf =======================
+    // ===== pdf =====
 
     private static TemplateEngine createEngine(){
         ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();

@@ -83,4 +83,10 @@ public class RoadmapController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     } // the roadmap as a PDF the visitor can share (map with the route, stops and stamps status)
+
+    @PostMapping("/sendPdf/{roadmapId}")
+    public ResponseEntity<?> sendPdfToWhatsApp(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        roadmapService.sendPdfToWhatsApp(user.getId(), roadmapId);
+        return ResponseEntity.status(200).body(new ApiResponse("the PDF was sent to your WhatsApp"));
+    } // sends the same PDF to the WhatsApp number of the logged in visitor, only when they ask for it
 }

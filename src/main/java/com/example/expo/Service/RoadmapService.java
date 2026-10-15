@@ -174,6 +174,18 @@ public class RoadmapService {
         return result;
     }
 
+    // the visitor asks for the roadmap PDF on the WhatsApp number of their account
+    public void sendPdfToWhatsApp(Integer visitorId, Integer roadmapId){
+        Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
+        String phone = roadmap.getVisitor().getUser().getPhone();
+        if(phone == null || phone.isBlank()){
+            throw new ApiException("no phone number in your account");
+        }
+        if(!whatsAppService.sendRoadmapPdfNow(phone, visitorId, roadmapId, "GROUP".equals(roadmap.getPartyType()))){
+            throw new ApiException("could not send the PDF on WhatsApp, try again later");
+        }
+    }
+
     public RoadmapResponse getStops(Integer visitorId, Integer roadmapId){
         Roadmap roadmap = getVisitorRoadmap(visitorId, roadmapId);
         return toRoadmapResponse(roadmap);
