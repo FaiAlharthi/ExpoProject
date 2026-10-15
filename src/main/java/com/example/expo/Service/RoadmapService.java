@@ -158,7 +158,7 @@ public class RoadmapService {
         RoadmapResponse result = toRoadmapResponse(roadmap);
         result.setAiUsed(aiUsed);
         // the visitor gets the roadmap PDF on WhatsApp (background, never fails the roadmap)
-        whatsAppService.sendRoadmapPdf(visitor.getUser().getPhone(), visitorId, roadmap.getId(), "GROUP".equals(roadmap.getPartyType()));
+        //whatsAppService.sendRoadmapPdf(visitor.getUser().getPhone(), visitorId, roadmap.getId(), "GROUP".equals(roadmap.getPartyType()));
         return result;
     }
 
