@@ -3,7 +3,6 @@ package com.example.expo.Controller;
 import com.example.expo.Api.ApiResponse;
 import com.example.expo.Dto.In.GenerateRoadmapRequest;
 import com.example.expo.Dto.In.ReorderStopsRequest;
-import com.example.expo.Model.Roadmap;
 import com.example.expo.Service.RoadmapService;
 import jakarta.validation.Valid;
 import com.example.expo.Model.User;
@@ -28,16 +27,16 @@ public class RoadmapController {
         return ResponseEntity.status(200).body(roadmapService.getVisitorRoadmaps(user.getId()));
     }
 
-    // manual roadmap without the AI
-    @PostMapping("/createRoadmap/{entranceId}")
-    public ResponseEntity<?> createRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer entranceId, @RequestBody @Valid Roadmap roadmap){
-        roadmapService.addRoadmap(user.getId(), entranceId, roadmap);
-        return ResponseEntity.status(200).body(new ApiResponse("roadmap added"));
+    // the nearest entrance is chosen by the system
+    @PostMapping("/generate")
+    public ResponseEntity<?> generateRoadmap(@AuthenticationPrincipal User user, @RequestBody @Valid GenerateRoadmapRequest request){
+        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(user.getId(), request));
     }
 
-    @PostMapping("/generate/{entranceId}")
-    public ResponseEntity<?> generateRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer entranceId, @RequestBody @Valid GenerateRoadmapRequest request){
-        return ResponseEntity.status(200).body(roadmapService.generateRoadmap(user.getId(), entranceId, request));
+    // only before the first visit
+    @PutMapping("/changeEntrance/{roadmapId}/{entranceId}")
+    public ResponseEntity<?> changeEntrance(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId, @PathVariable Integer entranceId){
+        return ResponseEntity.status(200).body(roadmapService.changeEntrance(user.getId(), roadmapId, entranceId));
     }
 
     @GetMapping("/getStops/{roadmapId}")

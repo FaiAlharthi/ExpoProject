@@ -20,7 +20,7 @@ public class GenerateRoadmapRequest {
     private LocalDate visitDate;
 
     @NotEmpty(message = "party type cannot be empty")
-    @Pattern(regexp = "^(SOLO|COUPLE|FAMILY_WITH_CHILDREN|FRIENDS|GROUP)$", message = "party type must be SOLO, COUPLE, FAMILY_WITH_CHILDREN, FRIENDS or GROUP")
+    @Pattern(regexp = "^(SOLO|GROUP)$", message = "party type must be SOLO or GROUP")
     private String partyType;
 
     @NotNull(message = "party size cannot be empty")
