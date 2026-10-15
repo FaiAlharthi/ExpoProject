@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -19,4 +20,5 @@ public class RoadmapStopResponse {
     private String imageUrl;
     private Boolean isVisited;
     private LocalDateTime visitedAt;
+    private List<AccessibilityWarningResponse> accessibilityWarnings;
 }

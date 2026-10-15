@@ -21,4 +21,7 @@ public class AdminDashboardResponse {
     private List<CountResponse> visitsPerDay;
     private List<CountResponse> visitsPerZone;
     private List<CountResponse> entrances;
+    private Long roadmapsWithNeeds;                          // trips with someone who has a need
+    private List<CountResponse> accessibilityNeeds;          // how many trips asked for each need
+    private List<AccessibilityConflictResponse> accessibilityConflicts; // official data the visitors disagree with
 }

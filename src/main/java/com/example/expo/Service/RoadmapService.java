@@ -50,11 +50,14 @@ public class RoadmapService {
     private final GeminiService geminiService;
     private final ReviewRepository reviewRepository;
     private final InterestRepository interestRepository;
+    private final AccessibilityService accessibilityService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // average minutes per pavilion, temporary until the AI is added
     private static final int MINUTES_PER_PAVILION = 30;
+    // a trip with a mobility need moves slower
+    private static final int MINUTES_PER_PAVILION_MOBILITY = 40;
 
     public List<Roadmap> getAllRoadmaps(){
         return roadmapRepository.findAll();
@@ -112,11 +115,13 @@ public class RoadmapService {
         // after the first visit the entrance stays the same
         Entrance lockedEntrance = started ? roadmap.getEntrance() : null;
 
+        Set<String> needs = roadmap.getAccessibilityNeeds();
         Set<Integer> visitedToday = new HashSet<>();
         List<Pavilion> candidates = selectPavilions(visitor, roadmap, visitedToday);
 
         long minutes = Duration.between(roadmap.getArrivalTime(), roadmap.getDepartureTime()).toMinutes();
-        int maxStops = (int) (minutes / MINUTES_PER_PAVILION) - visitedToday.size();
+        int minutesPerPavilion = AccessibilityService.needsStepFree(needs) ? MINUTES_PER_PAVILION_MOBILITY : MINUTES_PER_PAVILION;
+        int maxStops = (int) (minutes / minutesPerPavilion) - visitedToday.size();
         if(maxStops <= 0){
             throw new ApiException("not enough time for more pavilions today");
         }
@@ -132,18 +137,19 @@ public class RoadmapService {
             if(selected.isEmpty()){
                 throw new ApiException("AI selected no pavilions");
             }
-            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(selected, selected.size());
+            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(selected, selected.size(), needs);
             roadmap.setEntrance(entrance);
-            ordered = orderPavilions(entrance.getLocation(), selected, selected.size());
+            ordered = orderPavilions(entrance.getLocation(), selected, selected.size(), needs);
             roadmap.setAiBreaks(aiAnswer.get("breaks") == null ? null : objectMapper.writeValueAsString(aiAnswer.get("breaks")));
             roadmap.setAiSummary(aiAnswer.get("summary") == null ? null : aiAnswer.get("summary").toString());
             aiUsed = true;
         }catch(Exception e){
             // AI failed, use the nearest pavilions
             System.out.println("AI roadmap failed: " + e.getMessage());
-            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(candidates, maxStops);
+            List<Pavilion> preferred = preferFullyAccessible(candidates, needs, maxStops);
+            Entrance entrance = lockedEntrance != null ? lockedEntrance : bestEntrance(preferred, maxStops, needs);
             roadmap.setEntrance(entrance);
-            ordered = orderPavilions(entrance.getLocation(), candidates, maxStops);
+            ordered = orderPavilions(entrance.getLocation(), preferred, maxStops, needs);
         }
         roadmapRepository.save(roadmap);
 
@@ -179,13 +185,15 @@ public class RoadmapService {
             Pavilion pavilion = visit.getPavilion();
             stops.add(new RoadmapStopResponse(visit.getId(), visit.getStopOrder(), pavilion.getId(), pavilion.getName(),
                     pavilion.getCountry(), pavilion.getZone() == null ? null : pavilion.getZone().getName(),
-                    pavilion.getImageUrl(), visit.getIsVisited(), visit.getVisitedAt()));
+                    pavilion.getImageUrl(), visit.getIsVisited(), visit.getVisitedAt(),
+                    accessibilityService.warnings(pavilion, roadmap.getAccessibilityNeeds())));
         }
         // a summary means the AI made this roadmap
         Entrance entrance = roadmap.getEntrance();
         return new RoadmapResponse(roadmap.getId(), roadmap.getVisitDate(),
                 entrance == null ? null : entrance.getId(), entrance == null ? null : entrance.getName(), roadmap.getAiSummary(),
-                roadmap.getAiSummary() != null, breaks, stops);
+                roadmap.getAiSummary() != null, breaks, stops,
+                roadmap.getAccessibilityNeeds() == null ? new HashSet<>() : new HashSet<>(roadmap.getAccessibilityNeeds()));
     }
 
     private Roadmap toRoadmap(GenerateRoadmapRequest request){
@@ -201,6 +209,7 @@ public class RoadmapService {
         roadmap.setIncludeMealBreaks(request.getIncludeMealBreaks() != null && request.getIncludeMealBreaks());
         roadmap.setIncludeChildRestBreaks(request.getIncludeChildRestBreaks() != null && request.getIncludeChildRestBreaks());
         roadmap.setAllowRevisits(request.getAllowRevisits());
+        roadmap.setAccessibilityNeeds(request.getAccessibilityNeeds() == null ? new HashSet<>() : new HashSet<>(request.getAccessibilityNeeds()));
         return roadmap;
     }
 
@@ -237,6 +246,7 @@ public class RoadmapService {
         prompt.append("breaks wanted: prayer=").append(roadmap.getIncludePrayerBreaks())
                 .append(", meal=").append(roadmap.getIncludeMealBreaks())
                 .append(", child rest=").append(roadmap.getIncludeChildRestBreaks()).append("\n");
+        prompt.append(accessibilityLine(roadmap));
         prompt.append("\n");
 
         prompt.append("PREVIOUS REVIEWS (rating 1-5)\n");
@@ -255,19 +265,11 @@ public class RoadmapService {
             prompt.append("none\n");
         }
 
-        prompt.append("\nAVAILABLE PAVILIONS (id | name | country | zone | description)\n");
-        for(Pavilion pavilion : candidates){
-            String description = pavilion.getDescription() == null ? "" : pavilion.getDescription();
-            if(description.length() > 200){
-                description = description.substring(0, 200);
-            }
-            prompt.append(pavilion.getId()).append(" | ").append(pavilion.getName()).append(" | ")
-                    .append(pavilion.getCountry()).append(" | ").append(pavilion.getZone().getName())
-                    .append(" | ").append(description).append("\n");
-        }
+        appendPavilions(prompt, candidates, roadmap);
 
         prompt.append("\nRULES\n");
         prompt.append("- Choose only ids from the list above.\n");
+        prompt.append(accessibilityRules(roadmap));
         prompt.append("- Match the interests, the mood, the party (solo or group) and the previous reviews (like what was rated high, avoid what was rated low).\n");
         prompt.append("- Estimate a realistic time for each pavilion and the walking between them. All chosen pavilions and the breaks must fit between arrival and departure. If time is short, choose the most important ones. RELAXED pace means fewer pavilions.\n");
         prompt.append("- Add only the breaks that are wanted. Prayer breaks use the prayer times in Riyadh for that date.\n");
@@ -427,6 +429,7 @@ public class RoadmapService {
         }
 
         int stopsCount = plannedStops.size();
+        Set<String> needs = roadmap.getAccessibilityNeeds();
         Set<Integer> visitedToday = new HashSet<>();
         List<Pavilion> candidates = selectPavilions(visitor, roadmap, visitedToday);
         Set<Integer> visitedIds = new HashSet<>();
@@ -468,7 +471,7 @@ public class RoadmapService {
             for(Pavilion pavilion : selected){
                 selectedIds.add(pavilion.getId());
             }
-            for(Pavilion pavilion : rankByReviews(start, candidates, todayReviews)){
+            for(Pavilion pavilion : rankByReviews(start, candidates, todayReviews, needs)){
                 if(selected.size() == stopsCount){
                     break;
                 }
@@ -477,7 +480,7 @@ public class RoadmapService {
                 }
             }
         }
-        List<Pavilion> ordered = orderPavilions(start, selected, selected.size());
+        List<Pavilion> ordered = orderPavilions(start, selected, selected.size(), needs);
 
         visitRepository.deleteAll(plannedStops);
         renumberStops(visitedStops);
@@ -490,7 +493,7 @@ public class RoadmapService {
     }
 
     // zones with high ratings first, low ratings last, then the nearest
-    private List<Pavilion> rankByReviews(Location start, List<Pavilion> candidates, List<Review> reviews){
+    private List<Pavilion> rankByReviews(Location start, List<Pavilion> candidates, List<Review> reviews, Set<String> needs){
         Map<Integer, Double> ratingSum = new HashMap<>();
         Map<Integer, Integer> ratingCount = new HashMap<>();
         for(Review review : reviews){
@@ -504,7 +507,7 @@ public class RoadmapService {
             Integer zoneId = pavilion.getZone().getId();
             // a zone without reviews counts as neutral (3)
             score.put(pavilion.getId(), ratingCount.containsKey(zoneId) ? ratingSum.get(zoneId) / ratingCount.get(zoneId) : 3.0);
-            distance.put(pavilion.getId(), getDistance(start, pavilion.getLocation()));
+            distance.put(pavilion.getId(), getDistance(start, pavilion.getLocation(), needs));
         }
         List<Pavilion> ranked = new ArrayList<>(candidates);
         ranked.sort((a, b) -> {
@@ -536,7 +539,8 @@ public class RoadmapService {
         }
         prompt.append("interests: ").append(interests).append("\n");
         prompt.append("party: ").append(roadmap.getPartyType()).append(", size: ").append(roadmap.getPartySize())
-                .append(", mood: ").append(roadmap.getExperienceTypes()).append(", pace: ").append(roadmap.getVisitPace()).append("\n\n");
+                .append(", mood: ").append(roadmap.getExperienceTypes()).append(", pace: ").append(roadmap.getVisitPace()).append("\n");
+        prompt.append(accessibilityLine(roadmap)).append("\n");
 
         prompt.append("TODAY REVIEWS (rating 1-5)\n");
         for(Review review : reviews){
@@ -548,19 +552,11 @@ public class RoadmapService {
             prompt.append("\n");
         }
 
-        prompt.append("\nAVAILABLE PAVILIONS (id | name | country | zone | description)\n");
-        for(Pavilion pavilion : candidates){
-            String description = pavilion.getDescription() == null ? "" : pavilion.getDescription();
-            if(description.length() > 200){
-                description = description.substring(0, 200);
-            }
-            prompt.append(pavilion.getId()).append(" | ").append(pavilion.getName()).append(" | ")
-                    .append(pavilion.getCountry()).append(" | ").append(pavilion.getZone().getName())
-                    .append(" | ").append(description).append("\n");
-        }
+        appendPavilions(prompt, candidates, roadmap);
 
         prompt.append("\nRULES\n");
         prompt.append("- Choose only ids from the list above.\n");
+        prompt.append(accessibilityRules(roadmap));
         prompt.append("- Choose more of what was rated high today and avoid what is similar to what was rated low.\n");
         prompt.append("- Do not order the pavilions by distance, the system does that.\n");
         prompt.append("- Write the summary in Arabic if language is AR, otherwise in English, and mention why the plan changed.\n\n");
@@ -626,17 +622,30 @@ public class RoadmapService {
                 }
             }
         }
+        // the trip needs: no pavilion that cannot serve them, and with a mobility need only pavilions reachable without stairs
+        Set<String> needs = roadmap.getAccessibilityNeeds();
+        Set<Integer> stepFreeReachable = AccessibilityService.needsStepFree(needs) ? pathService.getStepFreeReachableLocations() : null;
         List<Pavilion> candidates = new ArrayList<>();
         for(Pavilion pavilion : pavilionRepository.findAll()){
-            if(!excluded.contains(pavilion.getId()) && pavilion.getLocation() != null && pavilion.getZone() != null){
-                candidates.add(pavilion);
+            if(excluded.contains(pavilion.getId()) || pavilion.getLocation() == null || pavilion.getZone() == null){
+                continue;
             }
+            if(!accessibilityService.isSuitable(pavilion, needs)){
+                continue;
+            }
+            if(stepFreeReachable != null && !stepFreeReachable.contains(pavilion.getLocation().getId())){
+                continue;
+            }
+            candidates.add(pavilion);
+        }
+        if(candidates.isEmpty() && needs != null && !needs.isEmpty()){
+            throw new ApiException("no pavilions fit the accessibility needs of this trip today");
         }
         return candidates;
     }
 
     // starts from the nearest zone, finishes it, then moves to the nearest next zone
-    private List<Pavilion> orderPavilions(Location start, List<Pavilion> candidates, int maxStops){
+    private List<Pavilion> orderPavilions(Location start, List<Pavilion> candidates, int maxStops, Set<String> needs){
         List<Pavilion> ordered = new ArrayList<>();
         List<Pavilion> remaining = new ArrayList<>(candidates);
         Location current = start;
@@ -645,10 +654,10 @@ public class RoadmapService {
         while(ordered.size() < maxStops && !remaining.isEmpty()){
             List<Pavilion> options = pavilionsInZone(remaining, currentZone);
             if(options.isEmpty()){
-                currentZone = nearestZone(current, remaining);
+                currentZone = nearestZone(current, remaining, needs);
                 options = pavilionsInZone(remaining, currentZone);
             }
-            Pavilion next = nearestPavilion(current, options);
+            Pavilion next = nearestPavilion(current, options, needs);
             ordered.add(next);
             remaining.remove(next);
             current = next.getLocation();
@@ -670,7 +679,7 @@ public class RoadmapService {
     }
 
     // zone distance is measured to its center, or to its first pavilion if it has no location
-    private Zone nearestZone(Location from, List<Pavilion> pavilions){
+    private Zone nearestZone(Location from, List<Pavilion> pavilions, Set<String> needs){
         Zone nearest = null;
         double best = Double.MAX_VALUE;
         Set<Integer> checked = new HashSet<>();
@@ -680,7 +689,7 @@ public class RoadmapService {
                 continue;
             }
             Location target = zone.getLocation() != null ? zone.getLocation() : pavilion.getLocation();
-            double distance = getDistance(from, target);
+            double distance = getDistance(from, target, needs);
             if(distance < best){
                 best = distance;
                 nearest = zone;
@@ -689,11 +698,11 @@ public class RoadmapService {
         return nearest;
     }
 
-    private Pavilion nearestPavilion(Location from, List<Pavilion> pavilions){
+    private Pavilion nearestPavilion(Location from, List<Pavilion> pavilions, Set<String> needs){
         Pavilion nearest = null;
         double best = Double.MAX_VALUE;
         for(Pavilion pavilion : pavilions){
-            double distance = getDistance(from, pavilion.getLocation());
+            double distance = getDistance(from, pavilion.getLocation(), needs);
             if(distance < best){
                 best = distance;
                 nearest = pavilion;
@@ -703,10 +712,18 @@ public class RoadmapService {
     }
 
     // walking distance from Dijkstra, straight line if there is no path yet
-    private double getDistance(Location from, Location to){
+    private double getDistance(Location from, Location to, Set<String> needs){
         try{
-            return pathService.getShortestPath(from.getId(), to.getId()).getTotalDistance();
+            return pathService.getShortestPath(from.getId(), to.getId(), needs).getTotalDistance();
         }catch(ApiException e){
+            // no step free way: the normal path counts 50% longer so it comes last
+            if(AccessibilityService.needsStepFree(needs)){
+                try{
+                    return pathService.getShortestPath(from.getId(), to.getId()).getTotalDistance() * 1.5;
+                }catch(ApiException noPath){
+                    // straight line below
+                }
+            }
             return Math.sqrt(Math.pow(to.getX() - from.getX(), 2) + Math.pow(to.getY() - from.getY(), 2));
         }
     }
@@ -735,21 +752,22 @@ public class RoadmapService {
         to.setIncludeMealBreaks(from.getIncludeMealBreaks());
         to.setIncludeChildRestBreaks(from.getIncludeChildRestBreaks());
         to.setAllowRevisits(from.getAllowRevisits());
+        to.setAccessibilityNeeds(from.getAccessibilityNeeds());
     }
 
     // tries every entrance and keeps the one with the shortest walk through the pavilions
-    private Entrance bestEntrance(List<Pavilion> pavilions, int maxStops){
+    private Entrance bestEntrance(List<Pavilion> pavilions, int maxStops, Set<String> needs){
         Entrance best = null;
         double bestDistance = Double.MAX_VALUE;
         for(Entrance entrance : entranceRepository.findAll()){
             if(entrance.getLocation() == null){
                 continue;
             }
-            List<Pavilion> ordered = orderPavilions(entrance.getLocation(), pavilions, maxStops);
+            List<Pavilion> ordered = orderPavilions(entrance.getLocation(), pavilions, maxStops, needs);
             double distance = 0;
             Location current = entrance.getLocation();
             for(Pavilion pavilion : ordered){
-                distance += getDistance(current, pavilion.getLocation());
+                distance += getDistance(current, pavilion.getLocation(), needs);
                 current = pavilion.getLocation();
             }
             if(distance < bestDistance){
@@ -781,14 +799,84 @@ public class RoadmapService {
             stopByPavilion.put(stop.getPavilion().getId(), stop);
             pavilions.add(stop.getPavilion());
         }
+        // a trip with a mobility need must reach every stop from this entrance without stairs
+        Set<String> needs = roadmap.getAccessibilityNeeds();
+        if(AccessibilityService.needsStepFree(needs)){
+            for(Pavilion pavilion : pavilions){
+                try{
+                    pathService.getAccessibleShortestPath(entrance.getLocation().getId(), pavilion.getLocation().getId());
+                }catch(ApiException e){
+                    throw new ApiException("this entrance has no step free path to " + pavilion.getName());
+                }
+            }
+        }
         roadmap.setEntrance(entrance);
         roadmapRepository.save(roadmap);
         List<Visit> reordered = new ArrayList<>();
-        for(Pavilion pavilion : orderPavilions(entrance.getLocation(), pavilions, pavilions.size())){
+        for(Pavilion pavilion : orderPavilions(entrance.getLocation(), pavilions, pavilions.size(), needs)){
             reordered.add(stopByPavilion.get(pavilion.getId()));
         }
         renumberStops(reordered);
         return toRoadmapResponse(roadmap);
+    }
+
+    // AI failed: fully accessible pavilions first, partly accessible ones only if there are not enough
+    private List<Pavilion> preferFullyAccessible(List<Pavilion> candidates, Set<String> needs, int maxStops){
+        if(needs == null || needs.isEmpty()){
+            return candidates;
+        }
+        List<Pavilion> full = new ArrayList<>();
+        for(Pavilion pavilion : candidates){
+            if(accessibilityService.isFullyAccessible(pavilion, needs)){
+                full.add(pavilion);
+            }
+        }
+        return full.size() >= maxStops ? full : candidates;
+    }
+
+    // the needs of the trip in the prompt
+    private String accessibilityLine(Roadmap roadmap){
+        Set<String> needs = roadmap.getAccessibilityNeeds();
+        if(needs == null || needs.isEmpty()){
+            return "accessibility needs in the party: none\n";
+        }
+        return "accessibility needs in the party: " + needs + "\n";
+    }
+
+    private String accessibilityRules(Roadmap roadmap){
+        Set<String> needs = roadmap.getAccessibilityNeeds();
+        if(needs == null || needs.isEmpty()){
+            return "";
+        }
+        StringBuilder rules = new StringBuilder();
+        rules.append("- Someone in the party has these needs: ").append(needs).append(". Prefer pavilions that are ACCESSIBLE for all of them, use PARTIAL ones only when they match the interests much better.\n");
+        if(needs.contains("LIMITED_MOBILITY") || needs.contains("STROLLER_ELDERLY") || needs.contains("WHEELCHAIR")){
+            rules.append("- The party moves slowly: choose fewer pavilions and add a short rest break every 90 minutes (type MEAL or CHILD_REST is fine, explain it in the note).\n");
+        }
+        if(needs.contains("SENSORY")){
+            rules.append("- Avoid putting loud or crowded pavilions one after another.\n");
+        }
+        rules.append("- Mention the accessibility in the summary in one short sentence.\n");
+        return rules.toString();
+    }
+
+    // pavilion lines for the prompt, with the accessibility for the trip needs
+    private void appendPavilions(StringBuilder prompt, List<Pavilion> candidates, Roadmap roadmap){
+        Set<String> needs = roadmap.getAccessibilityNeeds();
+        boolean withNeeds = needs != null && !needs.isEmpty();
+        prompt.append("\nAVAILABLE PAVILIONS (id | name | country | zone | ").append(withNeeds ? "accessibility | " : "").append("description)\n");
+        for(Pavilion pavilion : candidates){
+            String description = pavilion.getDescription() == null ? "" : pavilion.getDescription();
+            if(description.length() > 200){
+                description = description.substring(0, 200);
+            }
+            prompt.append(pavilion.getId()).append(" | ").append(pavilion.getName()).append(" | ")
+                    .append(pavilion.getCountry()).append(" | ").append(pavilion.getZone().getName()).append(" | ");
+            if(withNeeds){
+                prompt.append(accessibilityService.describe(pavilion, needs)).append(" | ");
+            }
+            prompt.append(description).append("\n");
+        }
     }
 
     // the roadmap must belong to the logged in visitor

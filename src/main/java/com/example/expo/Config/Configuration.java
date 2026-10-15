@@ -28,7 +28,7 @@ public class Configuration {
                         .requestMatchers("/api/v1/visitor/register",
                                 "/api/v1/zone/get", "/api/v1/entrance/getAll", "/api/v1/location/get", "/api/v1/interest/get",
                                 "/api/v1/pavilion/get", "/api/v1/pavilion/details/*", "/api/v1/pavilion/zone/*", "/api/v1/pavilion/search/*", "/api/v1/pavilion/top-rated",
-                                "/api/v1/path/get", "/api/v1/path/shortest/*/*",
+                                "/api/v1/path/get", "/api/v1/path/shortest/*/*", "/api/v1/path/shortest-accessible/*/*", "/api/v1/pavilion/accessible/*",
                                 "/api/v1/review/pavilion/*/average", "/api/v1/review/pavilion/*/latest", "/stamps/**").permitAll()
 
                         //admin only
@@ -38,8 +38,8 @@ public class Configuration {
                                 "/api/v1/entrance/createEntrance/*", "/api/v1/entrance/updateEntrance/*", "/api/v1/entrance/deleteEntrance/*",
                                 "/api/v1/location/add", "/api/v1/location/update/*", "/api/v1/location/delete/*",
                                 "/api/v1/interest/add", "/api/v1/interest/update/*", "/api/v1/interest/delete/*",
-                                "/api/v1/pavilion/add/*/*", "/api/v1/pavilion/update/*", "/api/v1/pavilion/delete/*",
-                                "/api/v1/path/add/*/*", "/api/v1/path/delete/*", "/api/v1/path/generate",
+                                "/api/v1/pavilion/add/*/*", "/api/v1/pavilion/update/*", "/api/v1/pavilion/delete/*", "/api/v1/pavilion/accessibility/*/*",
+                                "/api/v1/path/add/*/*", "/api/v1/path/delete/*", "/api/v1/path/generate", "/api/v1/path/accessibility/*",
                                 "/api/v1/roadmap/getAll", "/api/v1/visit/getAll", "/api/v1/passport/getAll", "/api/v1/review/get").hasAuthority("ADMIN")
 
                         //visitor, his own data only

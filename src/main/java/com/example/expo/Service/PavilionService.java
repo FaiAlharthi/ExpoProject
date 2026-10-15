@@ -21,6 +21,7 @@ public class PavilionService {
     private final VisitorRepository visitorRepository;
     private final ReviewRepository reviewRepository;
     private final StampRepository stampRepository;
+    private final AccessibilityService accessibilityService;
 
     // pavilion page with the reviews of the visitors
     public PavilionDetailsResponse getPavilionDetails(Integer pavilionId){
@@ -38,7 +39,8 @@ public class PavilionService {
         Location location = pavilion.getLocation();
         return new PavilionDetailsResponse(pavilion.getId(), pavilion.getName(), pavilion.getCountry(), pavilion.getDescription(),
                 pavilion.getImageUrl(), zone == null ? null : zone.getId(), zone == null ? null : zone.getName(),
-                location == null ? null : location.getX(), location == null ? null : location.getY(), reviews);
+                location == null ? null : location.getX(), location == null ? null : location.getY(), reviews,
+                accessibilityService.pavilionAccessibility(pavilion));
     }
 
     public List<Pavilion>getAllPavilion(){

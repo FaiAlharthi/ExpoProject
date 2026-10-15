@@ -56,4 +56,7 @@ public class Pavilion {
     @JsonIgnore
     private Stamp stamp; // the stamp a passport earns by visiting this pavilion
 
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "pavilion", orphanRemoval = true)
+    private Set<PavilionAccessibility> accessibility; // one status for every type of need
+
 }

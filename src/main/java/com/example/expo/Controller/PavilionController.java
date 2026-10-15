@@ -8,6 +8,8 @@ import com.example.expo.Api.ApiResponse;
 import com.example.expo.Model.User;
 import com.example.expo.Model.Pavilion;
 import com.example.expo.Service.PavilionService;
+import com.example.expo.Service.AccessibilityService;
+import com.example.expo.Dto.In.AccessibilityUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class PavilionController {
 
     private final PavilionService pavilionService;
+    private final AccessibilityService accessibilityService;
 
     @GetMapping("/get")
     public ResponseEntity<?> getAllPavilion() {
@@ -62,6 +65,18 @@ public class PavilionController {
     @GetMapping("/top-rated")
     public ResponseEntity<?> getTopRatedPavilions() {
         return ResponseEntity.status(200).body(pavilionService.getTopRatedPavilions());
+    }
+
+    // pavilions that serve all these needs, for example WHEELCHAIR,SENSORY
+    @GetMapping("/accessible/{needs}")
+    public ResponseEntity<?> getAccessiblePavilions(@PathVariable String needs) {
+        return ResponseEntity.status(200).body(accessibilityService.getAccessiblePavilions(needs));
+    }
+
+    @PutMapping("/accessibility/{pavilionId}/{needType}")
+    public ResponseEntity<?> updateAccessibility(@PathVariable Integer pavilionId, @PathVariable String needType, @RequestBody @Valid AccessibilityUpdateRequest request) {
+        accessibilityService.updatePavilionAccessibility(pavilionId, needType, request);
+        return ResponseEntity.status(200).body(new ApiResponse("Pavilion accessibility updated"));
     }
 
     @GetMapping("/unvisited")
