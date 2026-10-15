@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 
 @Service
@@ -53,6 +55,7 @@ public class ReviewService {
         }
         // AI checks the comment for racism and rude language
         moderationService.checkComment(review.getComment());
+        applyAccessibility(visitor, pavilion, review, review);
         review.setVisitor(visitor);
         review.setPavilion(pavilion);
         review.setCreatedAt(LocalDateTime.now());
@@ -73,7 +76,52 @@ public class ReviewService {
         moderationService.checkComment(review.getComment());
         oldReview.setRating(review.getRating());
         oldReview.setComment(review.getComment());
+        applyAccessibility(oldReview.getVisitor(), oldReview.getPavilion(), review, oldReview);
         reviewRepository.save(oldReview);
+    }
+
+    // the accessibility verdict is about the needs of the trip: sent by the visitor, or taken from the roadmap of that visit
+    private void applyAccessibility(Visitor visitor, Pavilion pavilion, Review from, Review to){
+        if(from.getAccessibilityVerdict() == null){
+            to.setAccessibilityVerdict(null);
+            to.setAccessibilityNeeds(new HashSet<>());
+            return;
+        }
+        Set<String> needs = from.getAccessibilityNeeds() == null ? new HashSet<>() : new HashSet<>(from.getAccessibilityNeeds());
+        if(needs.isEmpty()){
+            needs = tripNeeds(visitor, pavilion);
+        }
+        if(needs.isEmpty()){
+            throw new ApiException("choose the accessibility needs this verdict is about");
+        }
+        to.setAccessibilityVerdict(from.getAccessibilityVerdict());
+        to.setAccessibilityNeeds(needs);
+    }
+
+    // needs of the latest roadmap where this pavilion was visited
+    private Set<String> tripNeeds(Visitor visitor, Pavilion pavilion){
+        Set<String> needs = new HashSet<>();
+        Passport passport = visitor.getPassport();
+        if(passport == null || passport.getVisits() == null){
+            return needs;
+        }
+        Visit latest = null;
+        for(Visit visit : passport.getVisits()){
+            if(!visit.getIsVisited() || !visit.getPavilion().getId().equals(pavilion.getId()) || visit.getRoadmap() == null){
+                continue;
+            }
+            Set<String> roadmapNeeds = visit.getRoadmap().getAccessibilityNeeds();
+            if(roadmapNeeds == null || roadmapNeeds.isEmpty()){
+                continue;
+            }
+            if(latest == null || (visit.getVisitedAt() != null && latest.getVisitedAt() != null && visit.getVisitedAt().isAfter(latest.getVisitedAt()))){
+                latest = visit;
+            }
+        }
+        if(latest != null){
+            needs.addAll(latest.getRoadmap().getAccessibilityNeeds());
+        }
+        return needs;
     }
 
     // the visitor deletes his own review, the admin can delete any review

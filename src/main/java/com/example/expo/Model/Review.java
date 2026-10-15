@@ -5,10 +5,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -34,6 +36,17 @@ public class Review {
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    // optional: was the pavilion really suitable for the needs of the trip
+    @Pattern(regexp = "^(SUITABLE|PARTIAL|NOT_SUITABLE)$", message = "accessibility verdict must be SUITABLE, PARTIAL or NOT_SUITABLE")
+    @Column(columnDefinition = "VARCHAR(12)")
+    private String accessibilityVerdict;
+
+    // the needs the verdict is about, taken from the day roadmap or sent by the visitor
+    @ElementCollection
+    private Set<@Pattern(regexp = "^(WHEELCHAIR|LIMITED_MOBILITY|VISUAL|HEARING|SENSORY|STROLLER_ELDERLY)$",
+            message = "accessibility need must be WHEELCHAIR, LIMITED_MOBILITY, VISUAL, HEARING, SENSORY or STROLLER_ELDERLY")
+            String> accessibilityNeeds;
 
     //Relations
     @ManyToOne
