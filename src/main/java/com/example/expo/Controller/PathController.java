@@ -1,6 +1,8 @@
 package com.example.expo.Controller;
 
 import com.example.expo.Api.ApiResponse;
+import com.example.expo.Dto.In.PathAccessibilityRequest;
+import jakarta.validation.Valid;
 import com.example.expo.Model.User;
 import com.example.expo.Service.PathService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,18 @@ public class PathController {
     @GetMapping("/shortest/{fromId}/{toId}")
     public ResponseEntity<?> getShortestPath(@PathVariable Integer fromId, @PathVariable Integer toId){
         return ResponseEntity.status(200).body(pathService.getShortestPath(fromId, toId));
+    }
+
+    // بدون درج ويفضّل الظل (كرسي متحرك، صعوبة مشي، عربة أطفال)
+    @GetMapping("/shortest-accessible/{fromId}/{toId}")
+    public ResponseEntity<?> getAccessibleShortestPath(@PathVariable Integer fromId, @PathVariable Integer toId){
+        return ResponseEntity.status(200).body(pathService.getAccessibleShortestPath(fromId, toId));
+    }
+
+    @PutMapping("/accessibility/{id}")
+    public ResponseEntity<?> updatePathAccessibility(@PathVariable Integer id, @RequestBody @Valid PathAccessibilityRequest request){
+        pathService.updatePathAccessibility(id, request);
+        return ResponseEntity.status(200).body(new ApiResponse("Path accessibility updated"));
     }
 
     // من بوابة الرحلة

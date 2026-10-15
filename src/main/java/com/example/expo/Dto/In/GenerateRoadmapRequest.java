@@ -51,4 +51,7 @@ public class GenerateRoadmapRequest {
 
     // optional, extra interests for this day only
     private List<Integer> extraInterestIds;
+
+    // optional, needs of anyone in this trip, empty or missing when there are none
+    private Set<@Pattern(regexp = "^(WHEELCHAIR|LIMITED_MOBILITY|VISUAL|HEARING|SENSORY|STROLLER_ELDERLY)$", message = "accessibility need must be WHEELCHAIR, LIMITED_MOBILITY, VISUAL, HEARING, SENSORY or STROLLER_ELDERLY") String> accessibilityNeeds;
 }

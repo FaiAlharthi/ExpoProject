@@ -18,6 +18,12 @@ public class Path {
     @Column(nullable = false)
     private Double distance;  // Automatically counted in path service from X to Y
 
+    @Column(columnDefinition = "BOOLEAN")
+    private Boolean stepFree; // no stairs on this path, null counts as step free
+
+    @Column(columnDefinition = "BOOLEAN")
+    private Boolean shaded; // covered from the sun, null counts as not shaded
+
     //Relations
     @ManyToOne
     @JoinColumn

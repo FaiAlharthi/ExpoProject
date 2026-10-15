@@ -15,4 +15,5 @@ public class RoadmapRouteResponse {
     private Double totalDistance;       // مجموع المشي
     private List<Location> route;       // كل النقاط اللي يمشي عليها
     private String exitEntrance;       // البوابة اللي يطلع منها
+    private Boolean accessibleRoute;   // true = the whole walk is step free (only for trips with a mobility need)
 }

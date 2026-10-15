@@ -21,4 +21,5 @@ public class PavilionDetailsResponse {
     private Double x;
     private Double y;
     private List<PavilionReviewResponse> reviews;
+    private List<PavilionAccessibilityResponse> accessibility;
 }

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -19,4 +20,5 @@ public class RoadmapResponse {
     private Boolean aiUsed;
     private List<RoadmapBreakResponse> breaks;
     private List<RoadmapStopResponse> stops;
+    private Set<String> accessibilityNeeds;
 }

@@ -51,6 +51,12 @@ public class Roadmap {
             message = "Experience type must be ENTERTAINMENT, CULTURAL, EDUCATIONAL, RELAXATION, or CULINARY.")
             String> experienceTypes;
 
+    // needs of anyone in this trip (the visitor or someone with him), empty when there are none
+    @ElementCollection
+    private Set<@Pattern(regexp = "^(WHEELCHAIR|LIMITED_MOBILITY|VISUAL|HEARING|SENSORY|STROLLER_ELDERLY)$",
+            message = "accessibility need must be WHEELCHAIR, LIMITED_MOBILITY, VISUAL, HEARING, SENSORY or STROLLER_ELDERLY")
+            String> accessibilityNeeds;
+
     @NotEmpty(message = "Visit pace cannot be empty!")
     @Pattern(regexp = "^(RELAXED|INTENSIVE)$", message = "Visit pace must be RELAXED or INTENSIVE.")
     @Column(columnDefinition = "VARCHAR(9) NOT NULL")
