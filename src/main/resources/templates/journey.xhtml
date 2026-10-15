@@ -13,7 +13,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org" lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8"/>
-  <title th:text="${journey.title}">رحلتي في إكسبو</title>
+  <title th:text="${journey.title}">حيَاك الله في إكسبو</title>
   <style type="text/css">
     @page {
       size: A4;
@@ -127,7 +127,7 @@
 
   <!-- ===== title ===== -->
   <div class="kicker" th:text="${labels.kicker}">خطة الرحلة</div>
-  <div class="title" th:text="${journey.title}">رحلتي في إكسبو</div>
+  <div class="title" th:text="${journey.title}">حيَاكم الله في إكسبو</div>
   <div class="sub" th:if="${journey.partyLine != null}" th:text="${journey.partyLine}">عدد المرافقين: ٣ | مع أطفال</div>
   <div class="sub" th:if="${journey.entranceName != null}"
        th:text="${labels.enterFrom + ' ' + journey.entranceName + (journey.exitName != null ? ' | ' + labels.exitFrom + ' ' + journey.exitName : '')}">الدخول من ...</div>
