@@ -120,7 +120,7 @@
     <button data-tab="chat" data-need="VISITOR">💬 المساعد</button>
     <button data-tab="account" data-need="VISITOR">👤 حسابي</button>
     <button data-tab="admin" data-need="ADMIN">🛠️ الأدمن</button>
-    <a href="route3d.html" target="_blank" style="align-self:center;white-space:nowrap;font-size:14px">🗺️ الخريطة</a>
+    <button data-tab="map">🗺️ الخريطة</button>
   </nav>
 
   <!-- ===================== الدخول ===================== -->
@@ -291,6 +291,15 @@
     </div>
   </section>
 
+  <!-- ===================== الخريطة (داخل نفس الصفحة) ===================== -->
+  <section id="tab-map" class="tab hidden">
+    <div class="top">
+      <div class="muted" id="mapTitle">الخريطة العامة</div>
+      <button class="btn ghost sm" id="mapAll">الخريطة العامة</button>
+    </div>
+    <iframe id="mapFrame" title="الخريطة" style="width:100%;height:85vh;border:1px solid var(--line);border-radius:14px;background:var(--surface)"></iframe>
+  </section>
+
   <!-- ===================== الأدمن ===================== -->
   <section id="tab-admin" class="tab hidden">
     <div class="card">
@@ -392,6 +401,7 @@
     if (b.dataset.need && b.dataset.need !== role) { toast(b.dataset.need === "ADMIN" ? "هذي للأدمن بس" : "سجلي دخول كزائر أول"); return; }
     document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
     document.querySelectorAll(".tab").forEach(t => t.classList.toggle("hidden", t.id !== "tab-" + name));
+    if (name === "map" && !$("mapFrame").src) openMap(null);
     const load = { explore: loadExplore, trips: loadTrips, passport: loadPassport, reviews: loadReviews, chat: loadChat, account: loadAccount, admin: loadAdmin }[name];
     if (load) busy(null, load);
   }
@@ -411,6 +421,7 @@
       try { await api("/admin/dashboard"); role = "ADMIN"; me = { fullName: username, username }; }
       catch (e2) { auth = null; role = null; throw new Error("اسم المستخدم أو كلمة المرور غلط"); }
     }
+    window.expoAuth = auth; // الخريطة تستخدمه
     $("who").innerHTML = `👋 ${esc(me.fullName)} <span class="muted">(${role === "ADMIN" ? "أدمن" : "زائر"})</span> <button class="btn ghost sm" id="logout">خروج</button>`;
     $("logout").onclick = async () => { try { await api("/user/auth/logout", "POST"); } catch (e) {} location.reload(); };
     refreshNav();
@@ -545,6 +556,16 @@
     loadTrips();
   });
   $("tripsReload").onclick = () => busy($("tripsReload"), loadTrips);
+  // لما الخريطة تغيّر الرحلة (داخل الصفحة أو في تبويب ثاني) نحدّث «رحلاتي» على طول
+  try {
+    new BroadcastChannel("expo-trips").onmessage = () => {
+      if (role === "VISITOR") loadTrips().catch(() => {});
+    };
+  } catch (e) {}
+  // ولما ترجعين لتبويب الصفحة نحدّثها بعد
+  window.addEventListener("focus", () => {
+    if (role === "VISITOR" && !$("tab-trips").classList.contains("hidden")) loadTrips().catch(() => {});
+  });
 
   async function loadTrips() {
     myRoadmaps = await api("/roadmap/getMyRoadmaps");
@@ -558,9 +579,10 @@
     d.className = "card";
     const stops = r.stops || [];
     const planned = stops.filter(s => !s.isVisited);
+    const isToday = r.visitDate === today(); // الزيارة والتحديث يشتغلون بس في رحلة اليوم
     d.innerHTML = `
       <div class="top"><h3>رحلة ${r.roadmapId} · ${r.visitDate}</h3>
-        <div class="chips"><a class="btn ghost sm" href="route3d.html?roadmap=${r.roadmapId}" target="_blank">🗺️ الخريطة</a>
+        <div class="chips"><button class="btn ghost sm" data-a="map">🗺️ الخريطة</button>
         <button class="btn ghost sm" data-a="route">📏 المسافة</button>
         <button class="btn red sm" data-a="del">🗑️ حذف</button></div></div>
       ${r.summary ? `<div class="summary">${r.aiUsed ? "🤖 " : ""}${esc(r.summary)}</div>` : ""}
@@ -573,7 +595,7 @@
       return `<div class="stop ${s.isVisited ? "done" : ""}">${img(s.imageUrl || p.imageUrl)}
             <div><b>${s.stopOrder || ""}. ${flag(s.country || p.country)} ${esc(s.pavilionName)}</b><div class="muted">${esc(s.zoneName || "")}${s.isVisited ? " · ✅ زرتيه " + fmtDate(s.visitedAt) : ""}</div></div>
             <div class="chips">${s.isVisited ? "" : `
-              <button class="btn sm" data-a="visit" data-p="${s.pavilionId}">زيارة</button>
+              ${isToday ? `<button class="btn sm" data-a="visit" data-p="${s.pavilionId}">زيارة</button>` : ""}
               <button class="btn ghost sm" data-a="up" data-i="${pi}" ${pi === 0 ? "disabled" : ""}>↑</button>
               <button class="btn ghost sm" data-a="down" data-i="${pi}" ${pi === planned.length - 1 ? "disabled" : ""}>↓</button>
               <button class="btn red sm" data-a="rm" data-v="${s.visitId}">✕</button>`}</div></div>`;
@@ -584,12 +606,15 @@
         <input data-r="addPos" type="number" min="1" placeholder="الترتيب" style="max-width:90px" value="${stops.length + 1}">
         <button class="btn ghost" data-a="add">➕ أضيفي</button>
       </div>
-      <button class="btn" data-a="dyn">🔄 حدّثي الأجنحة الباقية حسب تقييماتي</button>
+      ${!isToday ? `<p class="muted">📅 هذي رحلة يوم ${r.visitDate}. تسجيل الزيارة وتحديث الأجنحة يشتغلون في يومها.</p>`
+            : planned.length ? `<button class="btn" data-a="dyn">🔄 حدّثي الأجنحة الباقية حسب تقييماتي</button>`
+                    : `<p class="muted">✅ زرتي كل أجنحة الرحلة. أضيفي أجنحة جديدة عشان تقدرين تحدّثينها.</p>`}
       <div data-r="dynRes"></div>`;
 
     const q = s => d.querySelector(`[data-r="${s}"]`);
     d.querySelectorAll("[data-a]").forEach(b => b.onclick = () => busy(b, async () => {
       const a = b.dataset.a;
+      if (a === "map") return openMap(r.roadmapId);
       if (a === "visit") { await api("/visit/checkIn/" + b.dataset.p, "POST"); toast("انسجلت الزيارة ✅ وأخذتي الختم 🛂 قيّميه من «تقييماتي»", true); return loadTrips(); }
       if (a === "rm") { await api(`/roadmap/removeStop/${r.roadmapId}/${b.dataset.v}`, "DELETE"); return loadTrips(); }
       if (a === "up" || a === "down") {
@@ -608,7 +633,9 @@
       if (a === "dyn") {
         const before = planned.map(s => s.pavilionName);
         q("dynRes").innerHTML = '<p class="muted">جاري التحديث...</p>';
-        const nr = await api("/roadmap/makeDynamic/" + r.roadmapId, "PUT");
+        let nr;
+        try { nr = await api("/roadmap/makeDynamic/" + r.roadmapId, "PUT"); }
+        catch (e) { q("dynRes").innerHTML = ""; throw e; } // نشيل «جاري التحديث» لو صار خطأ
         const after = (nr.stops || []).filter(s => !s.isVisited).map(s => s.pavilionName);
         const card = tripCard(nr); d.replaceWith(card);
         card.querySelector('[data-r="dynRes"]').innerHTML = `<div class="summary" style="display:grid;gap:4px">
@@ -619,6 +646,16 @@
     }));
     return d;
   }
+
+  // ===================== الخريطة =====================
+  // نفتح route3d.html داخل الصفحة، والخريطة تاخذ تسجيل الدخول من هنا (window.expoAuth)
+  function openMap(roadmapId) {
+    $("mapFrame").src = "route3d.html" + (roadmapId ? "?roadmap=" + roadmapId : "");
+    $("mapTitle").textContent = roadmapId ? "مسار رحلة " + roadmapId : "الخريطة العامة";
+    document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x.dataset.tab === "map"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.toggle("hidden", t.id !== "tab-map"));
+  }
+  $("mapAll").onclick = () => openMap(null);
 
   // ===================== جوازي =====================
   async function loadPassport() {
@@ -754,6 +791,7 @@
     const body = { fullName: $("uName").value, username: $("uUser").value, email: $("uEmail").value, phone: $("uPhone").value, password: $("uPass").value };
     await api("/user/updateUser", "PUT", body);
     auth = "Basic " + btoa(unescape(encodeURIComponent(body.username + ":" + body.password))); // الدخول بالبيانات الجديدة
+    window.expoAuth = auth;
     $("uPass").value = "";
     toast("انحفظ ✅", true);
   });

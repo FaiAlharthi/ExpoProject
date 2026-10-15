@@ -143,6 +143,7 @@
           <label class="field">تحميل أجنحة رحلة محفوظة <input type="number" id="roadmapId" min="1" placeholder="رقم الرحلة"></label>
           <button class="btn" id="loadRoadmap">تحميل</button>
         </div>
+        <div id="tripBar" style="display:grid;gap:8px"></div>
         <div id="chips" style="display:grid;gap:10px"></div>
       </div>
 
@@ -162,6 +163,8 @@
 
 <script>
   const API = "/api/v1";
+  // داخل expo.html: نخفي العنوان عشان الخريطة تاخذ المكان كله
+  if (window.parent !== window) document.querySelector("header").style.display = "none";
   const METERS = 2; // كل وحدة في الخريطة = 2 متر
   const svg = document.getElementById("map");
   const NS = "http://www.w3.org/2000/svg";
@@ -170,14 +173,20 @@
   let plaza = null, center = { x: 500, y: 400 }, big = false;
   let picked = new Set(), mode = "dijkstra";
   let fixedOrder = null; // ترتيب الرحلة من الباك إند (stopOrder)، null = نرتب هنا
+  let trip = null;       // الرحلة المربوطة بالخريطة: { id, stops } — أي تغيير ينحفظ فيها
   let aiSummary = "";    // ملخص الـ AI للرحلة
   let view = "diagram";  // "diagram" مخطط ، "art" مرسومة
   let bounds = { minX: 0, maxX: 1000, minY: 0, maxY: 770 }; // حدود الخريطة
   let viewBox2d = "0 0 1000 770"; // نرجع له في المخطط بعد التقريب في المرسومة
   const cache = {}; // نخزن نتائج Dijkstra عشان ما نكرر الطلب
 
-  async function api(url) {
-    const res = await fetch(API + url, { credentials: "same-origin" }); // يرسل تسجيل الدخول مع الطلب
+  async function api(url, method, body) {
+    const headers = {};
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    // لو الخريطة مفتوحة داخل expo.html ناخذ تسجيل الدخول منها
+    try { if (window.parent !== window && window.parent.expoAuth) headers["Authorization"] = window.parent.expoAuth; } catch (e) {}
+    const res = await fetch(API + url, { method: method || "GET", headers, credentials: "same-origin", // يرسل تسجيل الدخول مع الطلب
+      body: body !== undefined ? JSON.stringify(body) : undefined });
     const text = await res.text();
     let data; try { data = JSON.parse(text); } catch (e) { data = text; }
     if (res.status === 401) throw new Error("لازم تسجلين دخول كزائر عشان تشوفين الرحلة");
@@ -292,7 +301,7 @@
     ["الذكاء الاصطناعي", "المياه", "جناح إيطاليا", "جناح المملكة", "Saudi Arabia Pavilion", "Japan Pavilion", "Italy Pavilion", "Brazil Pavilion"].forEach(n => { const p = pavilions.find(x => x.name === n); if (p) picked.add(p.location.id); });
     if (!picked.size) pavilions.slice(0, 3).forEach(p => picked.add(p.location.id));
     syncChips();
-    startSel.addEventListener("change", () => { fixedOrder = null; render(); });
+    startSel.addEventListener("change", () => { if (!trip) fixedOrder = null; render(); });
     render();
 
     // لو الرابط فيه ?roadmap=رقم، نحمّل الرحلة على طول
@@ -333,7 +342,7 @@
       const id = p.location.id;
       const lab = document.createElement("label"); lab.className = "chip";
       lab.innerHTML = `<input type="checkbox" id="chk-${id}"> ${shortName(p.name)}`;
-      lab.querySelector("input").addEventListener("change", e => { fixedOrder = null; e.target.checked ? picked.add(id) : picked.delete(id); render(); });
+      lab.querySelector("input").addEventListener("change", () => togglePav(id));
       g.querySelector(".chips").appendChild(lab);
     });
     parent.appendChild(g);
@@ -422,7 +431,7 @@
         el("circle", { cx: l.x, cy: l.y, r: R, fill: on ? "var(--accent)" : "var(--surface)", stroke: on ? "var(--accent)" : "var(--node)", "stroke-width": 2, class: "ring" }, g);
         if (idx >= 0) el("text", { x: l.x, y: l.y + (big ? 4 : 5), "text-anchor": "middle", fill: "var(--surface)", "font-size": big ? 11 : 13, "font-weight": 700, "font-family": "var(--font-data)" }, g).textContent = idx + 1;
         el("text", { x: l.x, y: l.y - R - 6, "text-anchor": "middle", class: "node-label", style: big ? "font-size:10px" : "" }, g).textContent = shortName(pav.name);
-        const toggle = () => { fixedOrder = null; picked.has(l.id) ? picked.delete(l.id) : picked.add(l.id); syncChips(); render(); };
+        const toggle = () => togglePav(l.id);
         g.addEventListener("click", toggle);
         g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
       } else if (ent) {
@@ -467,34 +476,91 @@
     if (walk.unreachable.length && mode !== "straight") err("ما فيه ممرات توصل لـ: " + walk.unreachable.map(nameOf).join("، "));
   }
 
-  // ---------- تحميل رحلة محفوظة (من generate) ----------
+  // ---------- تحميل رحلة محفوظة وربطها بالخريطة ----------
+  async function loadTrip(id) {
+    // الرحلة: { roadmapId, summary, stops: [...] } والأجنحة مرتبة بـ stopOrder
+    const data = await api(`/roadmap/getStops/${id}`);
+    const stops = Array.isArray(data) ? data : (data.stops || []);
+    aiSummary = data.summary || "";
+    trip = { id: +id, stops: [] };
+    const order = [];
+    stops.forEach(v => {
+      const p = pavilions.find(x => x.id === v.pavilionId || x.name === v.pavilionName);
+      if (!p) return;
+      trip.stops.push({ visitId: v.visitId, pavilionId: p.id, locId: p.location.id, isVisited: !!(v.isVisited || v.visited) });
+      if (!(v.isVisited || v.visited)) order.push(p.location.id); // اللي زارها خلاص ما نرسم له طريق
+    });
+    fixedOrder = order;
+    picked = new Set(order);
+    drawTripBar();
+    syncChips(); render();
+    if (!order.length) err("الرحلة ما فيها أجنحة باقية. أضيفي أجنحة من القائمة أو من الخريطة.");
+  }
+
+  // شريط الرحلة المربوطة: حفظ أقصر ترتيب
+  function drawTripBar() {
+    const bar = document.getElementById("tripBar");
+    if (!trip) { bar.innerHTML = ""; return; }
+    bar.innerHTML = `<p class="note">🔗 الخريطة مربوطة برحلة ${trip.id}. أي جناح تضيفينه أو تشيلينه ينحفظ في الرحلة على طول.</p>
+      <button class="btn" id="saveOrder">💾 رتّبيها بأقصر مشي واحفظي</button>`;
+    document.getElementById("saveOrder").onclick = saveBestOrder;
+  }
+
+  // نبلّغ صفحة «رحلاتي» إن الرحلة تغيرت عشان تحدّث نفسها
+  function notifyTrips() {
+    try { new BroadcastChannel("expo-trips").postMessage({ roadmapId: trip.id }); } catch (e) {}
+  }
+
+  // إضافة جناح أو شيله: لو فيه رحلة مربوطة ينحفظ في الباك إند، وإلا يتغير في الخريطة بس
+  async function togglePav(locId) {
+    err("");
+    if (!trip) {
+      fixedOrder = null;
+      picked.has(locId) ? picked.delete(locId) : picked.add(locId);
+      syncChips(); render();
+      return;
+    }
+    const p = pavOf(locId); if (!p) return;
+    const stop = trip.stops.find(s => s.pavilionId === p.id);
+    try {
+      if (stop) {
+        if (stop.isVisited) throw new Error("ما تقدرين تشيلين جناح زرتيه");
+        await api(`/roadmap/removeStop/${trip.id}/${stop.visitId}`, "DELETE");
+      } else {
+        await api(`/roadmap/addStop/${trip.id}/${p.id}/${trip.stops.length + 1}`, "POST"); // يجي آخر الرحلة
+      }
+      await loadTrip(trip.id); // نقرا الرحلة من جديد عشان الخريطة تطابق الباك إند
+      notifyTrips();
+    } catch (e) { err(e.message); syncChips(); }
+  }
+
+  // نرتب الأجنحة الباقية بأقصر مشي (Dijkstra) ونحفظ الترتيب في الرحلة
+  async function saveBestOrder() {
+    if (!trip || !fixedOrder.length) return;
+    try {
+      const start = +document.getElementById("start").value;
+      const res = await plan(start, fixedOrder, "walk");
+      const locs = [...res.legs.map(l => l.to), ...res.unreachable];
+      const visitIds = locs.map(loc => trip.stops.find(s => s.locId === loc && !s.isVisited).visitId);
+      await api(`/roadmap/reorder/${trip.id}`, "PUT", { visitIds });
+      await loadTrip(trip.id);
+      notifyTrips();
+      document.querySelector("#tripBar .note").textContent = `💾 انحفظ أقصر ترتيب في رحلة ${trip.id}.`;
+    } catch (e) { err(e.message); }
+  }
+
   document.getElementById("loadRoadmap").addEventListener("click", async () => {
     const id = document.getElementById("roadmapId").value;
     if (!id) return;
     try {
-      // الرحلة: { id, summary, aiUsed, breaks, stops: [...] } والأجنحة مرتبة بـ stopOrder
-      const data = await api(`/roadmap/getStops/${id}`);
-      const stops = Array.isArray(data) ? data : (data.stops || []);
-      aiSummary = data.summary || "";
-      const order = [];
-      stops.forEach(v => {
-        if (v.isVisited || v.visited) return; // اللي زارها خلاص
-        const p = pavilions.find(x => x.id === v.pavilionId || x.name === v.pavilionName);
-        if (p) order.push(p.location.id);
-      });
-      if (!order.length) throw new Error("الرحلة ما فيها أجنحة باقية");
-      fixedOrder = order;
-      picked = new Set(order);
-
-      // نقطة البداية = بوابة الرحلة
+      await loadTrip(id);
       // نقطة البداية = بوابة الرحلة (أول نقطة في مسار الرحلة من الباك إند)
       try {
         const routeData = await api(`/path/roadmap/${id}`);
         const first = routeData.route && routeData.route[0];
         const sel = document.getElementById("start");
-        if (first && sel.querySelector(`option[value="${first.id}"]`)) sel.value = first.id;
+        if (first && sel.querySelector(`option[value="${first.id}"]`)) { sel.value = first.id; render(); }
       } catch (e) { /* لو ما قدرنا نجيبها نخلي البداية زي ما هي */ }
-      syncChips(); render();
     } catch (e) { err(e.message); }
   });
 
