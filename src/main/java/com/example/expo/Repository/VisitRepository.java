@@ -24,6 +24,9 @@ public interface VisitRepository extends JpaRepository<Visit, Integer> {
 
     List<Visit> findVisitsByRoadmapOrderByStopOrderAsc(Roadmap roadmap);
 
+    // has any stop of this roadmap been checked in (the plan has started)
+    boolean existsByRoadmapAndIsVisitedTrue(Roadmap roadmap);
+
     List<Visit> findVisitsByPassportAndIsVisitedTrue(Passport passport);
 
     // planned stop for this pavilion in the roadmap

@@ -4,9 +4,11 @@ import com.example.expo.Api.ApiResponse;
 import com.example.expo.Dto.In.GenerateRoadmapRequest;
 import com.example.expo.Dto.In.ReorderStopsRequest;
 import com.example.expo.Dto.In.ShareRoadmapRequest;
+import com.example.expo.Dto.In.JoinRequestBody;
 import com.example.expo.Service.JourneyPdfService;
 import com.example.expo.Service.RoadmapService;
 import com.example.expo.Service.SharedRoadmapService;
+import com.example.expo.Service.GroupService;
 import jakarta.validation.Valid;
 import com.example.expo.Model.User;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class RoadmapController {
     private final RoadmapService roadmapService;
     private final JourneyPdfService journeyPdfService;
     private final SharedRoadmapService sharedRoadmapService;
+    private final GroupService groupService;
 
     @GetMapping("/getAll")
     public ResponseEntity<?> getAllRoadmaps(){
@@ -117,9 +120,58 @@ public class RoadmapController {
         return ResponseEntity.status(200).body(sharedRoadmapService.getShared(user.getId(), date, page, size));
     }
 
-    @PostMapping("/copy/{roadmapId}")
-    public ResponseEntity<?> copyRoadmap(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
-        return ResponseEntity.status(200).body(sharedRoadmapService.copyRoadmap(user.getId(), roadmapId));
+    // ===== find a group: join requests and membership =====
+
+    // a visitor asks to join a shared plan (optional short message)
+    @PostMapping("/{roadmapId}/join")
+    public ResponseEntity<?> requestJoin(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId, @RequestBody @Valid JoinRequestBody body){
+        return ResponseEntity.status(200).body(groupService.requestJoin(user.getId(), roadmapId, body));
+    }
+
+    // the requester cancels his own pending request
+    @DeleteMapping("/join/{requestId}")
+    public ResponseEntity<?> withdrawJoin(@AuthenticationPrincipal User user, @PathVariable Integer requestId){
+        groupService.withdraw(user.getId(), requestId);
+        return ResponseEntity.status(200).body(new ApiResponse("request withdrawn"));
+    }
+
+    // the requester's own outgoing requests and their status
+    @GetMapping("/myJoinRequests")
+    public ResponseEntity<?> myJoinRequests(@AuthenticationPrincipal User user){
+        return ResponseEntity.status(200).body(groupService.myRequests(user.getId()));
+    }
+
+    // a member leaves a group he joined
+    @DeleteMapping("/{roadmapId}/leave")
+    public ResponseEntity<?> leaveGroup(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        groupService.leave(user.getId(), roadmapId);
+        return ResponseEntity.status(200).body(new ApiResponse("you left the group"));
+    }
+
+    // the founder sees the join requests for his plan
+    @GetMapping("/{roadmapId}/requests")
+    public ResponseEntity<?> joinRequests(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        return ResponseEntity.status(200).body(groupService.requestsForRoadmap(user.getId(), roadmapId));
+    }
+
+    // the founder accepts a request (creates the member's locked copy)
+    @PutMapping("/requests/{requestId}/accept")
+    public ResponseEntity<?> acceptJoin(@AuthenticationPrincipal User user, @PathVariable Integer requestId){
+        groupService.accept(user.getId(), requestId);
+        return ResponseEntity.status(200).body(new ApiResponse("request accepted"));
+    }
+
+    // the founder rejects a request
+    @PutMapping("/requests/{requestId}/reject")
+    public ResponseEntity<?> rejectJoin(@AuthenticationPrincipal User user, @PathVariable Integer requestId){
+        groupService.reject(user.getId(), requestId);
+        return ResponseEntity.status(200).body(new ApiResponse("request rejected"));
+    }
+
+    // the group view for a founder or an accepted member (read-only plan, members, contact)
+    @GetMapping("/{roadmapId}/group")
+    public ResponseEntity<?> group(@AuthenticationPrincipal User user, @PathVariable Integer roadmapId){
+        return ResponseEntity.status(200).body(groupService.getGroup(user.getId(), roadmapId));
     }
 
     @PostMapping("/sendPdf/{roadmapId}")
