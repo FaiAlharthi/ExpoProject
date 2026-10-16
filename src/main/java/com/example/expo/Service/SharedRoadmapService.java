@@ -53,6 +53,9 @@ public class SharedRoadmapService {
         if(visitRepository.findVisitsByRoadmapOrderByStopOrderAsc(roadmap).isEmpty()){
             throw new ApiException("you cannot share a roadmap without stops");
         }
+        if(visitRepository.existsByRoadmapAndIsVisitedTrue(roadmap)){
+            throw new ApiException("you cannot share a roadmap that already started");
+        }
         String phone = roadmap.getVisitor().getUser().getPhone();
         if(request.getShowContact() && (phone == null || phone.isBlank())){
             throw new ApiException("no phone number in your account");
@@ -143,30 +146,14 @@ public class SharedRoadmapService {
         return result;
     }
 
-    // copies the stops into a new roadmap of the viewer, after that the copy is independent from the original
+    // copies a shared plan's stops into a NEW roadmap for the viewer and returns the saved entity.
+    // used when a join request is accepted (locked = true, only the founder edits the original).
     @Transactional
-    public RoadmapResponse copyRoadmap(Integer visitorId, Integer roadmapId){
-        Visitor viewer = visitorRepository.findVisitorById(visitorId);
-        if(viewer == null){
-            throw new ApiException("visitor not found");
-        }
-        Roadmap source = roadmapRepository.findRoadmapById(roadmapId);
-        // not shared (or stopped sharing after the viewer opened it), or not for this viewer: the same answer
-        if(source == null || !Boolean.TRUE.equals(source.getIsShared())
-                || ("SAME_GENDER".equals(source.getShareAudience()) && !source.getVisitor().getGender().equals(viewer.getGender()))){
-            throw new ApiException("shared roadmap not found");
-        }
-        if(source.getVisitor().getId().equals(visitorId)){
-            throw new ApiException("you cannot copy your own roadmap");
-        }
-        if(source.getVisitDate().isBefore(LocalDate.now())){
-            throw new ApiException("you cannot copy a roadmap of a past day");
-        }
+    public Roadmap copyInto(Visitor viewer, Roadmap source, boolean locked){
         // one roadmap per visitor per day
         if(roadmapRepository.findRoadmapByVisitorAndVisitDate(viewer, source.getVisitDate()) != null){
-            throw new ApiException("you already have a roadmap for this day, delete it first to copy this one");
+            throw new ApiException("you already have a plan for this day, delete it first to join this group");
         }
-
         Roadmap copy = new Roadmap();
         copy.setVisitDate(source.getVisitDate());
         copy.setPartyType(source.getPartyType());
@@ -187,6 +174,10 @@ public class SharedRoadmapService {
         copy.setVisitor(viewer);
         copy.setCreatedAt(LocalDateTime.now());
         copy.setCopiedFromId(source.getId());
+        // a member's copy is locked: only the founder edits the original plan
+        if(locked){
+            copy.setLockedAt(LocalDateTime.now());
+        }
         roadmapRepository.save(copy);
 
         int order = 0;
@@ -200,7 +191,7 @@ public class SharedRoadmapService {
         }
         roadmapRepository.increaseCopyCount(source.getId());
         crowdService.invalidate();
-        return roadmapService.getStops(visitorId, copy.getId());
+        return copy;
     }
 
     // only what the owner agreed to show, the phone only when he turned it on
