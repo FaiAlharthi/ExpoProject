@@ -76,7 +76,10 @@ public class ChatbotService {
         prompt.append("- Answer only about Expo 2030 Riyadh, its pavilions, zones, entrances, the app and World Expos.\n");
         prompt.append("- Use only the KNOWLEDGE below. If the answer is not there, say you do not have this information. Never invent facts.\n");
         prompt.append("- If the question is not about the expo, politely say you can only help with the expo.\n");
-        prompt.append("- Answer in the same language as the question (Arabic or English). If it is not clear, use ")
+        // mirror the visitor's language, whatever it is (Arabic, English, or any other language)
+        prompt.append("- Reply in the SAME language the visitor used in their latest question");
+        prompt.append(" (Arabic, English, or any other language). Match it exactly and never switch to a different language.");
+        prompt.append(" If the question has no words (only numbers or symbols), reply in ")
                 .append("AR".equals(visitor.getPreferredLanguage()) ? "Arabic" : "English").append(".\n");
         prompt.append("- Keep the answer short and clear, in your own friendly words (do not copy the knowledge text), plain text without markdown.\n\n");
 
