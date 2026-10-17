@@ -42,7 +42,7 @@ public class GroupService {
     private final SharedRoadmapService sharedRoadmapService;
     private final RoadmapService roadmapService;
 
-    private static final int CAPACITY = 5;                 // founder + accepted members
+    public static final int CAPACITY = 5;                 // founder + accepted members
     private static final int MAX_MEMBERS = CAPACITY - 1;   // accepted members (the founder is the 5th seat)
     private static final List<String> ACTIVE = List.of("PENDING", "ACCEPTED");
 

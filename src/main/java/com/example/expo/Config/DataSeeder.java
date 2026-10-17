@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
@@ -19,6 +20,7 @@ import java.util.Map;
 // fills the database from data/expo-data.json on startup
 // zones, entrances and pavilions only if they are empty, paths only if there are no paths
 @Component
+@Order(1)
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
     private final LocationRepository locationRepository;

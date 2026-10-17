@@ -7,11 +7,13 @@ import com.example.expo.Dto.Out.RoadmapResponse;
 import com.example.expo.Dto.Out.SharedRoadmapResponse;
 import com.example.expo.Dto.Out.SharedStopResponse;
 import com.example.expo.Model.Interest;
+import com.example.expo.Model.JoinRequest;
 import com.example.expo.Model.Pavilion;
 import com.example.expo.Model.Roadmap;
 import com.example.expo.Model.User;
 import com.example.expo.Model.Visit;
 import com.example.expo.Model.Visitor;
+import com.example.expo.Repository.JoinRequestRepository;
 import com.example.expo.Repository.RoadmapRepository;
 import com.example.expo.Repository.VisitRepository;
 import com.example.expo.Repository.VisitorRepository;
@@ -23,18 +25,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-// "Find a group": a visitor publishes his roadmap, others see it and copy it into their own journey.
-// There are no requests, accepts or rejects, the people coordinate outside the app on WhatsApp.
+// "Find a group": a visitor publishes his roadmap and other visitors of the same day see it.
+// Joining is not a copy, it is a request the founder accepts or rejects, see GroupService.
 @Service
 @RequiredArgsConstructor
 public class SharedRoadmapService {
     private final RoadmapRepository roadmapRepository;
     private final VisitorRepository visitorRepository;
     private final VisitRepository visitRepository;
+    private final JoinRequestRepository joinRequestRepository;
     private final CrowdService crowdService;
     private final RoadmapService roadmapService;
 
@@ -138,10 +143,20 @@ public class SharedRoadmapService {
             return sharedB.compareTo(sharedA);
         });
 
+        // the viewer own requests, so every card can say "pending", "you are a member" or nothing
+        Map<Integer, String> myRequests = new HashMap<>();
+        for(JoinRequest request : joinRequestRepository.findByRequesterOrderByCreatedAtDesc(viewer)){
+            if(!"WITHDRAWN".equals(request.getStatus())){
+                // the list is newest first, so the first status of a roadmap is the current one
+                myRequests.putIfAbsent(request.getRoadmap().getId(), request.getStatus());
+            }
+        }
+
         List<SharedRoadmapResponse> result = new ArrayList<>();
         int from = pageNumber * pageSize;
         for(int i = from; i < Math.min(from + pageSize, scored.size()); i++){
-            result.add(toSharedResponse(scored.get(i).roadmap(), scored.get(i).common()));
+            Roadmap roadmap = scored.get(i).roadmap();
+            result.add(toSharedResponse(roadmap, scored.get(i).common(), myRequests.get(roadmap.getId())));
         }
         return result;
     }
@@ -195,7 +210,7 @@ public class SharedRoadmapService {
     }
 
     // only what the owner agreed to show, the phone only when he turned it on
-    private SharedRoadmapResponse toSharedResponse(Roadmap roadmap, int common){
+    private SharedRoadmapResponse toSharedResponse(Roadmap roadmap, int common, String myRequestStatus){
         Visitor owner = roadmap.getVisitor();
         User user = owner.getUser();
         String firstName = user.getFullName().trim().split("\\s+")[0];
@@ -213,10 +228,13 @@ public class SharedRoadmapService {
                     pavilion.getZone() == null ? null : pavilion.getZone().getName(), pavilion.getImageUrl()));
         }
         String phone = Boolean.TRUE.equals(roadmap.getShowContact()) ? user.getPhone() : null;
+        int memberCount = 1 + (int) joinRequestRepository.countByRoadmapAndStatus(roadmap, "ACCEPTED");
         return new SharedRoadmapResponse(roadmap.getId(), roadmap.getVisitDate(), roadmap.getArrivalTime(), roadmap.getDepartureTime(),
                 roadmap.getVisitPace(), firstName, owner.getNationality(), interests, common, roadmap.getShareNote(),
                 roadmap.getEntrance() == null ? null : roadmap.getEntrance().getName(), stops,
-                roadmap.getCopyCount() == null ? 0 : roadmap.getCopyCount(), roadmap.getLockedAt() != null, phone);
+                roadmap.getCopyCount() == null ? 0 : roadmap.getCopyCount(), roadmap.getLockedAt() != null,
+                roadmap.getShareAudience(), owner.getGender(), memberCount, GroupService.CAPACITY,
+                memberCount >= GroupService.CAPACITY, myRequestStatus, phone);
     }
 
     // the roadmap must belong to the logged in visitor
